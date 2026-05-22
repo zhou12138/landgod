@@ -25,6 +25,7 @@ function printUsage() {
   console.log('Commands:');
   console.log('  onboard                   Interactive setup wizard');
   console.log('  start                     Start worker daemon');
+  console.log('  start --ui                Start in UI mode (foreground, with Electron GUI)');
   console.log('  start --headless          Start in headless mode (no GUI, recommended for servers)');
   console.log('  stop                      Stop worker daemon');
   console.log('  status                    Show worker status');
@@ -927,6 +928,10 @@ async function main() {
   }
 
   if (command === 'start' || (command === 'daemon' && args[1] === 'start')) {
+    if (args.includes('--ui') || args.includes('--foreground')) {
+      launchUiMode();
+      return;
+    }
     const useHeadlessNode = args.includes('--headless');
     startDaemon(useHeadlessNode);
     return;
