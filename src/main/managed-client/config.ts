@@ -31,6 +31,7 @@ interface ManagedClientFileConfig {
   retryDelayMs?: number;
   enabled?: boolean;
   mcpServers?: Record<string, ManagedClientFileMcpServerConfig>;
+  enableComputerUse?: boolean;
   builtInTools?: PartialBuiltInToolsSecurityConfig;
   toolCallApprovalMode?: ToolCallApprovalMode;
 }
@@ -491,7 +492,31 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     getArgValue(args, '--managed-client-retry-ms') ?? process.env.MANAGED_CLIENT_RETRY_MS ?? String(fileConfig.retryDelayMs ?? ''),
     3000,
   );
-  const mcpServers = parseManagedClientMcpServers(loadManagedClientMcpFileConfig());
+  // Built-in computer-use MCP server: opt-in via --enable-computer-use flag,
+  // ENABLE_COMPUTER_USE env var, or managed-client.config.json enableComputerUse field.
+  const enableComputerUse =
+    hasArg(args, '--enable-computer-use')
+    || parseBooleanFlag(process.env.ENABLE_COMPUTER_USE)
+    || fileConfig.enableComputerUse === true;
+
+  const userMcpConfig = loadManagedClientMcpFileConfig();
+
+  // Inject built-in computer-use if enabled and not already configured by user
+  const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = enableComputerUse && !userMcpConfig['computer-use']
+    ? {
+        'computer-use': {
+          command: 'python',
+          args: ['-m', 'landgod_computer_use'],
+          tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
+          trustLevel: 'trusted' as const,
+          publishedRemotely: true,
+          enabled: true,
+        },
+        ...userMcpConfig,
+      }
+    : userMcpConfig;
+
+  const mcpServers = parseManagedClientMcpServers(effectiveMcpConfig);
 
   return {
     mode,
