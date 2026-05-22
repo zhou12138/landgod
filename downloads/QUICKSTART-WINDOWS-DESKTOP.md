@@ -58,9 +58,14 @@ landgod config set toolCallApprovalMode auto
 # 桌面 UI 模式
 landgod start --ui
 
-# 或后台守护进程模式
+# Demo 模式（跳过所有安全检查，适合演示和本地测试）
+landgod start --ui --demo
+
+# 后台守护进程模式
 landgod start
 ```
+
+> ⚠️ `--demo` 模式会禁用所有安全限制（命令白名单、内容过滤等），仅用于演示和本地测试，**不要在生产环境使用**。
 
 ## 验证
 
