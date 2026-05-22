@@ -62,48 +62,10 @@ python3 -m pip install Pillow
 
 ---
 
-## ⚙️ 配置
-
-### 方式一：交互式向导（推荐）
-
-```bash
-landgod onboard
-```
-
-按提示完成 Gateway 地址、Token、权限等配置。
-
-### 方式二：手动配置
-
-```bash
-landgod config set enabled true
-landgod config set mode managed-client-mcp-ws
-landgod config set bootstrapBaseUrl "ws://你的GATEWAY地址:8080"
-landgod config set token "你的TOKEN"
-landgod config set toolCallApprovalMode auto
-```
-
-查看当前配置：
-
-```bash
-landgod config show
-```
-
----
-
 ## ▶️ 启动
 
 ```bash
-# 桌面 UI 模式（推荐桌面用户）
-landgod start --ui
-
-# Demo 模式 — 跳过所有安全检查，适合演示和本地测试
 landgod start --ui --demo
-
-# 后台守护进程模式
-landgod start
-
-# 无 GUI 后台模式（适合服务器）
-landgod start --headless
 ```
 
 > ⚠️ `--demo` 模式会禁用命令白名单、内容过滤等所有安全限制，**仅用于演示和本地测试**。
@@ -131,37 +93,14 @@ landgod mcp show
 
 ---
 
-## ✅ 验证连接
-
-在 Gateway 机器上执行：
-
-```bash
-curl -s http://GATEWAY地址:8081/clients
-```
-
-应该能看到你的设备出现在列表中。
-
----
-
 ## ❓ 常见问题
 
 | 问题 | 解决方案 |
 |------|---------|
 | `landgod` 命令找不到 | 关闭终端重新打开；或检查 `npm prefix -g` 路径是否在系统 PATH 中 |
 | Python 功能不可用 | 安装 Python 后需要重启终端，确认 `python --version`（Windows）或 `python3 --version`（macOS）正常 |
-| 连接不上 Gateway | 检查 `bootstrapBaseUrl` 地址和 `token` 是否正确，确认网络/防火墙放通 |
 | Electron 相关报错 | 首次运行 `landgod start --ui` 时会自动安装 Electron 依赖，需要联网 |
 | macOS 权限弹窗 | 截图功能需要在 系统设置 → 隐私与安全 → 屏幕录制 中授权终端 |
-
----
-
-## 📁 文件位置
-
-| 内容 | Windows | macOS |
-|------|---------|-------|
-| 配置文件 | `%APPDATA%\npm\node_modules\landgod\managed-client.config.json` | `/usr/local/lib/node_modules/landgod/managed-client.config.json` |
-| MCP 服务器配置 | 同目录下 `managed-client.mcp-servers.json` | 同上 |
-| 运行数据/日志 | 同目录下 `.landgod-data/` | 同上 |
 
 ---
 
