@@ -72,27 +72,6 @@ landgod start --ui --demo
 
 ---
 
-## 🔍 日常管理
-
-```bash
-# 查看运行状态
-landgod status
-
-# 查看日志
-landgod logs
-
-# 实时跟踪日志
-landgod logs --follow
-
-# 停止
-landgod stop
-
-# 查看 MCP 服务器配置
-landgod mcp show
-```
-
----
-
 ## ❓ 常见问题
 
 | 问题 | 解决方案 |
