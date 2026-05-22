@@ -2,6 +2,7 @@ import * as os from 'node:os';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import type { ManagedClientMode, ManagedClientRuntimeConfig } from './types';
 import { getDefaultManagedClientWorkspaceRoot } from './workspace';
 import { parseManagedClientMcpServers, type ManagedClientFileMcpServerConfig } from './mcp-server-config';
@@ -444,6 +445,49 @@ export function getManagedClientWorkspaceRoot(args = process.argv): string {
   return path.resolve(workspaceRoot);
 }
 
+// --- Built-in computer-use Python detection ---
+
+let cachedPythonCommand: string | false | undefined;
+
+/**
+ * Detect which python command is available (python3 or python).
+ * Also verifies that landgod_computer_use module is importable.
+ * Result is cached for the process lifetime.
+ */
+function getPythonCommand(): string {
+  if (cachedPythonCommand !== undefined) {
+    return cachedPythonCommand as string;
+  }
+  // This should only be called after isPythonAvailable() returns true
+  detectPython();
+  return cachedPythonCommand as string;
+}
+
+function isPythonAvailable(): boolean {
+  if (cachedPythonCommand !== undefined) {
+    return cachedPythonCommand !== false;
+  }
+  return detectPython();
+}
+
+function detectPython(): boolean {
+  const candidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
+  for (const cmd of candidates) {
+    try {
+      execFileSync(cmd, ['-c', 'import landgod_computer_use'], {
+        timeout: 5000,
+        stdio: 'ignore',
+      });
+      cachedPythonCommand = cmd;
+      return true;
+    } catch {
+      // not available, try next
+    }
+  }
+  cachedPythonCommand = false;
+  return false;
+}
+
 export function getManagedClientRuntimeConfig(version: string, args = process.argv): ManagedClientRuntimeConfig {
   const fileConfig = loadManagedClientFileConfig();
   const explicitMode =
@@ -492,20 +536,23 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     getArgValue(args, '--managed-client-retry-ms') ?? process.env.MANAGED_CLIENT_RETRY_MS ?? String(fileConfig.retryDelayMs ?? ''),
     3000,
   );
-  // Built-in computer-use MCP server: opt-in via --enable-computer-use flag,
-  // ENABLE_COMPUTER_USE env var, or managed-client.config.json enableComputerUse field.
-  const enableComputerUse =
-    hasArg(args, '--enable-computer-use')
-    || parseBooleanFlag(process.env.ENABLE_COMPUTER_USE)
-    || fileConfig.enableComputerUse === true;
-
   const userMcpConfig = loadManagedClientMcpFileConfig();
 
-  // Inject built-in computer-use if enabled and not already configured by user
-  const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = enableComputerUse && !userMcpConfig['computer-use']
+  // Built-in computer-use MCP server: enabled by default if Python is available.
+  // Can be disabled via --disable-computer-use flag, DISABLE_COMPUTER_USE env var,
+  // or enableComputerUse: false in managed-client.config.json.
+  // User-defined 'computer-use' in mcp-servers.json always takes precedence.
+  const disableComputerUse =
+    hasArg(args, '--disable-computer-use')
+    || parseBooleanFlag(process.env.DISABLE_COMPUTER_USE)
+    || fileConfig.enableComputerUse === false;
+
+  const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
+
+  const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = shouldInjectComputerUse
     ? {
         'computer-use': {
-          command: 'python',
+          command: getPythonCommand(),
           args: ['-m', 'landgod_computer_use'],
           tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
           trustLevel: 'trusted' as const,
