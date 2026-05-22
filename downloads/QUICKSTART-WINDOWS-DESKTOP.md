@@ -1,48 +1,48 @@
-# 🖥️ LandGod Worker — Windows & macOS 安装指南
+# 🖥️ LandGod Worker — Windows & macOS Quick Start
 
-> 在本地电脑上安装 LandGod Worker，让你的设备接入 LandGod 远程管理网络。
-
----
-
-## 📋 前置条件
-
-| 依赖 | Windows | macOS |
-|------|---------|-------|
-| Node.js (v18+) | [nodejs.org](https://nodejs.org/) 下载安装 | `brew install node` |
-| npm | Node.js 自带 | Node.js 自带 |
+> Install LandGod Worker on your local machine to connect it to the LandGod remote management network.
 
 ---
 
-## 🚀 安装 LandGod Worker
+## 📋 Prerequisites
 
-打开终端（Windows: PowerShell，macOS: Terminal）：
+| Dependency | Windows | macOS |
+|------------|---------|-------|
+| Node.js (v18+) | Download from [nodejs.org](https://nodejs.org/) | `brew install node` |
+| npm | Included with Node.js | Included with Node.js |
+
+---
+
+## 🚀 Install LandGod Worker
+
+Open a terminal (Windows: PowerShell, macOS: Terminal):
 
 ```bash
 npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.3.tgz
 ```
 
-验证安装成功：
+Verify the installation:
 
 ```bash
 landgod --version
-# 输出: landgod 0.1.3
+# Expected output: landgod 0.1.3
 ```
 
-> 💡 如果提示 `landgod` 不是可识别的命令，关闭终端重新打开再试。
+> 💡 If `landgod` is not recognized, close and reopen your terminal.
 
 ---
 
-## 🐍 安装 Python 环境（可选 — 截图/远程操作功能需要）
+## 🐍 Install Python (Optional — required for screenshot/remote control)
 
-LandGod 内置了 Computer Use 功能（截图、点击、输入、滚动），需要 Python 支持。如果不需要这些功能可以跳过。
+LandGod includes built-in Computer Use capabilities (screenshot, click, type, scroll) that require Python. Skip this step if you don't need these features.
 
 ### Windows
 
 ```powershell
-# 安装 Python
+# Install Python
 winget install Python.Python.3
 
-# 关闭终端，重新打开，然后安装依赖：
+# Close and reopen terminal, then install dependencies:
 python -m pip install pyautogui
 python -m pip install Pillow
 ```
@@ -50,40 +50,40 @@ python -m pip install Pillow
 ### macOS
 
 ```bash
-# macOS 通常自带 python3，如果没有：
+# macOS usually ships with python3. If not:
 brew install python3
 
-# 安装依赖
+# Install dependencies
 python3 -m pip install pyautogui
 python3 -m pip install Pillow
 ```
 
-> Worker 启动时会自动检测 Python 环境，未安装则静默跳过 Computer Use 功能，不影响其他功能。
+> The Worker automatically detects Python at startup. If Python is not available, Computer Use is silently skipped — all other features work normally.
 
 ---
 
-## ▶️ 启动
+## ▶️ Start
 
 ```bash
 landgod start --ui --demo
 ```
 
-> ⚠️ `--demo` 模式会禁用命令白名单、内容过滤等所有安全限制，**仅用于演示和本地测试**。
+> ⚠️ `--demo` mode disables all security restrictions (command allowlist, content filtering, etc.). **Use only for demos and local testing.**
 
 ---
 
-## ❓ 常见问题
+## ❓ Troubleshooting
 
-| 问题 | 解决方案 |
-|------|---------|
-| `landgod` 命令找不到 | 关闭终端重新打开；或检查 `npm prefix -g` 路径是否在系统 PATH 中 |
-| Python 功能不可用 | 安装 Python 后需要重启终端，确认 `python --version`（Windows）或 `python3 --version`（macOS）正常 |
-| Electron 相关报错 | 首次运行 `landgod start --ui` 时会自动安装 Electron 依赖，需要联网 |
-| macOS 权限弹窗 | 截图功能需要在 系统设置 → 隐私与安全 → 屏幕录制 中授权终端 |
+| Problem | Solution |
+|---------|----------|
+| `landgod` command not found | Close and reopen terminal; or check that `npm prefix -g` is in your system PATH |
+| Python features unavailable | Restart terminal after installing Python; verify with `python --version` (Windows) or `python3 --version` (macOS) |
+| Electron errors | First run of `landgod start --ui` auto-installs Electron dependencies — requires internet |
+| macOS permission prompt | Screenshot requires granting Screen Recording permission in System Settings → Privacy & Security |
 
 ---
 
-## 🔗 相关链接
+## 🔗 Links
 
-- [Gateway 安装指南](./QUICKSTART-GATEWAY.md)
-- [完整文档](../docs/)
+- [Gateway Setup Guide](./QUICKSTART-GATEWAY.md)
+- [Full Documentation](../docs/)
