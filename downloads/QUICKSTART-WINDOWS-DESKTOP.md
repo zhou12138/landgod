@@ -72,6 +72,18 @@ landgod start --ui --demo
 
 ---
 
+## 🖥️ Choose Startup Mode
+
+After launching, a UI window will appear prompting you to **Choose Startup Mode**:
+
+![Startup Mode Selection](./images/startup-mode.png)
+
+Select **"Managed MCP WebSocket Mode"** (the right option) to connect this device to a remote LandGod Gateway and publish its local tools over WebSocket. This is the recommended mode for remote management.
+
+> **Server Mode** (left option) is for local-only connections and does not connect to the Gateway.
+
+---
+
 ## ❓ Troubleshooting
 
 | Problem | Solution |
