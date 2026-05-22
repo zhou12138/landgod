@@ -447,6 +447,33 @@ export function getManagedClientWorkspaceRoot(args = process.argv): string {
 
 // --- Built-in computer-use Python detection ---
 
+/**
+ * Resolve the path to the bundled mcp-servers directory.
+ * In development: <project-root>/mcp-servers
+ * In packaged app: <resources>/mcp-servers (extraResource)
+ */
+function getMcpServersPath(): string {
+  // When packaged with electron-forge, app.isPackaged is true and
+  // process.resourcesPath points to the resources dir where extraResource files live.
+  // In dev mode, we use process.cwd() (project root).
+  try {
+    const { app } = require('electron');
+    if (app.isPackaged) {
+      return path.join(process.resourcesPath, 'mcp-servers');
+    }
+  } catch {
+    // Not running in Electron (e.g. headless-entry.js with plain Node)
+  }
+  return path.join(process.cwd(), 'mcp-servers');
+}
+
+/**
+ * Get the path to the computer-use Python package directory.
+ */
+function getComputerUsePythonPath(): string {
+  return path.join(getMcpServersPath(), 'computer-use');
+}
+
 let cachedPythonCommand: string | false | undefined;
 
 /**
@@ -471,12 +498,14 @@ function isPythonAvailable(): boolean {
 }
 
 function detectPython(): boolean {
+  const computerUsePath = getComputerUsePythonPath();
   const candidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
   for (const cmd of candidates) {
     try {
       execFileSync(cmd, ['-c', 'import landgod_computer_use'], {
         timeout: 5000,
         stdio: 'ignore',
+        env: { ...process.env, PYTHONPATH: computerUsePath },
       });
       cachedPythonCommand = cmd;
       return true;
@@ -554,6 +583,7 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
         'computer-use': {
           command: getPythonCommand(),
           args: ['-m', 'landgod_computer_use'],
+          env: { PYTHONPATH: getComputerUsePythonPath() },
           tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
           trustLevel: 'trusted' as const,
           publishedRemotely: true,

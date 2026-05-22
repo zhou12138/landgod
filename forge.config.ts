@@ -11,6 +11,13 @@ const config: ForgeConfig = {
     name: 'LandGod Worker',
     executableName: 'landgod', // 设置输出的二进制文件名
     dir: '.',
+    extraResource: [
+      './mcp-servers',
+    ],
+    ignore: [
+      // Exclude mcp-servers from asar (they are in extraResource)
+      /^\/mcp-servers$/,
+    ],
   },
   makers: [
     new MakerSquirrel({ name: 'cli-server', authors: 'CLI Server' }),
