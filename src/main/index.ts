@@ -15,6 +15,7 @@ import { getManagedClientWorkspacePaths } from './managed-client/workspace';
 import {
   getBuiltInToolsSecurityConfig,
   getManagedClientMcpServersConfig,
+  getEffectiveMcpServersForDisplay,
   getManagedClientRuntimeConfig,
   getManagedClientWorkspaceRoot,
   loadManagedClientFileConfig,
@@ -569,7 +570,7 @@ app.whenReady().then(async () => {
     tlsServername: payload.tlsServername ?? null,
   }));
   ipcMain.handle('managed-client:getMcpServersConfig', () => ({
-    mcpServers: getManagedClientMcpServersConfig(),
+    mcpServers: getEffectiveMcpServersForDisplay(),
   }));
   ipcMain.handle('built-in-tools:getSecurityConfig', () => ({
     config: getBuiltInToolsSecurityConfig(),

@@ -74,9 +74,9 @@ export default function App() {
         const state = await window.electronAPI.getManagedClientBootstrapState();
         console.log('[App] Bootstrap state received:', state);
         setBootstrap(state);
-        setBaseUrl(state.baseUrl ?? '');
-        setSigninPageUrl(state.signinPageUrl ?? state.baseUrl ?? '');
-        setTlsServername(state.tlsServername ?? '');
+        setBaseUrl(state.baseUrl ?? 'wss://officeagent-dev2.microsoft.com/api/mcphub/ws');
+        setSigninPageUrl(state.signinPageUrl ?? state.baseUrl ?? 'https://officeagent-dev2.microsoft.com');
+        setTlsServername(state.tlsServername ?? 'officeagent-dev2.microsoft.com');
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
         console.error('[App] Bootstrap failed:', msg);
@@ -176,9 +176,9 @@ export default function App() {
                     try {
                       const next = await window.electronAPI.selectManagedClientMode('managed-client-mcp-ws');
                       setBootstrap(next);
-                      setBaseUrl(next.baseUrl ?? '');
-                      setSigninPageUrl(next.signinPageUrl ?? next.baseUrl ?? '');
-                      setTlsServername(next.tlsServername ?? '');
+                      setBaseUrl(next.baseUrl ?? 'wss://officeagent-dev2.microsoft.com/api/mcphub/ws');
+                      setSigninPageUrl(next.signinPageUrl ?? next.baseUrl ?? 'https://officeagent-dev2.microsoft.com');
+                      setTlsServername(next.tlsServername ?? 'officeagent-dev2.microsoft.com');
                       setToken('');
                     } catch (saveError) {
                       setError(saveError instanceof Error ? saveError.message : String(saveError));
@@ -240,7 +240,7 @@ export default function App() {
                       type="text"
                       value={baseUrl}
                       onChange={(event) => setBaseUrl(event.target.value)}
-                      placeholder={isDesktopWsMode ? 'ws://localhost:8000/api/mcphub/ws or http://localhost:8000/api' : 'http://localhost:8000/api'}
+                      placeholder={isDesktopWsMode ? 'wss://officeagent-dev2.microsoft.com/api/mcphub/ws' : 'https://officeagent-dev2.microsoft.com/api'}
                     />
                   </div>
                   {isDesktopWsMode && (
@@ -250,7 +250,7 @@ export default function App() {
                         type="text"
                         value={signinPageUrl}
                         onChange={(event) => setSigninPageUrl(event.target.value)}
-                        placeholder="http://localhost:3000/desktop-signin"
+                        placeholder="https://officeagent-dev2.microsoft.com"
                       />
                     </div>
                   )}

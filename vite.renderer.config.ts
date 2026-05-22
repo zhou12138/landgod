@@ -4,6 +4,10 @@ import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
+  base: './',
+  build: {
+    outDir: '.vite/renderer/main_window',
+  },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-dom/client'],
   },

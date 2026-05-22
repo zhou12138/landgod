@@ -25,7 +25,8 @@ function printUsage() {
   console.log('Commands:');
   console.log('  onboard                   Interactive setup wizard');
   console.log('  start                     Start worker daemon');
-  console.log('  start --ui                Start in UI mode (foreground, with Electron GUI)');
+  console.log('  start --ui [--demo]       Start in UI mode (foreground, with Electron GUI). --demo bypasses all security checks.');
+  console.log('  start [--demo]            Start in headless daemon mode.');
   console.log('  start --headless          Start in headless mode (no GUI, recommended for servers)');
   console.log('  stop                      Stop worker daemon');
   console.log('  status                    Show worker status');
@@ -318,6 +319,53 @@ function ensureClientId(config) {
   return randomUUID();
 }
 
+// --- Computer-use dependency check ---
+
+function detectPythonForComputerUse() {
+  const computerUsePath = path.join(ROOT_DIR, 'mcp-servers', 'computer-use');
+  const candidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
+  for (const cmd of candidates) {
+    try {
+      const r = spawnSync(cmd, ['-c', 'import landgod_computer_use'], {
+        timeout: 5000,
+        encoding: 'utf-8',
+        env: { ...process.env, PYTHONPATH: computerUsePath },
+      });
+      if (r.status === 0) return { pythonCmd: cmd, hasDeps: true };
+      // Python found but module missing — check which packages are absent
+      const missingPackages = [];
+      for (const pkg of ['pyautogui', 'PIL']) {
+        const check = spawnSync(cmd, ['-c', `import ${pkg}`], { timeout: 3000, encoding: 'utf-8' });
+        if (check.status !== 0) missingPackages.push(pkg === 'PIL' ? 'Pillow' : pkg);
+      }
+      return { pythonCmd: cmd, hasDeps: false, missingPackages };
+    } catch {
+      // try next
+    }
+  }
+  return { pythonCmd: null, hasDeps: false, missingPackages: ['pyautogui', 'Pillow'] };
+}
+
+async function checkAndOfferComputerUseSetup() {
+  const { pythonCmd, hasDeps, missingPackages } = detectPythonForComputerUse();
+  if (hasDeps) return; // all good
+
+  if (!pythonCmd) {
+    console.log('[computer-use] Python not found — computer_screenshot/click/type/scroll will be unavailable.');
+    console.log('  Install Python 3.10+ to enable computer-use tools.');
+    return;
+  }
+
+  const missing = missingPackages.join(' ');
+  console.log(`[computer-use] Missing packages: ${missing}`);
+  if (await askYesNo(`Install ${missing} now? (required for computer_screenshot, computer_click, etc.)`, true)) {
+    runCommand(pythonCmd, ['-m', 'pip', 'install', ...missingPackages]);
+    console.log('[computer-use] Packages installed successfully.');
+  } else {
+    console.log('[computer-use] Skipped. Computer-use tools will be unavailable until packages are installed.');
+  }
+}
+
 function ensureElectronBinary() {
   try {
     return require('electron');
@@ -327,7 +375,9 @@ function ensureElectronBinary() {
 }
 
 function buildHeadlessArgs() {
-  return [ROOT_DIR, '--enable-managed-client-mcp-ws', '--managed-client-mcp-ws-only'];
+  const args = [ROOT_DIR, '--enable-managed-client-mcp-ws', '--managed-client-mcp-ws-only'];
+  if (process.argv.includes('--demo')) args.push('--demo');
+  return args;
 }
 
 function startDaemon(useHeadlessNode = false) {
@@ -790,7 +840,30 @@ async function runConfigWizard(seed = {}) {
 }
 
 function launchUiMode() {
-  runCommand(getNpmCommand(), ['run', 'start:managed-client-mcp-ws-ui']);
+  const electronBinary = ensureElectronBinary();
+  const builtEntry = path.join(ROOT_DIR, '.vite', 'build', 'index.js');
+  if (!fileExists(builtEntry)) {
+    throw new Error(
+      `UI build not found at ${builtEntry}.\n` +
+      'Run "npm run make" to build the app first, or run "npm run build" for a faster development build.',
+    );
+  }
+  const electronArgs = [ROOT_DIR, '--enable-managed-client-mcp-ws', '--managed-client-mode=managed-client-mcp-ws'];
+  if (process.argv.includes('--demo')) {
+    electronArgs.push('--demo');
+    console.log('[demo] Starting in demo mode — all security checks are disabled.');
+  }
+  const result = spawnSync(
+    electronBinary,
+    electronArgs,
+    {
+      cwd: ROOT_DIR,
+      stdio: 'inherit',
+      env: { ...process.env, LANDGOD_DATA_DIR: DATA_DIR },
+    },
+  );
+  if (result.error) throw result.error;
+  process.exit(result.status ?? 0);
 }
 
 function launchHeadlessForeground() {
@@ -933,6 +1006,9 @@ async function main() {
       return;
     }
     const useHeadlessNode = args.includes('--headless');
+    if (!args.includes('--skip-computer-use-check')) {
+      await checkAndOfferComputerUseSetup();
+    }
     startDaemon(useHeadlessNode);
     return;
   }

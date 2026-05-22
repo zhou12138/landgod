@@ -29,6 +29,7 @@ const ADVERTISED_DESKTOP_TOOL_NAMES = new Set([
 
 const EXTERNAL_MCP_CONNECT_TIMEOUT_MS = 5 * 60 * 1000;
 const EXTERNAL_MCP_LIST_TOOLS_TIMEOUT_MS = 5 * 60 * 1000;
+const COMPUTER_USE_SERVER_NAME = 'computer-use';
 
 function getEnabledDesktopToolNames(): Set<string> {
   const config = getBuiltInToolsSecurityConfig();
@@ -56,11 +57,15 @@ function filterExternalServersByPermissionProfile(
   serverConfigs: ManagedClientExternalMcpServerConfig[],
 ): ManagedClientExternalMcpServerConfig[] {
   const permissionProfile = getBuiltInToolsSecurityConfig().permissionProfile;
-  return serverConfigs.filter((serverConfig) => getExternalMcpAccessDecision(
-    permissionProfile,
-    serverConfig.transport,
-    serverConfig.requiredPermissionProfile,
-  ).allowed);
+  return serverConfigs.filter((serverConfig) => {
+    // computer-use is promoted to a built-in tool — always allow it through regardless of profile.
+    if (serverConfig.name === COMPUTER_USE_SERVER_NAME) return true;
+    return getExternalMcpAccessDecision(
+      permissionProfile,
+      serverConfig.transport,
+      serverConfig.requiredPermissionProfile,
+    ).allowed;
+  });
 }
 
 function getExternalServerAccessDecision(
@@ -250,13 +255,18 @@ export class ManagedClientMcpToolRegistry {
     workspaceRoot?: string;
     defaultWorkingDirectory?: string;
   }): Promise<ManagedClientMcpToolRegistry> {
+    const allConfigs = params.externalServerConfigs;
+    const filteredConfigs = filterExternalServersByPermissionProfile(allConfigs);
+    console.log('[tool-registry] create: all external servers', allConfigs.map(s => ({ name: s.name, transport: s.transport, requiredPermissionProfile: s.requiredPermissionProfile })));
+    console.log('[tool-registry] create: after permission filter', filteredConfigs.map(s => s.name));
     const externalServers = await ManagedClientMcpToolRegistry.connectExternalMcpServers(
-      filterExternalServersByPermissionProfile(params.externalServerConfigs),
+      filteredConfigs,
       params.version,
       params.logger,
       params.workspaceRoot,
       params.defaultWorkingDirectory,
     );
+    console.log('[tool-registry] create: connected servers', externalServers.map(s => s.config.name));
     const registry = new ManagedClientMcpToolRegistry(params.localClient, externalServers, params.logger);
     await registry.buildBindings();
     return registry;
@@ -418,7 +428,38 @@ export class ManagedClientMcpToolRegistry {
       });
     }
 
+    // Inject computer-use tools as built-in (source: 'local') when available
+    const computerUseServer = this.externalServers.find((s) => s.config.name === COMPUTER_USE_SERVER_NAME);
+    console.log('[tool-registry] buildBindings: computerUseServer found =', Boolean(computerUseServer), 'total externalServers =', this.externalServers.length, this.externalServers.map(s => s.config.name));
+    if (computerUseServer) {
+      try {
+        const toolList = await withTimeout(
+          computerUseServer.client.listTools(),
+          EXTERNAL_MCP_LIST_TOOLS_TIMEOUT_MS,
+          `Timed out listing tools from computer-use MCP server`,
+        );
+        const filteredTools = filterToolsByConfig(computerUseServer.config, toolList.tools);
+        console.log('[tool-registry] buildBindings: computer-use tools injected =', filteredTools.map(t => t.name));
+        for (const tool of filteredTools) {
+          this.toolBindings.set(tool.name, {
+            advertisedName: tool.name,
+            upstreamName: tool.name,
+            description: tool.description ?? '',
+            inputSchema: tool.inputSchema,
+            client: computerUseServer.client,
+            source: 'local',
+            sourceName: COMPUTER_USE_SERVER_NAME,
+          });
+        }
+      } catch (error) {
+        this.logger.error('[managed-client-mcp-ws] computer-use tools injection failed', {}, error instanceof Error ? error.message : String(error));
+      }
+    }
+
     for (const externalServer of this.externalServers) {
+      // computer-use is injected as built-in above — skip here
+      if (externalServer.config.name === COMPUTER_USE_SERVER_NAME) continue;
+
       const publicationDecision = shouldPublishExternalServerRemotely(externalServer.config);
       if (!publicationDecision.allowed) {
         continue;

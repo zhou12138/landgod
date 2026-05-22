@@ -16,7 +16,7 @@ import {
 } from '../../main/builtin-tools/types';
 import type { ManagedClientFileMcpServerConfig } from '../../main/managed-client/mcp-server-config';
 
-const PERMISSION_PROFILE_OPTIONS: BuiltInToolsPermissionProfile[] = ['command-only', 'interactive-trusted', 'full-local-admin'];
+const PERMISSION_PROFILE_OPTIONS: BuiltInToolsPermissionProfile[] = ['command-only', 'interactive-trusted', 'full-local-admin', 'demo'];
 const DESKTOP_TOOL_NAMES = [
   'shell_execute',
   'file_read',
@@ -35,6 +35,8 @@ function getPermissionProfileSummaryKey(profile: BuiltInToolsPermissionProfile):
       return 'builtInTools.permissionProfileCommandOnlySummary';
     case 'full-local-admin':
       return 'builtInTools.permissionProfileFullLocalAdminSummary';
+    case 'demo':
+      return 'builtInTools.permissionProfileDemoSummary';
     case 'interactive-trusted':
     default:
       return 'builtInTools.permissionProfileInteractiveTrustedSummary';
@@ -110,11 +112,21 @@ export default function Permissions() {
       });
   }, []);
 
+  // Built-in computer-use tools (promoted from MCP server to built-in display)
+  const COMPUTER_USE_SERVER_NAME = 'computer-use';
+  const computerUseTools = useMemo(() => {
+    const server = savedMcpServers[COMPUTER_USE_SERVER_NAME];
+    if (!server || server.enabled === false) return [];
+    return server.tools ?? [];
+  }, [savedMcpServers]);
+
   const externalMcpPreview = useMemo(() => {
     const available: Array<{ name: string; transport: 'http' | 'stdio' }> = [];
     const unavailable: Array<{ name: string; transport: 'http' | 'stdio'; reason: string }> = [];
 
     for (const [name, server] of Object.entries(savedMcpServers)) {
+      // computer-use is promoted to built-in tools section — skip here
+      if (name === COMPUTER_USE_SERVER_NAME) continue;
       const transport = server.transport === 'http' ? 'http' : 'stdio';
 
       if (server.enabled === false) {
@@ -164,6 +176,7 @@ export default function Permissions() {
   const hasProfileOverrides = JSON.stringify(savedConfig) !== JSON.stringify(currentProfileDefaults);
   const availableDesktopTools = DESKTOP_TOOL_NAMES.filter((toolName) => isDesktopToolPublishedForPermissionProfile(selectedProfile, toolName));
   const unavailableDesktopTools = DESKTOP_TOOL_NAMES.filter((toolName) => !isDesktopToolPublishedForPermissionProfile(selectedProfile, toolName));
+  const allAvailableTools = [...availableDesktopTools, ...computerUseTools];
 
   const handleSave = async () => {
     setSaving(true);
@@ -248,6 +261,12 @@ export default function Permissions() {
               <span>{t('permissions.fullLocalAdminWarning')}</span>
             </div>
           )}
+          {selectedProfile === 'demo' && (
+            <div className="flex items-start gap-2 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2.5 text-xs text-red-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+              <span>{t('permissions.demoWarning')}</span>
+            </div>
+          )}
           <p className="text-xs text-slate-500">{hasProfileOverrides ? t('builtInTools.permissionProfileOverridesActive') : t('builtInTools.permissionProfileNoOverrides')}</p>
         </CardContent>
       </Card>
@@ -262,11 +281,15 @@ export default function Permissions() {
             <div className="rounded-lg border border-green-900/50 bg-green-950/20 p-4">
               <div className="text-sm font-medium text-green-200">{t('permissions.availableToolsTitle')}</div>
               <div className="mt-3 space-y-2">
-                {availableDesktopTools.map((toolName) => {
-                  const resultMode = getManagedClientToolResultMode(selectedProfile, toolName, 'local');
+                {allAvailableTools.map((toolName) => {
+                  const isComputerUse = computerUseTools.includes(toolName as string);
+                  const resultMode = isComputerUse ? 'full' : getManagedClientToolResultMode(selectedProfile, toolName as (typeof DESKTOP_TOOL_NAMES)[number], 'local');
                   return (
                     <div key={toolName} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-green-900/40 bg-slate-950/60 px-3 py-2">
-                      <code className="text-xs text-green-100">{toolName}</code>
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs text-green-100">{toolName}</code>
+                        {isComputerUse && <Badge variant="outline" className="text-[10px] px-1 py-0 text-slate-400 border-slate-600">computer-use</Badge>}
+                      </div>
                       <Badge
                         variant="success"
                         title={t(getToolResultModeDescriptionKey(resultMode))}

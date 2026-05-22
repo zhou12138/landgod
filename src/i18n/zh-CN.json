@@ -162,11 +162,13 @@
     "permissionProfile": {
       "command-only": "Command Only",
       "interactive-trusted": "Interactive Trusted",
-      "full-local-admin": "Full Local Admin"
+      "full-local-admin": "Full Local Admin",
+      "demo": "演示模式"
     },
     "permissionProfileCommandOnlySummary": "远端可以触发本地命令，但成功的工具调用只返回 success 状态。file read、输出读取以及所有外部 MCP 服务都会被禁用。",
     "permissionProfileInteractiveTrustedSummary": "远端只允许使用少量需要返回句柄的交互式工具，例如 session_create 和 session_wait，但成功结果仍不返回命令正文或文件内容。",
     "permissionProfileFullLocalAdminSummary": "开放完整本地能力面，包括非 workspace 文件读取，以及 HTTP 和 stdio 外部 MCP 服务。",
+    "permissionProfileDemoSummary": "关闭所有安全检查。开放完整工具面，无白名单、无输出脱敏、无大小限制。仅用于演示和本地测试，禁止在生产环境中使用。",
     "permissionProfileOverridesActive": "当前档位下方存在手工覆盖项。保存时只会持久化相对所选档位的差异。",
     "permissionProfileNoOverrides": "当前设置与所选档位默认值一致。",
     "enabled": "启用",
@@ -261,7 +263,8 @@
     "advancedTitle": "高级限制",
     "advancedDescription": "更细的 shell、file read 和 managed MCP server 限制仍然保留在 Built-in Tools 页面。",
     "advancedLink": "打开 Built-in Tools",
-    "fullLocalAdminWarning": "警告：完全本地管理员模式授予不受限制的 Shell 执行、文件读取和外部 MCP 服务器访问权限。所有远程工具调用均可不受限制地读取和修改本机上的任何文件。仅在完全信任远程端时使用。"
+    "fullLocalAdminWarning": "警告：完全本地管理员模式授予不受限制的 Shell 执行、文件读取和外部 MCP 服务器访问权限。所有远程工具调用均可不受限制地读取和修改本机上的任何文件。仅在完全信任远程端时使用。",
+    "demoWarning": "⚠️ 演示模式 — 所有安全检查已关闭。远端工具调用对本机具有完全无限制的访问：无白名单的 shell 执行、任意路径的文件读取、输出不脱敏。禁止在生产或共享环境中使用。"
   },
   "settings": {
     "title": "设置",

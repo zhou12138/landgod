@@ -2,7 +2,7 @@ import * as os from 'node:os';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import type { ManagedClientMode, ManagedClientRuntimeConfig } from './types';
 import { getDefaultManagedClientWorkspaceRoot } from './workspace';
 import { parseManagedClientMcpServers, type ManagedClientFileMcpServerConfig } from './mcp-server-config';
@@ -279,7 +279,16 @@ export function saveManagedClientFileConfig(config: ManagedClientFileConfig): vo
   fs.writeFileSync(getManagedClientConfigPath(), JSON.stringify(sanitized, null, 2), 'utf-8');
 }
 
+export function isDemoMode(args: string[] = process.argv): boolean {
+  return args.includes('--demo');
+}
+
 export function getBuiltInToolsSecurityConfig(): BuiltInToolsSecurityConfig {
+  // Demo mode: bypass all security \u2014 return fully open config.
+  if (isDemoMode()) {
+    return getBuiltInToolsSecurityConfigForProfile('demo');
+  }
+
   const config = normalizeBuiltInToolsSecurityConfig(loadManagedClientFileConfig().builtInTools);
   const defaults = getBuiltInToolsSecurityConfigForProfile(config.permissionProfile);
 
@@ -355,6 +364,32 @@ function removeLegacyManagedClientMcpServersConfig(): void {
 
 export function getManagedClientMcpServersConfig(): Record<string, ManagedClientFileMcpServerConfig> {
   return loadManagedClientMcpFileConfig();
+}
+
+/**
+ * Returns the effective MCP servers for display purposes, including built-in
+ * injected servers (e.g. computer-use) that are not stored in mcp-servers.json.
+ */
+export function getEffectiveMcpServersForDisplay(): Record<string, ManagedClientFileMcpServerConfig> {
+  const userMcpConfig = loadManagedClientMcpFileConfig();
+  const fileConfig = loadManagedClientFileConfig();
+  const disableComputerUse =
+    parseBooleanFlag(process.env.DISABLE_COMPUTER_USE)
+    || fileConfig.enableComputerUse === false;
+  const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
+  if (!shouldInjectComputerUse) return userMcpConfig;
+  return {
+    'computer-use': {
+      command: getPythonCommand(),
+      args: ['-m', 'landgod_computer_use'],
+      env: { PYTHONPATH: getComputerUsePythonPath() },
+      tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
+      trustLevel: 'trusted' as const,
+      publishedRemotely: true,
+      enabled: true,
+    },
+    ...userMcpConfig,
+  };
 }
 
 export function saveManagedClientMcpServersConfig(mcpServers: Record<string, ManagedClientFileMcpServerConfig>): void {
@@ -487,7 +522,7 @@ function getPythonCommand(): string {
   }
   // This should only be called after isPythonAvailable() returns true
   detectPython();
-  return cachedPythonCommand as string;
+  return cachedPythonCommand as unknown as string;
 }
 
 function isPythonAvailable(): boolean {
@@ -500,17 +535,24 @@ function isPythonAvailable(): boolean {
 function detectPython(): boolean {
   const computerUsePath = getComputerUsePythonPath();
   const candidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
+  console.log('[config] detectPython: computerUsePath =', computerUsePath);
   for (const cmd of candidates) {
     try {
-      execFileSync(cmd, ['-c', 'import landgod_computer_use'], {
-        timeout: 5000,
-        stdio: 'ignore',
-        env: { ...process.env, PYTHONPATH: computerUsePath },
-      });
-      cachedPythonCommand = cmd;
+      // Use sys.executable to capture the real .exe path (avoids .bat shim issues on Windows)
+      const out = execSync(
+        `${cmd} -c "import landgod_computer_use; import sys; print(sys.executable)"`,
+        {
+          timeout: 5000,
+          stdio: 'pipe',
+          env: { ...process.env, PYTHONPATH: computerUsePath },
+        },
+      );
+      cachedPythonCommand = out.toString().trim();
+      console.log('[config] detectPython: found', cachedPythonCommand);
       return true;
-    } catch {
-      // not available, try next
+    } catch (err: any) {
+      const msg = (err?.stderr?.toString() || err?.message || '').slice(0, 200);
+      console.log('[config] detectPython: failed for', cmd, '-', msg);
     }
   }
   cachedPythonCommand = false;
@@ -577,6 +619,7 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     || fileConfig.enableComputerUse === false;
 
   const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
+  console.log('[config] getManagedClientRuntimeConfig computer-use:', { disableComputerUse, hasUserComputerUse: Boolean(userMcpConfig['computer-use']), pythonAvailable: isPythonAvailable(), shouldInject: shouldInjectComputerUse });
 
   const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = shouldInjectComputerUse
     ? {
@@ -588,6 +631,7 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
           trustLevel: 'trusted' as const,
           publishedRemotely: true,
           enabled: true,
+          requiredPermissionProfile: 'command-only' as const,
         },
         ...userMcpConfig,
       }

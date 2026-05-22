@@ -987,8 +987,23 @@ export class ManagedClientMcpWsRuntime {
 
   private async openSocket(wsUrl: string, token: string | null, signal: AbortSignal): Promise<WebSocket> {
     return new Promise<WebSocket>((resolve, reject) => {
+      console.log('[managed-client-mcp-ws] openSocket', {
+        wsUrl,
+        hasToken: Boolean(token),
+      });
       const socket = new WebSocket(wsUrl, getManagedClientWebSocketOptions(wsUrl, this.config, token));
       const servername = this.config.tlsServername?.trim() || new URL(wsUrl).hostname;
+
+      socket.once('unexpected-response', (_req, res) => {
+        signal.removeEventListener('abort', onAbort);
+        let body = '';
+        res.on('data', (d: Buffer) => { body += d.toString(); });
+        res.on('end', () => {
+          const msg = `Unexpected server response: ${res.statusCode} (url=${wsUrl}, hasToken=${Boolean(token)}, body=${body.slice(0, 200)})`;
+          console.log('[managed-client-mcp-ws] unexpected-response', msg);
+          reject(new Error(msg));
+        });
+      });
       const onAbort = () => {
         socket.close();
         reject(new Error('Managed MCP websocket connection aborted'));

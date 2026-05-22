@@ -235,7 +235,7 @@ export default function BuiltInTools() {
   if (isShellAllowlistMissingInManagedMcpWs) {
     validationErrors.push(t('builtInTools.shellAllowlistRequiredManagedMcpWs'));
   }
-  if (formState.permissionProfile === 'full-local-admin' && formState.fileReadEnabled && textToList(formState.fileReadAllowedPaths).length === 0) {
+  if ((formState.permissionProfile === 'full-local-admin' || formState.permissionProfile === 'demo') && formState.fileReadEnabled && textToList(formState.fileReadAllowedPaths).length === 0 && formState.permissionProfile !== 'demo') {
     validationErrors.push(t('builtInTools.fileReadAllowlistRequiredFullLocalAdmin'));
   }
 
@@ -255,8 +255,8 @@ export default function BuiltInTools() {
   const shellAllowInlineScriptsDisabled = !profileDefaults.shellExecute.allowInlineScripts;
   const shellAllowPathsOutsideWorkspaceDisabled = !profileDefaults.shellExecute.allowPathsOutsideWorkspace;
   const shellSandboxExecutionForced = profileDefaults.shellExecute.sandboxExecution;
-  const fileReadControlsDisabled = formState.permissionProfile !== 'full-local-admin';
-  const managedMcpAdminControlsDisabled = formState.permissionProfile !== 'full-local-admin';
+  const fileReadControlsDisabled = formState.permissionProfile !== 'full-local-admin' && formState.permissionProfile !== 'demo';
+  const managedMcpAdminControlsDisabled = formState.permissionProfile !== 'full-local-admin' && formState.permissionProfile !== 'demo';
 
   const applyRecommendedExecutables = () => {
     setFormState((current) => current ? {

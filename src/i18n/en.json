@@ -162,11 +162,13 @@
     "permissionProfile": {
       "command-only": "Command Only",
       "interactive-trusted": "Interactive Trusted",
-      "full-local-admin": "Full Local Admin"
+      "full-local-admin": "Full Local Admin",
+      "demo": "Demo"
     },
     "permissionProfileCommandOnlySummary": "Remote side can trigger local commands, but successful tool calls only return success status. File reads, output reads, and all external MCP servers stay blocked.",
     "permissionProfileInteractiveTrustedSummary": "Remote side can use a small interactive handle surface such as session_create and session_wait, but successful results still avoid returning command output or file contents.",
     "permissionProfileFullLocalAdminSummary": "Full local tool surface, including unrestricted file reads and both HTTP and stdio external MCP servers.",
+    "permissionProfileDemoSummary": "All security checks disabled. Full tool surface with no allowlists, no output redaction, and no size limits. For demos and local testing only — do not use in production.",
     "permissionProfileOverridesActive": "This profile currently has manual overrides below. Saving will persist only the differences from the selected profile.",
     "permissionProfileNoOverrides": "The current settings match the selected profile defaults.",
     "enabled": "Enabled",
@@ -261,7 +263,8 @@
     "advancedTitle": "Advanced Restrictions",
     "advancedDescription": "Detailed shell, file read, and managed MCP server restrictions remain on the Built-in Tools page.",
     "advancedLink": "Open Built-in Tools",
-    "fullLocalAdminWarning": "Warning: Full Local Admin grants unrestricted shell execution, file reads, and external MCP server access. All remote tool calls can read and modify any file on this machine without restriction. Use only if you fully trust the remote side."
+    "fullLocalAdminWarning": "Warning: Full Local Admin grants unrestricted shell execution, file reads, and external MCP server access. All remote tool calls can read and modify any file on this machine without restriction. Use only if you fully trust the remote side.",
+    "demoWarning": "⚠️ DEMO MODE — All security checks are disabled. Every remote tool call has unrestricted access to this machine: shell execution without allowlists, any file read, no output redaction. Never use this profile in a production or shared environment."
   },
   "settings": {
     "title": "Settings",

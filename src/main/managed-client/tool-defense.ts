@@ -1,5 +1,6 @@
 import type { ToolBinding } from './mcp-tool-registry';
 import type { ManagedClientRuntimeConfig } from './types';
+import { isDemoMode } from './config';
 
 const REDACTED_VALUE = '***REDACTED***';
 
@@ -19,6 +20,13 @@ interface RedactionRule {
   message: string;
   block?: boolean;
 }
+
+const COMPUTER_USE_TOOL_NAMES = new Set([
+  'computer_screenshot',
+  'computer_click',
+  'computer_type',
+  'computer_scroll',
+]);
 
 const RESPONSE_LIMITS: Record<ManagedClientResponseMode, ResponseInspectionLimit> = {
   'status-only': { maxChars: 1024, maxLines: 20 },
@@ -96,6 +104,11 @@ const RESPONSE_REDACTION_RULES: RedactionRule[] = [
 ];
 
 function getEffectiveResponseLimit(context: ManagedClientToolResponseDefenseContext): ResponseInspectionLimit {
+  // Computer-use tools return binary image data — never truncate.
+  if (COMPUTER_USE_TOOL_NAMES.has(context.toolName)) {
+    return { maxChars: Infinity, maxLines: Infinity };
+  }
+
   const baseLimit = RESPONSE_LIMITS[context.responseMode];
   let maxChars = baseLimit.maxChars;
   let maxLines = baseLimit.maxLines;
@@ -270,6 +283,15 @@ class NoopManagedClientDefenseLayer implements ManagedClientDefenseLayer {
   }
 
   async inspectToolResponse(context: ManagedClientToolResponseDefenseContext): Promise<ManagedClientToolResponseDefenseResult> {
+    // Demo mode: skip all redaction, truncation, and size limits.
+    if (isDemoMode()) {
+      return {
+        allowed: true,
+        responseText: context.responseText,
+        findings: [],
+      };
+    }
+
     const findings: ManagedClientDefenseFinding[] = [];
     const normalizedResponse = context.responseText.replace(/\r\n/g, '\n');
     const effectiveLimit = getEffectiveResponseLimit(context);

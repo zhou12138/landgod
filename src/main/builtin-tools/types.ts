@@ -28,7 +28,7 @@ export interface ManagedMcpServerAdminSecurityConfig {
   allowedStdioServerCommands: string[];
 }
 
-export type BuiltInToolsPermissionProfile = 'command-only' | 'interactive-trusted' | 'full-local-admin';
+export type BuiltInToolsPermissionProfile = 'command-only' | 'interactive-trusted' | 'full-local-admin' | 'demo';
 export type ExternalMcpAccessBlockedReason = 'profile-too-low' | 'transport-blocked';
 export type ManagedClientToolResultMode = 'status-only' | 'handle' | 'full';
 
@@ -41,7 +41,7 @@ export interface BuiltInToolsSecurityConfig {
 
 export const DEFAULT_BUILT_IN_TOOLS_PERMISSION_PROFILE: BuiltInToolsPermissionProfile = 'command-only';
 
-const PERMISSION_PROFILE_ORDER: BuiltInToolsPermissionProfile[] = ['command-only', 'interactive-trusted', 'full-local-admin'];
+const PERMISSION_PROFILE_ORDER: BuiltInToolsPermissionProfile[] = ['command-only', 'interactive-trusted', 'full-local-admin', 'demo'];
 const COMMAND_ONLY_DESKTOP_TOOL_NAMES = new Set(['shell_execute']);
 const INTERACTIVE_TRUSTED_DESKTOP_TOOL_NAMES = new Set(['shell_execute', 'session_create', 'session_stdin', 'session_wait']);
 const FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES = new Set([
@@ -53,6 +53,8 @@ const FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES = new Set([
   'session_wait',
   'session_read_output',
 ]);
+// Demo profile exposes the full tool surface — identical to full-local-admin.
+const DEMO_DESKTOP_TOOL_NAMES = FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES;
 
 export function getBuiltInToolsSecurityConfigForProfile(
   permissionProfile: BuiltInToolsPermissionProfile,
@@ -151,13 +153,45 @@ export function getBuiltInToolsSecurityConfigForProfile(
           allowedStdioServerCommands: [],
         },
       };
+    // Demo profile: all security checks disabled — for presentations and local testing only.
+    case 'demo':
+      return {
+        permissionProfile,
+        shellExecute: {
+          enabled: true,
+          allowedExecutableNames: [], // empty = no allowlist filter in demo mode
+          allowedWorkingDirectories: [], // empty = no directory restriction
+          allowPipes: true,
+          allowRedirection: true,
+          allowNetworkCommands: true,
+          allowInlineScripts: true,
+          allowPathsOutsideWorkspace: true,
+          sandboxExecution: false,
+          maxCommandLength: 100_000,
+          maxTimeoutSeconds: 600,
+        },
+        fileRead: {
+          enabled: true,
+          allowRelativePaths: true,
+          allowedPaths: [], // empty = allow any path
+          maxBytesPerRead: 100 * 1024 * 1024,
+          maxFileSizeBytes: 100 * 1024 * 1024,
+        },
+        managedMcpServerAdmin: {
+          enabled: true,
+          allowHttpServers: true,
+          allowStdioServers: true,
+          sandboxStdioServers: false,
+          allowedStdioServerCommands: [],
+        },
+      };
     default:
       return getBuiltInToolsSecurityConfigForProfile(DEFAULT_BUILT_IN_TOOLS_PERMISSION_PROFILE);
   }
 }
 
 export function normalizeBuiltInToolsPermissionProfile(value: unknown): BuiltInToolsPermissionProfile {
-  if (value === 'command-only' || value === 'interactive-trusted' || value === 'full-local-admin') {
+  if (value === 'command-only' || value === 'interactive-trusted' || value === 'full-local-admin' || value === 'demo') {
     return value;
   }
 
@@ -207,17 +241,18 @@ export function isPermissionProfileAtLeast(
 export function isShellAllowedForPermissionProfile(permissionProfile: BuiltInToolsPermissionProfile): boolean {
   return permissionProfile === 'command-only'
     || permissionProfile === 'interactive-trusted'
-    || permissionProfile === 'full-local-admin';
+    || permissionProfile === 'full-local-admin'
+    || permissionProfile === 'demo';
 }
 
 export function isWorkspaceScopedPermissionProfile(permissionProfile: BuiltInToolsPermissionProfile): boolean {
-  return permissionProfile !== 'full-local-admin';
+  return permissionProfile !== 'full-local-admin' && permissionProfile !== 'demo';
 }
 
 export function isManagedMcpServerAdminAllowedForPermissionProfile(
   permissionProfile: BuiltInToolsPermissionProfile,
 ): boolean {
-  return permissionProfile === 'full-local-admin';
+  return permissionProfile === 'full-local-admin' || permissionProfile === 'demo';
 }
 
 export function isDesktopToolPublishedForPermissionProfile(
@@ -232,15 +267,32 @@ export function isDesktopToolPublishedForPermissionProfile(
     return INTERACTIVE_TRUSTED_DESKTOP_TOOL_NAMES.has(toolName);
   }
 
+  if (permissionProfile === 'demo') {
+    return DEMO_DESKTOP_TOOL_NAMES.has(toolName);
+  }
+
   return FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES.has(toolName);
 }
+
+const COMPUTER_USE_TOOL_NAMES = new Set([
+  'computer_screenshot',
+  'computer_click',
+  'computer_type',
+  'computer_scroll',
+]);
 
 export function getManagedClientToolResultMode(
   permissionProfile: BuiltInToolsPermissionProfile,
   toolName: string,
   source: 'local' | 'external',
 ): ManagedClientToolResultMode {
-  if (permissionProfile === 'full-local-admin') {
+  if (permissionProfile === 'full-local-admin' || permissionProfile === 'demo') {
+    return 'full';
+  }
+
+  // Computer-use tools always return full results regardless of permission profile —
+  // the image data must reach the AI agent.
+  if (source === 'local' && COMPUTER_USE_TOOL_NAMES.has(toolName)) {
     return 'full';
   }
 
@@ -259,7 +311,7 @@ export function isExternalMcpTransportAllowedForPermissionProfile(
   permissionProfile: BuiltInToolsPermissionProfile,
   transport: 'http' | 'stdio',
 ): boolean {
-  return permissionProfile === 'full-local-admin' && (transport === 'http' || transport === 'stdio');
+  return (permissionProfile === 'full-local-admin' || permissionProfile === 'demo') && (transport === 'http' || transport === 'stdio');
 }
 
 export function getExternalMcpAccessDecision(
@@ -296,6 +348,11 @@ export function getExternalMcpAccessDecision(
 }
 
 export function applyPermissionProfileGuards(config: BuiltInToolsSecurityConfig): BuiltInToolsSecurityConfig {
+  // Demo profile: no guards — all settings pass through as-is.
+  if (config.permissionProfile === 'demo') {
+    return config;
+  }
+
   if (config.permissionProfile === 'command-only') {
     return {
       ...config,
