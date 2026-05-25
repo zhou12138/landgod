@@ -54,13 +54,13 @@ class ClusterCoordinator:
         # Check if we hold this connection locally
         if self._local_handler is None:
             return
-        result = await self._local_handler(conn_id, data["tool_name"], data.get("arguments", {}), data.get("timeout", 30000))
+        result = await self._local_handler(conn_id, data["tool_name"], data.get("arguments", {}), data.get("timeout", 300000))
         if result is not None:
             # Publish response back
             resp_channel = f"{self.RESP_CHANNEL_PREFIX}{data['request_id']}"
             await self._redis.publish(resp_channel, json.dumps(result))
 
-    async def route_tool_call(self, connection_id: str, tool_name: str, arguments: dict, timeout: int = 30000) -> dict | None:
+    async def route_tool_call(self, connection_id: str, tool_name: str, arguments: dict, timeout: int = 300000) -> dict | None:
         """Try local first, then broadcast to cluster. Returns result or None."""
         # Try local
         result = await self._local_handler(connection_id, tool_name, arguments, timeout)

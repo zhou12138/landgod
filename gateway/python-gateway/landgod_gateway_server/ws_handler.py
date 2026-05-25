@@ -218,7 +218,7 @@ class WSHandler:
                 "payload": {"error": f"Unknown method: {method}"},
             }))
 
-    async def send_tool_call(self, connection_id: str, tool_name: str, arguments: dict, timeout: int = 30000) -> dict | None:
+    async def send_tool_call(self, connection_id: str, tool_name: str, arguments: dict, timeout: int = 300000) -> dict | None:
         """Send tool_call to a locally-connected worker. Returns response or None if not local."""
         conn = self.connections.get(connection_id)
         if not conn or not conn["binding"]:

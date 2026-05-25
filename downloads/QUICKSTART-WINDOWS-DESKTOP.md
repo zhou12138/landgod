@@ -62,6 +62,63 @@ python3 -m pip install Pillow
 
 ---
 
+## 📋 Enable Shiproom Tools (Optional — team meeting automation)
+
+LandGod includes a built-in Shiproom MCP server that automates meeting prep, agenda updates, Loop/OCV sync, and more via SharePoint. Skip this step if you don't need Shiproom.
+
+### 1. Install Python dependencies
+
+```powershell
+# Windows
+python -m pip install "mcp[cli]" pyyaml msal requests openpyxl beautifulsoup4
+
+# macOS
+python3 -m pip install "mcp[cli]" pyyaml msal requests openpyxl beautifulsoup4
+```
+
+### 2. Create your config file
+
+Copy the example template and fill in your team's values:
+
+```powershell
+# Windows — copy template to your user profile
+copy "$env:APPDATA\npm\node_modules\landgod\src\shiproom-mcp\shiproom-config.example.yaml" "$env:USERPROFILE\shiproom-config.yaml"
+
+# macOS
+cp $(npm root -g)/landgod/src/shiproom-mcp/shiproom-config.example.yaml ~/shiproom-config.yaml
+```
+
+Edit `shiproom-config.yaml` and fill in:
+
+| Field | Description |
+|-------|-------------|
+| `team_id` | Your Teams team GUID |
+| `channel_id` | The channel where Shiproom data lives |
+| `drive_id` | SharePoint document library drive ID |
+| `web_url` | SharePoint site URL |
+| `loop_current` | Current Loop document URL |
+| `meeting_chat` | Teams meeting chat URL |
+
+> See `shiproom-config.example.yaml` for the full schema with all available options.
+
+### 3. Set the config path
+
+```powershell
+# Windows — add to your PowerShell profile or system environment
+$env:SHIPROOM_CONFIG = "$env:USERPROFILE\shiproom-config.yaml"
+
+# macOS — add to ~/.zshrc or ~/.bashrc
+export SHIPROOM_CONFIG=~/shiproom-config.yaml
+```
+
+### 4. Verify
+
+Restart LandGod. Shiproom tools (e.g. `shiproom_prep`, `shiproom_update`, `shiproom_fetch_loop`) will appear automatically in the tool list if detection succeeds.
+
+> If `SHIPROOM_CONFIG` is not set, the server looks for `shiproom-config.yaml` in the same directory as `server.py`. If no config file is found, Shiproom tools are silently skipped.
+
+---
+
 ## ▶️ Start
 
 ```bash
@@ -90,6 +147,8 @@ Select **"Managed MCP WebSocket Mode"** (the right option) to connect this devic
 |---------|----------|
 | `landgod` command not found | Close and reopen terminal; or check that `npm prefix -g` is in your system PATH |
 | Python features unavailable | Restart terminal after installing Python; verify with `python --version` (Windows) or `python3 --version` (macOS) |
+| Shiproom tools not showing | Verify: `python -c "import mcp.server.fastmcp"` succeeds; check `SHIPROOM_CONFIG` points to a valid yaml file |
+| Shiproom login popup not appearing | Run `landgod` from a real terminal (not a background service) — MSAL WAM login requires a console window |
 | Electron errors | First run of `landgod start --ui` auto-installs Electron dependencies — requires internet |
 | macOS permission prompt | Screenshot requires granting Screen Recording permission in System Settings → Privacy & Security |
 

@@ -69,7 +69,7 @@ async def _drain_queue(gw, connection_id: str, client_name: str, worker_labels: 
 async def _execute_queued(gw, connection_id: str, queued: dict, task_id: str) -> None:
     try:
         result = await gw.ws_handler.send_tool_call(
-            connection_id, queued["tool_name"], queued.get("arguments", {}), queued.get("timeout", 30000)
+            connection_id, queued["tool_name"], queued.get("arguments", {}), queued.get("timeout", 300000)
         )
         _complete_task(task_id, result)
         logger.info(f"[queue] Drained task {task_id}")
@@ -205,7 +205,7 @@ async def tool_call(request: web.Request) -> web.Response:
         return web.json_response({"error": "Missing tool_name"}, status=400)
 
     arguments = body.get("arguments", {})
-    timeout = body.get("timeout", 30000)
+    timeout = body.get("timeout", 300000)
     client_name = body.get("clientName") or body.get("client_name")
     labels = body.get("labels")
 

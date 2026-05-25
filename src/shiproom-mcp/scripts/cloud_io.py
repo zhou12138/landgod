@@ -74,7 +74,15 @@ def _get_app() -> PublicClientApplication:
 
 
 def get_token(scopes: Optional[list[str]] = None) -> str:
-    """Return a Graph access token. Silent when possible, interactive as fallback."""
+    """Return a Graph access token. Silent when possible, interactive as fallback.
+
+    If SHIPROOM_ACCESS_TOKEN is set in the environment, use it directly
+    (token injected by the parent MCP server process where WAM is available).
+    """
+    injected = os.environ.get("SHIPROOM_ACCESS_TOKEN", "").strip()
+    if injected:
+        return injected
+
     if scopes is None:
         scopes = ["https://graph.microsoft.com/.default"]
     key = ",".join(scopes)

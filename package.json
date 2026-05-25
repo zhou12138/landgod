@@ -11,7 +11,10 @@
     "bin/",
     ".vite/build/",
     ".vite/renderer/",
-    "mcp-servers/"
+    "mcp-servers/",
+    "src/shiproom-mcp/",
+    "!src/shiproom-mcp/shiproom-config.yaml",
+    "!src/shiproom-mcp/scripts/__pycache__/"
   ],
   "main": ".vite/build/index.js",
   "scripts": {

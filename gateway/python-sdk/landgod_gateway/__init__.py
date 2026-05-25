@@ -31,7 +31,7 @@ from landgod_gateway.store import create_store, StateStore, MemoryStore, RedisSt
 class LandGod:
     """LandGod Link SDK — Connect AI Agents to LandGod Workers"""
 
-    def __init__(self, server_url: str, admin_token: str = None, timeout: int = 30000, store: str = 'memory'):
+    def __init__(self, server_url: str, admin_token: str = None, timeout: int = 300000, store: str = 'memory'):
         """
         Args:
             server_url: Gateway HTTP API URL, e.g. 'http://localhost:8081'

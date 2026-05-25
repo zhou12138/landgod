@@ -341,21 +341,36 @@ def shiproom_url(path: str = "") -> str:
 # ---- CLI subprocess helper ------------------------------------------------
 
 def _run_cli(subcommand: str, args: list[str] | None = None) -> str:
-    """Run a cloud_cli.py subcommand and return stdout+stderr."""
+    """Run a cloud_cli.py subcommand and return stdout+stderr.
+
+    Acquires a Graph token in this process (where WAM/console is available)
+    and passes it to the subprocess via SHIPROOM_ACCESS_TOKEN so the child
+    never needs to pop an interactive login window.
+    """
     import subprocess
     config_path = os.environ.get("SHIPROOM_CONFIG", str(DEFAULT_CONFIG))
+
+    # Get token in the parent process where WAM interactive login works,
+    # then inject it into the subprocess environment.
+    child_env = {**os.environ, "PYTHONPATH": SKILL_SCRIPTS, "PYTHONUTF8": "1"}
+    try:
+        from cloud_io import get_token
+        child_env["SHIPROOM_ACCESS_TOKEN"] = get_token()
+    except Exception:
+        pass  # If token acquisition fails here, let the subprocess try on its own
+
     cmd = [
         sys.executable, "-X", "utf8",
         str(Path(SKILL_SCRIPTS) / "cloud_cli.py"),
+        "--config", config_path,
         subcommand,
         *(args or []),
-        "--config", config_path,
     ]
     try:
         result = subprocess.run(
             cmd, capture_output=True, text=True, timeout=300,
             cwd=str(SKILL_ROOT),
-            env={**os.environ, "PYTHONPATH": SKILL_SCRIPTS, "PYTHONUTF8": "1"},
+            env=child_env,
         )
         output = result.stdout or ""
         if result.stderr:

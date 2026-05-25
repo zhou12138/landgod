@@ -2,6 +2,8 @@
 .xclaw-node-data/
 managed-client.config.json
 managed-client.mcp-servers.json
+src/shiproom-mcp/shiproom-config.yaml
+src/shiproom-mcp/scripts/__pycache__/
 dist/
 dist-headless/
 out/
