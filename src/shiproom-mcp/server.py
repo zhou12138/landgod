@@ -160,7 +160,7 @@ def shiproom_fetch_loop() -> str:
 
     Data source: Loop page (virtual-scrolled SPA, captured via Playwright).
     Auth: browser cookie in persistent Playwright profile."""
-    return _run_cli("fetch-loop")
+    return _call_cli_inproc("fetch-loop")
 
 
 # ---- 4. OCV Excel fetch ---------------------------------------------------
@@ -184,7 +184,7 @@ def shiproom_fetch_notes() -> str:
 
     Data source: Teams chat messages + personal OneDrive Loop.
     Auth: separate MSAL app with Chat.Read scope + browser cookie."""
-    return _run_cli("fetch-notes")
+    return _call_cli_inproc("fetch-notes")
 
 
 # ---- 6. Write: update section ----------------------------------------------
@@ -307,7 +307,7 @@ def shiproom_upload_md(local_path: str, remote_path: str) -> str:
         local_path: absolute path to the local .md file
         remote_path: destination relative to Shiproom/, e.g. "current/updates/2-data.md"
     """
-    return _run_cli("upload-md", [local_path, remote_path])
+    return _call_cli_inproc("upload-md", [local_path, remote_path])
 
 
 # ---- 11. Render HTML dashboard --------------------------------------------
@@ -319,7 +319,7 @@ def shiproom_render_view() -> str:
     Reads all current/updates/*.md files, applies the hard-coded HTML/CSS
     template, and uploads view.html to SharePoint. Should be run LAST
     in the prep workflow after all data is fresh."""
-    return _run_cli("render-view")
+    return _call_cli_inproc("render-view")
 
 
 # ---- 12. Get SharePoint URL -----------------------------------------------
