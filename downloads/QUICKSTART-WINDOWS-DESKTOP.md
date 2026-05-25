@@ -18,14 +18,14 @@
 Open a terminal (Windows: PowerShell, macOS: Terminal):
 
 ```bash
-npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.3.tgz
+npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.6.tgz
 ```
 
 Verify the installation:
 
 ```bash
 landgod --version
-# Expected output: landgod 0.1.3
+# Expected output: landgod 0.1.6
 ```
 
 > 💡 If `landgod` is not recognized, close and reopen your terminal.
@@ -101,11 +101,23 @@ Edit `shiproom-config.yaml` and fill in:
 
 > See `shiproom-config.example.yaml` for the full schema with all available options.
 
-### 3. Set the config path
+### 3. Start with your config
+
+Pass the config path directly via `--config` — no environment variable needed:
 
 ```powershell
-# Windows — add to your PowerShell profile or system environment
-$env:SHIPROOM_CONFIG = "$env:USERPROFILE\shiproom-config.yaml"
+# Windows
+landgod start --ui --config "$env:USERPROFILE\shiproom-config.yaml"
+
+# macOS
+landgod start --ui --config ~/shiproom-config.yaml
+```
+
+Or set it once as a permanent environment variable (takes effect after restarting LandGod):
+
+```powershell
+# Windows — persist across reboots
+[System.Environment]::SetEnvironmentVariable("SHIPROOM_CONFIG", "$env:USERPROFILE\shiproom-config.yaml", "User")
 
 # macOS — add to ~/.zshrc or ~/.bashrc
 export SHIPROOM_CONFIG=~/shiproom-config.yaml
@@ -122,9 +134,11 @@ Restart LandGod. Shiproom tools (e.g. `shiproom_prep`, `shiproom_update`, `shipr
 ## ▶️ Start
 
 ```bash
-landgod start --ui --demo
+landgod start --ui --demo --config "$env:USERPROFILE\shiproom-config.yaml"
 ```
 
+> 💡 `--config` sets the Shiproom config path without needing an environment variable.
+>
 > ⚠️ `--demo` mode disables all security restrictions (command allowlist, content filtering, etc.). **Use only for demos and local testing.**
 
 ---
