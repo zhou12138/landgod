@@ -902,9 +902,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("fetch-ocv", help="build current/updates/3-ocv.md from the OCV xlsx (Graph)")
     sub.add_parser("fetch-loop", help="auto-fetch Current Loop -> current/currentloop.md (headless Chrome)")
-    fn = sub.add_parser("fetch-notes", help="auto-fetch latest meeting-notes Loop from Teams chat -> current/notes.md")
-    fn.add_argument("--n", type=int, default=1, help="how many recent meetings to consider (default: 1, fetch only the latest)")
-    fn.add_argument("--interactive", action="store_true", help="force a visible browser (skip silent attempt)")
     sub.add_parser("split-loop", help="re-run loop section splitter on the existing current/currentloop.md")
 
     return p
@@ -927,7 +924,6 @@ HANDLERS = {
     "render-view": cmd_render_view,
     "fetch-ocv": cmd_fetch_ocv,
     "fetch-loop": cmd_fetch_loop,
-    "fetch-notes": cmd_fetch_notes,
     "split-loop": cmd_split_loop,
 }
 

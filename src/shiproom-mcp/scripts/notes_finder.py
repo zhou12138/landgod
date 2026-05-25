@@ -20,6 +20,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional
 
 import msal
@@ -72,10 +73,13 @@ def _get_chat_token() -> str:
     if accounts:
         result = _app.acquire_token_silent(SCOPES, account=accounts[0])
     if not result or "access_token" not in result:
-        result = _app.acquire_token_interactive(
-            scopes=SCOPES,
-            parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,
-        )
+        # WAM interactive can be hidden behind VS Code; device_code is more
+        # terminal-friendly: prints a short URL+code the user pastes in any browser.
+        flow = _app.initiate_device_flow(scopes=SCOPES)
+        if "user_code" not in flow:
+            raise NotesFinderError(f"Failed to start device flow: {flow}")
+        print(flow["message"], flush=True)   # e.g. "Go to https://microsoft.com/devicelogin and enter code XXXXXXXX"
+        result = _app.acquire_token_by_device_flow(flow)  # blocks until user completes
     if "access_token" not in result:
         raise NotesFinderError(
             f"Chat-token auth failed: {result.get('error_description', result)}"
@@ -91,7 +95,7 @@ def _headers() -> dict:
 def _find_chat_id(chat_topic: str) -> str:
     """Return the chat id whose `topic` contains chat_topic (case-insensitive)."""
     needle = chat_topic.lower()
-    url = f"{GRAPH}/me/chats?$top=50&$expand=lastMessagePreview"
+    url = f"{GRAPH}/me/chats?$top=50&$select=id,topic"
     while url:
         r = requests.get(url, headers=_headers(), timeout=30)
         r.raise_for_status()

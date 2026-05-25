@@ -175,17 +175,6 @@ def shiproom_fetch_ocv() -> str:
     return _call_cli_inproc("fetch-ocv")
 
 
-# ---- 5. Teams meeting notes fetch -----------------------------------------
-
-@mcp.tool()
-def shiproom_fetch_notes() -> str:
-    """Scan the Teams meeting chat for the Facilitator bot summary,
-    fetch the embedded Notes Loop, upload as current/notes.md.
-
-    Data source: Teams chat messages + personal OneDrive Loop.
-    Auth: separate MSAL app with Chat.Read scope + browser cookie."""
-    return _call_cli_inproc("fetch-notes")
-
 
 # ---- 6. Write: update section ----------------------------------------------
 
