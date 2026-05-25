@@ -352,12 +352,17 @@ def _run_cli(subcommand: str, args: list[str] | None = None) -> str:
 
     # Get token in the parent process where WAM interactive login works,
     # then inject it into the subprocess environment.
-    child_env = {**os.environ, "PYTHONPATH": SKILL_SCRIPTS, "PYTHONUTF8": "1"}
+    child_env = {**os.environ, "PYTHONPATH": SKILL_SCRIPTS, "PYTHONUTF8": "1",
+                 # Tell the child that it's running as a non-interactive subprocess:
+                 # get_token() will use silent_only=True and never block on WAM/browser.
+                 "SHIPROOM_SILENT_AUTH": "1"}
     try:
         from cloud_io import get_token
-        child_env["SHIPROOM_ACCESS_TOKEN"] = get_token()
+        # Use silent_only=True so we never block the MCP server's thread waiting
+        # for an interactive login dialog (WAM/browser).
+        child_env["SHIPROOM_ACCESS_TOKEN"] = get_token(silent_only=True)
     except Exception:
-        pass  # If token acquisition fails here, let the subprocess try on its own
+        pass  # No cached token — child will rely on MSAL persistent cache (silent only).
 
     cmd = [
         sys.executable, "-X", "utf8",

@@ -269,13 +269,17 @@ export class ManagedClientMcpToolRegistry {
     workspaceRoot?: string;
     defaultWorkingDirectory?: string;
   }): Promise<ManagedClientMcpToolRegistry> {
+    const filtered = filterExternalServersByPermissionProfile(params.externalServerConfigs);
+    console.log('[tool-registry] create: all external servers', params.externalServerConfigs.map(s => ({ name: s.name, transport: s.transport, requiredPermissionProfile: s.requiredPermissionProfile })));
+    console.log('[tool-registry] create: after permission filter', filtered.map(s => s.name));
     const externalServers = await ManagedClientMcpToolRegistry.connectExternalMcpServers(
-      filterExternalServersByPermissionProfile(params.externalServerConfigs),
+      filtered,
       params.version,
       params.logger,
       params.workspaceRoot,
       params.defaultWorkingDirectory,
     );
+    console.log('[tool-registry] create: connected servers', externalServers.map(s => s.config.name));
     const registry = new ManagedClientMcpToolRegistry(params.localClient, externalServers, params.logger);
     await registry.buildBindings();
     return registry;
@@ -402,10 +406,15 @@ export class ManagedClientMcpToolRegistry {
       throw new Error(`Unknown desktop tool: ${toolName}`);
     }
 
+    // Stdio servers injected as built-in (computer-use, shiproom) run slow subprocesses.
+    // They are registered with source='local' but sourceName is the server name, not 'local'.
+    // Give any non-truly-local binding 5 minutes to match server.py's subprocess timeout.
+    const callOptions = binding.sourceName !== 'local' ? { timeout: 300_000 } : undefined;
+
     const result = await binding.client.callTool({
       name: binding.upstreamName,
       arguments: argumentsPayload,
-    });
+    }, undefined, callOptions);
 
     return {
       binding,
@@ -561,6 +570,8 @@ export class ManagedClientMcpToolRegistry {
       } catch (error) {
         await client.close().catch(() => undefined);
         await transport.close().catch(() => undefined);
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.error('[tool-registry] connectExternalMcpServers: failed to connect', serverConfig.name, errMsg);
         logger.error('[managed-client-mcp-ws] external mcp server failed', {
           name: serverConfig.name,
           transport: serverConfig.transport,

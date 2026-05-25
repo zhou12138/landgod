@@ -73,12 +73,23 @@ def _get_app() -> PublicClientApplication:
     return _app
 
 
-def get_token(scopes: Optional[list[str]] = None) -> str:
+def get_token(scopes: Optional[list[str]] = None, silent_only: bool = False) -> str:
     """Return a Graph access token. Silent when possible, interactive as fallback.
 
     If SHIPROOM_ACCESS_TOKEN is set in the environment, use it directly
     (token injected by the parent MCP server process where WAM is available).
+
+    If SHIPROOM_SILENT_AUTH=1 is set (subprocess spawned by _run_cli), silent_only
+    is forced True to prevent blocking on WAM/browser in a non-interactive context.
+
+    Args:
+        silent_only: If True, only attempt silent (cached) token acquisition and
+            raise RuntimeError if no cached token is available. Use this when
+            calling from a context where blocking on interactive auth would hang
+            (e.g. from inside an MCP server tool handler).
     """
+    if os.environ.get("SHIPROOM_SILENT_AUTH") == "1":
+        silent_only = True
     injected = os.environ.get("SHIPROOM_ACCESS_TOKEN", "").strip()
     if injected:
         return injected
@@ -97,6 +108,8 @@ def get_token(scopes: Optional[list[str]] = None) -> str:
     if accounts:
         result = app.acquire_token_silent(scopes, account=accounts[0])
     if not result or "access_token" not in result:
+        if silent_only:
+            raise RuntimeError("No cached token available (silent_only=True); interactive auth skipped")
         result = app.acquire_token_interactive(
             scopes=scopes,
             parent_window_handle=msal.PublicClientApplication.CONSOLE_WINDOW_HANDLE,

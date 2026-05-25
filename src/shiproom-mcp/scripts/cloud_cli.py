@@ -727,8 +727,33 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
     else:
         sheet = sheets[-1]
 
-    # Read used range as values
-    rng = _request("GET", f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/workbook/worksheets('{sheet}')/usedRange(valuesOnly=true)?$select=values,address")
+    max_rows = int((cfg.get("ocv_source") or {}).get("max_rows", 30))
+
+    # Step 1: Get used-range dimensions only (address field, no values — tiny response).
+    # This avoids downloading thousands of rows that we immediately discard.
+    base_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/workbook/worksheets('{sheet}')"
+    dim_resp = _request("GET", f"{base_url}/usedRange(valuesOnly=true)?$select=address")
+    dim_resp.raise_for_status()
+    full_address = dim_resp.json().get("address", "")
+
+    # Step 2: Derive a trimmed range address covering only header + max_rows data rows.
+    # Graph address is like "Sheet1!A1:AB4828" or "A1:AB4828".
+    import re
+    _rng_addr = full_address
+    rows: list = []
+    total_data_rows = 0
+    m = re.search(r"(\$?[A-Z]+)\$?1:(\$?[A-Z]+)\$?(\d+)$", full_address)
+    if m:
+        col_start, col_end, total_str = m.groups()
+        total_rows = int(total_str)
+        total_data_rows = max(0, total_rows - 1)
+        fetch_rows = min(total_rows, max_rows + 1)  # header + max_rows data rows
+        # Do NOT include the sheet prefix — the worksheet is already in the URL path.
+        # Including it causes double-quoting errors for sheet names with special chars.
+        _rng_addr = f"{col_start}1:{col_end}{fetch_rows}"
+
+    # Step 3: Fetch only the needed rows (header + max_rows).
+    rng = _request("GET", f"{base_url}/range(address='{_rng_addr}')?$select=values")
     rng.raise_for_status()
     payload = rng.json()
     rows = payload.get("values") or []
@@ -736,8 +761,8 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
         print(f"ERROR: sheet '{sheet}' is empty", file=sys.stderr)
         return 1
 
-    max_rows = int((cfg.get("ocv_source") or {}).get("max_rows", 30))
     header, *body = rows
+    # body is already trimmed to max_rows by the range fetch; trim again for safety
     body = body[:max_rows]
 
     def _cell(v):
@@ -746,7 +771,7 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
         return str(v).replace("|", "\\|").replace("\n", " ")
 
     md_lines = [
-        f"# OCV snapshot — sheet `{sheet}` ({payload.get('address', '?')})",
+        f"# OCV snapshot — sheet `{sheet}` ({full_address})",
         "",
         f"_Auto-fetched from {source_label}_",
         "",
@@ -755,9 +780,9 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
     ]
     for row in body:
         md_lines.append("| " + " | ".join(_cell(c) for c in row) + " |")
-    if len(rows) - 1 > max_rows:
+    if total_data_rows > max_rows:
         md_lines.append("")
-        md_lines.append(f"_Truncated to first {max_rows} rows; full sheet has {len(rows) - 1} data rows._")
+        md_lines.append(f"_Truncated to first {max_rows} rows; full sheet has {total_data_rows} data rows._")
 
     import tempfile
     body = "\n".join(md_lines) + "\n"
