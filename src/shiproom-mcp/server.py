@@ -172,7 +172,7 @@ def shiproom_fetch_ocv() -> str:
 
     Data source: SharePoint Excel workbook.
     Auth: MSAL Graph token."""
-    return _run_cli("fetch-ocv")
+    return _call_cli_inproc("fetch-ocv")
 
 
 # ---- 5. Teams meeting notes fetch -----------------------------------------
@@ -291,7 +291,7 @@ def shiproom_prep() -> str:
     the expected set, flag missing/stale/leftover artifacts.
 
     Returns structured JSON with file statuses and recommended next steps."""
-    return _run_cli("prep")
+    return _call_cli_inproc("prep")
 
 
 # ---- 10. Upload markdown to SharePoint ------------------------------------
@@ -336,6 +336,48 @@ def shiproom_url(path: str = "") -> str:
     parts = [p for p in path.split("/") if p] if path else []
     url = cloud.web_url(*parts) or "(not found)"
     return json.dumps({"path": path or "/", "url": url}, ensure_ascii=False)
+
+
+# ---- In-process CLI helper ------------------------------------------------
+
+def _call_cli_inproc(subcommand: str, extra_args: list[str] | None = None) -> str:
+    """Run a cloud_cli subcommand IN-PROCESS (no subprocess spawn).
+
+    Eliminates ~10-15 s of overhead that _run_cli incurs from:
+      - Python interpreter cold start
+      - Module re-imports (requests, msal, yaml, …)
+      - MSAL broker (WAM) re-initialization
+
+    Use for Graph API / SharePoint tools where the Hub's 60 s wall-clock
+    timeout would otherwise be hit even though the work itself is fast.
+    """
+    import io
+    from contextlib import redirect_stdout, redirect_stderr
+
+    config_path = os.environ.get("SHIPROOM_CONFIG", str(DEFAULT_CONFIG))
+    from cloud_cli import HANDLERS, build_parser, _load_cloud
+    from pathlib import Path as _Path
+
+    args_ns = build_parser().parse_args(
+        ["--config", config_path, subcommand, *(extra_args or [])]
+    )
+    cloud = _load_cloud(_Path(config_path))
+    handler = HANDLERS[subcommand]
+
+    stdout_buf = io.StringIO()
+    stderr_buf = io.StringIO()
+    try:
+        with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
+            rc = handler(args_ns, cloud)
+    except Exception as exc:
+        return json.dumps({"error": str(exc)})
+
+    output = stdout_buf.getvalue()
+    if stderr_buf.getvalue().strip():
+        output += "\n[stderr]\n" + stderr_buf.getvalue()
+    if rc and rc != 0:
+        output += f"\n[exit_code: {rc}]"
+    return output.strip() or "(no output)"
 
 
 # ---- CLI subprocess helper ------------------------------------------------
