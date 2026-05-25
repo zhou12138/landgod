@@ -76,30 +76,30 @@ python -m pip install "mcp[cli]" pyyaml msal requests openpyxl beautifulsoup4
 python3 -m pip install "mcp[cli]" pyyaml msal requests openpyxl beautifulsoup4
 ```
 
-### 2. Create your config file
+### 2. Get your config file
 
-Copy the example template and fill in your team's values:
+The Societas team's config is maintained in the praesto-claw repo:
+
+👉 **[societas-shiproom/shiproom-config.yaml](https://github.com/gim-home/praesto-claw/blob/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml)**
+
+> Requires Microsoft EMU SSO — sign in with your `@microsoft.com` account.
+
+Download it to your user profile:
 
 ```powershell
-# Windows — copy template to your user profile
-copy "$env:APPDATA\npm\node_modules\landgod\src\shiproom-mcp\shiproom-config.example.yaml" "$env:USERPROFILE\shiproom-config.yaml"
-
-# macOS
-cp $(npm root -g)/landgod/src/shiproom-mcp/shiproom-config.example.yaml ~/shiproom-config.yaml
+# Windows — save to your user profile
+Invoke-WebRequest `
+  -Uri "https://raw.githubusercontent.com/gim-home/praesto-claw/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml" `
+  -OutFile "$env:USERPROFILE\shiproom-config.yaml"
 ```
 
-Edit `shiproom-config.yaml` and fill in:
+```bash
+# macOS
+curl -o ~/shiproom-config.yaml \
+  "https://raw.githubusercontent.com/gim-home/praesto-claw/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml"
+```
 
-| Field | Description |
-|-------|-------------|
-| `team_id` | Your Teams team GUID |
-| `channel_id` | The channel where Shiproom data lives |
-| `drive_id` | SharePoint document library drive ID |
-| `web_url` | SharePoint site URL |
-| `loop_current` | Current Loop document URL |
-| `meeting_chat` | Teams meeting chat URL |
-
-> See `shiproom-config.example.yaml` for the full schema with all available options.
+> If the download fails (private repo), open the GitHub link above in a browser, copy the raw content, and save it manually as `shiproom-config.yaml`.
 
 ### 3. Start with your config
 
