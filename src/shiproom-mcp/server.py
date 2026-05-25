@@ -373,7 +373,7 @@ def _run_cli(subcommand: str, args: list[str] | None = None) -> str:
     ]
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300,
+            cmd, capture_output=True, text=True, encoding="utf-8", timeout=300,
             cwd=str(SKILL_ROOT),
             env=child_env,
         )

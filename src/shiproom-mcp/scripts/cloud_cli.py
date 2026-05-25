@@ -23,6 +23,15 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Force UTF-8 stdout/stderr so emoji in print() never crash on cp1252 terminals.
+# reconfigure() is available on Python 3.7+ text-mode streams on Windows.
+for _s in (sys.stdout, sys.stderr):
+    if _s is not None and hasattr(_s, "reconfigure"):
+        try:
+            _s.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 THIS = Path(__file__).resolve()
 sys.path.insert(0, str(THIS.parent))
 
