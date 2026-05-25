@@ -28,6 +28,7 @@ function printUsage() {
   console.log('  start --ui [--demo]       Start in UI mode (foreground, with Electron GUI). --demo bypasses all security checks.');
   console.log('  start [--demo]            Start in headless daemon mode.');
   console.log('  start --headless          Start in headless mode (no GUI, recommended for servers)');
+  console.log('  start --config <path>     Path to shiproom-config.yaml (overrides SHIPROOM_CONFIG env var)');
   console.log('  stop                      Stop worker daemon');
   console.log('  status                    Show worker status');
   console.log('  logs [--follow]           Show daemon logs');
@@ -1001,6 +1002,11 @@ async function main() {
   }
 
   if (command === 'start' || (command === 'daemon' && args[1] === 'start')) {
+    // --config <path>: inject SHIPROOM_CONFIG before spawning so getShiproomEnv() picks it up.
+    const configFlagIdx = args.indexOf('--config');
+    if (configFlagIdx >= 0 && args[configFlagIdx + 1] && !args[configFlagIdx + 1].startsWith('--')) {
+      process.env.SHIPROOM_CONFIG = path.resolve(args[configFlagIdx + 1]);
+    }
     if (args.includes('--ui') || args.includes('--foreground')) {
       launchUiMode();
       return;
