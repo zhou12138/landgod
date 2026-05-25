@@ -929,8 +929,8 @@ export class ManagedClientMcpWsRuntime {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const server = createMcpServer(this.sessionManager, 'managed-client-mcp-ws', {
       defaultWorkingDirectory: workspace.workDir,
-      enforcedWorkingDirectoryRoot: workspace.rootDir,
-      requireShellAllowlist: true,
+      enforcedWorkingDirectoryRoot: this.config.demo ? undefined : workspace.rootDir,
+      requireShellAllowlist: !this.config.demo,
       exposeManagedAdminTool: true,
       onActivity: this.onActivity,
     });
@@ -947,7 +947,7 @@ export class ManagedClientMcpWsRuntime {
       localClient: client,
       externalServerConfigs: this.config.mcpServers,
       version: this.config.version,
-      workspaceRoot: workspace.rootDir,
+      workspaceRoot: this.config.demo ? undefined : workspace.rootDir,
       defaultWorkingDirectory: workspace.workDir,
       logger: {
         info: (command, stdout) => this.appendAuditEntry(command, stdout, 0),
@@ -1276,24 +1276,26 @@ export class ManagedClientMcpWsRuntime {
       return;
     }
 
-    const securityValidation = this.validateToolCallSecurity(requestId, toolName, argumentsPayload, payload);
-    if (!securityValidation.valid) {
-      this.pullStatus = 'task-failed';
-      this.lastTaskCommand = toolName;
-      this.lastPolledAt = new Date().toISOString();
-      this.appendAuditEntry(`[managed-client-mcp-ws] tool_call rejected: ${toolName}`, {
-        requestId,
-        toolName,
-        rawPayload: payload,
-        validation: securityValidation.details,
-      }, 1, `${securityValidation.code}: ${securityValidation.message}`);
-      emitServerEvent('managed-client-mcp-ws:task:rejected', {
-        requestId,
-        toolName,
-        code: securityValidation.code,
-      });
-      await this.sendToolError(socket, requestId, securityValidation.code, securityValidation.message);
-      return;
+    if (!this.config.demo) {
+      const securityValidation = this.validateToolCallSecurity(requestId, toolName, argumentsPayload, payload);
+      if (!securityValidation.valid) {
+        this.pullStatus = 'task-failed';
+        this.lastTaskCommand = toolName;
+        this.lastPolledAt = new Date().toISOString();
+        this.appendAuditEntry(`[managed-client-mcp-ws] tool_call rejected: ${toolName}`, {
+          requestId,
+          toolName,
+          rawPayload: payload,
+          validation: securityValidation.details,
+        }, 1, `${securityValidation.code}: ${securityValidation.message}`);
+        emitServerEvent('managed-client-mcp-ws:task:rejected', {
+          requestId,
+          toolName,
+          code: securityValidation.code,
+        });
+        await this.sendToolError(socket, requestId, securityValidation.code, securityValidation.message);
+        return;
+      }
     }
 
     const binding = this.toolRegistry?.getToolBinding(toolName) ?? null;
@@ -1346,7 +1348,7 @@ export class ManagedClientMcpWsRuntime {
     const metaForApproval = isJsonObject(payload.meta) ? payload.meta : null;
     const toolCallSessionId = typeof metaForApproval?.session_id === 'string' ? metaForApproval.session_id : '';
 
-    if (getToolCallApprovalMode() === 'manual' && !this.approvedSessions.has(toolCallSessionId)) {
+    if (!this.config.demo && getToolCallApprovalMode() === 'manual' && !this.approvedSessions.has(toolCallSessionId)) {
       emitServerEvent('tool-call:approval-required', {
         requestId,
         toolName,

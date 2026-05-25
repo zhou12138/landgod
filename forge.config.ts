@@ -13,10 +13,12 @@ const config: ForgeConfig = {
     dir: '.',
     extraResource: [
       './mcp-servers',
+      './src/shiproom-mcp',
     ],
     ignore: [
       // Exclude mcp-servers from asar (they are in extraResource)
       /^\/mcp-servers$/,
+      /^\/src\/shiproom-mcp$/,
     ],
   },
   makers: [

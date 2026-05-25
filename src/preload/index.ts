@@ -14,6 +14,7 @@ export interface IOEvent {
 export interface ManagedClientBootstrapState {
   mode: 'cli-server' | 'managed-client' | 'managed-client-mcp-ws';
   headless: boolean;
+  demo: boolean;
   baseUrl: string | null;
   signinPageUrl: string | null;
   tlsServername: string | null;

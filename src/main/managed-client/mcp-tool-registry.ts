@@ -12,6 +12,8 @@ import {
   type ExternalMcpAccessBlockedReason,
 } from '../builtin-tools/types';
 import { buildSandboxEnv } from '../sandbox-env';
+import { SHIPROOM_TOOL_NAMES } from '../builtin-tools/types';
+import { isShiproomPythonAvailable } from '../builtin-tools/shiproom';
 
 const SESSION_DESKTOP_TOOL_NAMES = [
   'session_create',
@@ -25,11 +27,13 @@ const ADVERTISED_DESKTOP_TOOL_NAMES = new Set([
   'file_read',
   'remote_configure_mcp_server',
   ...SESSION_DESKTOP_TOOL_NAMES,
+  ...(isShiproomPythonAvailable() ? SHIPROOM_TOOL_NAMES : []),
 ]);
 
 const EXTERNAL_MCP_CONNECT_TIMEOUT_MS = 5 * 60 * 1000;
 const EXTERNAL_MCP_LIST_TOOLS_TIMEOUT_MS = 5 * 60 * 1000;
 const COMPUTER_USE_SERVER_NAME = 'computer-use';
+const SHIPROOM_SERVER_NAME = 'shiproom';
 
 function getEnabledDesktopToolNames(): Set<string> {
   const config = getBuiltInToolsSecurityConfig();
@@ -50,6 +54,15 @@ function getEnabledDesktopToolNames(): Set<string> {
     enabledTools.add('remote_configure_mcp_server');
   }
 
+  // Shiproom tools — promoted to built-in when shiproom MCP server is injected
+  if (isShiproomPythonAvailable()) {
+    for (const toolName of SHIPROOM_TOOL_NAMES) {
+      if (isDesktopToolPublishedForPermissionProfile(config.permissionProfile, toolName)) {
+        enabledTools.add(toolName);
+      }
+    }
+  }
+
   return enabledTools;
 }
 
@@ -58,8 +71,9 @@ function filterExternalServersByPermissionProfile(
 ): ManagedClientExternalMcpServerConfig[] {
   const permissionProfile = getBuiltInToolsSecurityConfig().permissionProfile;
   return serverConfigs.filter((serverConfig) => {
-    // computer-use is promoted to a built-in tool — always allow it through regardless of profile.
+    // computer-use and shiproom are promoted to built-in — always allow through.
     if (serverConfig.name === COMPUTER_USE_SERVER_NAME) return true;
+    if (serverConfig.name === SHIPROOM_SERVER_NAME) return true;
     return getExternalMcpAccessDecision(
       permissionProfile,
       serverConfig.transport,
@@ -255,18 +269,13 @@ export class ManagedClientMcpToolRegistry {
     workspaceRoot?: string;
     defaultWorkingDirectory?: string;
   }): Promise<ManagedClientMcpToolRegistry> {
-    const allConfigs = params.externalServerConfigs;
-    const filteredConfigs = filterExternalServersByPermissionProfile(allConfigs);
-    console.log('[tool-registry] create: all external servers', allConfigs.map(s => ({ name: s.name, transport: s.transport, requiredPermissionProfile: s.requiredPermissionProfile })));
-    console.log('[tool-registry] create: after permission filter', filteredConfigs.map(s => s.name));
     const externalServers = await ManagedClientMcpToolRegistry.connectExternalMcpServers(
-      filteredConfigs,
+      filterExternalServersByPermissionProfile(params.externalServerConfigs),
       params.version,
       params.logger,
       params.workspaceRoot,
       params.defaultWorkingDirectory,
     );
-    console.log('[tool-registry] create: connected servers', externalServers.map(s => s.config.name));
     const registry = new ManagedClientMcpToolRegistry(params.localClient, externalServers, params.logger);
     await registry.buildBindings();
     return registry;
@@ -428,37 +437,38 @@ export class ManagedClientMcpToolRegistry {
       });
     }
 
-    // Inject computer-use tools as built-in (source: 'local') when available
-    const computerUseServer = this.externalServers.find((s) => s.config.name === COMPUTER_USE_SERVER_NAME);
-    console.log('[tool-registry] buildBindings: computerUseServer found =', Boolean(computerUseServer), 'total externalServers =', this.externalServers.length, this.externalServers.map(s => s.config.name));
-    if (computerUseServer) {
+    // Inject computer-use and shiproom tools as built-in (source: 'local') when available
+    const builtInServerNames = [COMPUTER_USE_SERVER_NAME, SHIPROOM_SERVER_NAME];
+    for (const serverName of builtInServerNames) {
+      const builtInServer = this.externalServers.find((s) => s.config.name === serverName);
+      if (!builtInServer) continue;
       try {
         const toolList = await withTimeout(
-          computerUseServer.client.listTools(),
+          builtInServer.client.listTools(),
           EXTERNAL_MCP_LIST_TOOLS_TIMEOUT_MS,
-          `Timed out listing tools from computer-use MCP server`,
+          `Timed out listing tools from ${serverName} MCP server`,
         );
-        const filteredTools = filterToolsByConfig(computerUseServer.config, toolList.tools);
-        console.log('[tool-registry] buildBindings: computer-use tools injected =', filteredTools.map(t => t.name));
+        const filteredTools = filterToolsByConfig(builtInServer.config, toolList.tools);
+        console.log(`[tool-registry] buildBindings: ${serverName} tools injected =`, filteredTools.map(t => t.name));
         for (const tool of filteredTools) {
           this.toolBindings.set(tool.name, {
             advertisedName: tool.name,
             upstreamName: tool.name,
             description: tool.description ?? '',
             inputSchema: tool.inputSchema,
-            client: computerUseServer.client,
+            client: builtInServer.client,
             source: 'local',
-            sourceName: COMPUTER_USE_SERVER_NAME,
+            sourceName: serverName,
           });
         }
       } catch (error) {
-        this.logger.error('[managed-client-mcp-ws] computer-use tools injection failed', {}, error instanceof Error ? error.message : String(error));
+        this.logger.error(`[managed-client-mcp-ws] ${serverName} tools injection failed`, {}, error instanceof Error ? error.message : String(error));
       }
     }
 
     for (const externalServer of this.externalServers) {
-      // computer-use is injected as built-in above — skip here
-      if (externalServer.config.name === COMPUTER_USE_SERVER_NAME) continue;
+      // Built-in servers are injected above — skip here
+      if (builtInServerNames.includes(externalServer.config.name)) continue;
 
       const publicationDecision = shouldPublishExternalServerRemotely(externalServer.config);
       if (!publicationDecision.allowed) {

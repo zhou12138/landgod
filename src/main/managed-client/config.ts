@@ -14,6 +14,13 @@ import {
   type BuiltInToolsSecurityConfig,
   type BuiltInToolsPermissionProfile,
 } from '../builtin-tools/types';
+import {
+  isShiproomPythonAvailable,
+  getShiproomPythonCommand,
+  getShiproomServerPath,
+  getShiproomEnv,
+  SHIPROOM_TOOL_NAMES,
+} from '../builtin-tools/shiproom';
 
 export type ToolCallApprovalMode = 'auto' | 'manual';
 
@@ -577,6 +584,7 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     || fileConfig.enabled === true;
   const mode: ManagedClientMode = 'managed-client-mcp-ws';
   const headless = hasArg(args, '--managed-client-mcp-ws-only');
+  const demo = isDemoMode(args);
   const baseUrl =
     getArgValue(args, '--managed-client-base-url')
     ?? fileConfig.bootstrapBaseUrl
@@ -621,21 +629,46 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
   const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
   console.log('[config] getManagedClientRuntimeConfig computer-use:', { disableComputerUse, hasUserComputerUse: Boolean(userMcpConfig['computer-use']), pythonAvailable: isPythonAvailable(), shouldInject: shouldInjectComputerUse });
 
-  const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = shouldInjectComputerUse
-    ? {
-        'computer-use': {
-          command: getPythonCommand(),
-          args: ['-m', 'landgod_computer_use'],
-          env: { PYTHONPATH: getComputerUsePythonPath() },
-          tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
-          trustLevel: 'trusted' as const,
-          publishedRemotely: true,
-          enabled: true,
-          requiredPermissionProfile: 'command-only' as const,
-        },
-        ...userMcpConfig,
-      }
-    : userMcpConfig;
+  // Built-in shiproom MCP server: auto-injected when server.py + Python are available.
+  // Can be disabled via --disable-shiproom flag or DISABLE_SHIPROOM env var.
+  // User-defined 'shiproom' in mcp-servers.json always takes precedence.
+  const disableShiproom =
+    hasArg(args, '--disable-shiproom')
+    || parseBooleanFlag(process.env.DISABLE_SHIPROOM);
+
+  const shouldInjectShiproom = !disableShiproom && !userMcpConfig['shiproom'] && isShiproomPythonAvailable();
+  console.log('[config] getManagedClientRuntimeConfig shiproom:', { disableShiproom, hasUserShiproom: Boolean(userMcpConfig['shiproom']), pythonAvailable: isShiproomPythonAvailable(), shouldInject: shouldInjectShiproom });
+
+  const injectedConfigs: Record<string, ManagedClientFileMcpServerConfig> = {};
+  if (shouldInjectComputerUse) {
+    injectedConfigs['computer-use'] = {
+      command: getPythonCommand(),
+      args: ['-m', 'landgod_computer_use'],
+      env: { PYTHONPATH: getComputerUsePythonPath() },
+      tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
+      trustLevel: 'trusted' as const,
+      publishedRemotely: true,
+      enabled: true,
+      requiredPermissionProfile: 'command-only' as const,
+    };
+  }
+  if (shouldInjectShiproom) {
+    injectedConfigs['shiproom'] = {
+      command: getShiproomPythonCommand(),
+      args: [getShiproomServerPath()],
+      env: getShiproomEnv(),
+      tools: [...SHIPROOM_TOOL_NAMES],
+      trustLevel: 'trusted' as const,
+      publishedRemotely: true,
+      enabled: true,
+      requiredPermissionProfile: 'full-local-admin' as const,
+    };
+  }
+
+  const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = {
+    ...injectedConfigs,
+    ...userMcpConfig,
+  };
 
   const mcpServers = parseManagedClientMcpServers(effectiveMcpConfig);
 
@@ -643,6 +676,7 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     mode,
     enabled,
     headless,
+    demo,
     baseUrl: baseUrl ? baseUrl.replace(/\/+$/, '') : null,
     signinPageUrl: signinPageUrl ? signinPageUrl.replace(/\/+$/, '') : null,
     tlsServername: normalizeOptionalString(tlsServername),

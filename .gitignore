@@ -47,5 +47,8 @@ Thumbs.db
 # IDE
 .idea/
 
+# Shiproom config (contains team-specific IDs/URLs)
+src/shiproom-mcp/shiproom-config.yaml
+
 # npm pack output (downloads/ is tracked intentionally)
 /*.tgz

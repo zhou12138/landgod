@@ -15,7 +15,8 @@
   ],
   "main": ".vite/build/index.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "electron-forge start -- --enable-managed-client-mcp-ws --managed-client-mode=managed-client-mcp-ws --demo",
+    "start:no-demo": "electron-forge start",
     "start:managed-client": "electron-forge start -- --managed-client-only --enable-managed-client-runtime",
     "start:managed-client-ui": "electron-forge start -- --enable-managed-client-runtime",
     "start:managed-client-mcp-ws": "electron-forge start -- --managed-client-mcp-ws-only --enable-managed-client-mcp-ws",
@@ -38,6 +39,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "express": "^4.21.0",
+    "landgod": "file:landgod-0.1.3.tgz",
     "lucide-react": "^0.577.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

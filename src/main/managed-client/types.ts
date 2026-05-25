@@ -36,6 +36,7 @@ export interface ManagedClientRuntimeConfig {
   mode: ManagedClientMode;
   enabled: boolean;
   headless: boolean;
+  demo: boolean;
   baseUrl: string | null;
   signinPageUrl: string | null;
   tlsServername: string | null;

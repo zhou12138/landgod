@@ -209,11 +209,6 @@ function validateShellExecutionRequest(
   const securityConfig = getBuiltInToolsSecurityConfig();
   const shellConfig = securityConfig.shellExecute;
 
-  // Demo profile: no restrictions — skip all validation.
-  if (securityConfig.permissionProfile === 'demo') {
-    return null;
-  }
-
   if (!shellConfig.enabled) {
     return 'shell_execute is disabled by built-in tool policy';
   }
@@ -376,7 +371,7 @@ export function createMcpServer(sessionManager: SessionManager, clientIp: string
           return error('Relative paths are disabled by built-in tool policy', buildFileReadAllowlistDetails());
         }
 
-        if (securityConfig.permissionProfile !== 'demo' && securityConfig.permissionProfile === 'full-local-admin' && fileReadConfig.allowedPaths.length === 0) {
+        if (securityConfig.permissionProfile === 'full-local-admin' && fileReadConfig.allowedPaths.length === 0) {
           return error('file_read requires at least one allowed read root in full-local-admin mode', buildFileReadAllowlistDetails());
         }
 
@@ -710,6 +705,7 @@ The idleMs condition triggers when no new stdout/stderr output has been produced
       }],
     }),
   );
+
 
   return server;
 }

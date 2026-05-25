@@ -1,0 +1,77 @@
+# Shiproom workspace config — COPY to shiproom-config.yaml and fill in values.
+# All data lives in SharePoint. Code in this repo never touches local data/.
+
+team:
+  id: my-team
+  name: My Team Shiproom
+  timezone: Asia/Shanghai
+
+storage:
+  backend: sharepoint
+  sharepoint:
+    # Teams channel and the document library folder where current/ and history/ live.
+    team_id: "<TEAMS_TEAM_GUID>"
+    channel_id: "<TEAMS_CHANNEL_ID>"
+    drive_id: "<SHAREPOINT_DRIVE_ID>"
+    base_path: "Shiproom"
+    current_dir: "current"
+    history_dir: "history"
+    web_url: "<SHAREPOINT_WEB_URL>"
+
+# Agenda sections. The agent uses these names to classify free-text /sr-update
+# inputs into the right current/updates/<n>-<theme>.md file.
+agenda:
+  fixed:
+    - { id: 1, name: Todo }
+    - { id: 2, name: Data }
+    - { id: 3, name: Feedback }
+    - { id: 4, name: Release Status }
+  floating_slots:
+    - { id: 5, name: Slot5 }
+    - { id: 6, name: Slot6 }
+
+commands:
+  namespace: sr
+  aliases_enabled: true
+
+# Optional reference links shown to the host during /sr-prep. The host opens
+# them manually, exports / downloads, and supplies the local path. The skill
+# itself does not auto-fetch from these URLs.
+references:
+  loop_current: "<LOOP_DOCUMENT_URL>"
+  meeting_chat: "<TEAMS_MEETING_CHAT_URL>"
+
+# Auto-refresh source for /sr-prep step 2 (Current Loop).
+# Used by `cloud_cli.py fetch-loop`.
+loop_source:
+  # If empty, falls back to references.loop_current.
+  url: ""
+
+# After /sr-fetch-loop uploads currentloop.md, slice it by these section
+# headings and inject each slice into the matching update file's LOOP-SYNC
+# block. Human /sr-update entries (outside the markers) are preserved.
+# Keys are filenames under current/updates/. Values are heading strings to
+# match (case-insensitive, whole-line). The section ends at the next match
+# from any list, or EOF.
+loop_sync:
+  enabled: true
+  stop_headings:
+    - Guidance
+    - Highlights
+  targets:
+    1-todo.md:
+      - Action Items
+    4-release.md:
+      - Release plan
+
+# Auto-refresh source for /sr-prep step 3 (OCV).
+# Used by `cloud_cli.py fetch-ocv`.
+ocv_source:
+  remote_path: "<OCV_WORKBOOK_FILENAME>.xlsx"
+  sheet_pick: last
+  max_rows: 30
+
+# Auto-fetch source for the post-meeting Notes Loop.
+# Used by `cloud_cli.py fetch-notes`.
+notes_source:
+  teams_chat_topic: "<MEETING_CHAT_TOPIC>"

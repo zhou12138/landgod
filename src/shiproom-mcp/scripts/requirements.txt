@@ -1,0 +1,16 @@
+# Runtime deps for the cloud-first Shiproom skill.
+# Install with: pip install -r framework/scripts/requirements.txt
+requests>=2.31
+pyyaml>=6.0
+msal[broker]>=1.28,<2
+
+# Optional: required by `cloud_cli.py fetch-loop` (auto-fetch Current Loop).
+# If you skip this, /sr-fetch-loop will fail and the host can still upload the
+# Loop PDF manually via /sr-upload-loop.
+# After install, run once: python -m playwright install chromium
+playwright>=1.40
+
+# Optional: required to auto-split host-uploaded Loop PDFs into section
+# update files (1-todo / 4-release / 5-gdpval / 6-deep-worker). Without it,
+# /sr-upload-loop just uploads the PDF and the section files are left alone.
+pdfminer.six>=20221105

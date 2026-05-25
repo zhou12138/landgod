@@ -1,3 +1,22 @@
+export const SHIPROOM_TOOL_NAMES = [
+  'shiproom_login',
+  'shiproom_whoami',
+  'shiproom_status',
+  'shiproom_read',
+  'shiproom_list_history',
+  'shiproom_url',
+  'shiproom_update',
+  'shiproom_notes',
+  'shiproom_prep',
+  'shiproom_fetch_loop',
+  'shiproom_fetch_ocv',
+  'shiproom_fetch_notes',
+  'shiproom_split_loop',
+  'shiproom_upload_md',
+  'shiproom_archive',
+  'shiproom_render_view',
+] as const;
+
 export interface ShellExecuteSecurityConfig {
   enabled: boolean;
   allowedExecutableNames: string[];
@@ -52,6 +71,7 @@ const FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES = new Set([
   'session_stdin',
   'session_wait',
   'session_read_output',
+  ...SHIPROOM_TOOL_NAMES,
 ]);
 // Demo profile exposes the full tool surface — identical to full-local-admin.
 const DEMO_DESKTOP_TOOL_NAMES = FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES;
@@ -159,8 +179,8 @@ export function getBuiltInToolsSecurityConfigForProfile(
         permissionProfile,
         shellExecute: {
           enabled: true,
-          allowedExecutableNames: [], // empty = no allowlist filter in demo mode
-          allowedWorkingDirectories: [], // empty = no directory restriction
+          allowedExecutableNames: [],
+          allowedWorkingDirectories: [],
           allowPipes: true,
           allowRedirection: true,
           allowNetworkCommands: true,
@@ -173,7 +193,7 @@ export function getBuiltInToolsSecurityConfigForProfile(
         fileRead: {
           enabled: true,
           allowRelativePaths: true,
-          allowedPaths: [], // empty = allow any path
+          allowedPaths: [],
           maxBytesPerRead: 100 * 1024 * 1024,
           maxFileSizeBytes: 100 * 1024 * 1024,
         },
@@ -216,7 +236,7 @@ export function normalizeExternalMcpPermissionProfile(
   value: unknown,
   transport: 'http' | 'stdio',
 ): BuiltInToolsPermissionProfile {
-  if (value === 'command-only' || value === 'interactive-trusted' || value === 'full-local-admin') {
+  if (value === 'command-only' || value === 'interactive-trusted' || value === 'full-local-admin' || value === 'demo') {
     return value;
   }
 
@@ -274,25 +294,12 @@ export function isDesktopToolPublishedForPermissionProfile(
   return FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES.has(toolName);
 }
 
-const COMPUTER_USE_TOOL_NAMES = new Set([
-  'computer_screenshot',
-  'computer_click',
-  'computer_type',
-  'computer_scroll',
-]);
-
 export function getManagedClientToolResultMode(
   permissionProfile: BuiltInToolsPermissionProfile,
   toolName: string,
   source: 'local' | 'external',
 ): ManagedClientToolResultMode {
   if (permissionProfile === 'full-local-admin' || permissionProfile === 'demo') {
-    return 'full';
-  }
-
-  // Computer-use tools always return full results regardless of permission profile —
-  // the image data must reach the AI agent.
-  if (source === 'local' && COMPUTER_USE_TOOL_NAMES.has(toolName)) {
     return 'full';
   }
 
