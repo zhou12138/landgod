@@ -350,10 +350,16 @@ def fetch_loop_with_fallback(loop_url: str) -> str:
     """Try silent headless first; on LoopFetchError, retry with a visible
     browser so the host can SSO / approve once. After the first successful
     interactive run, the persistent profile holds the cookie and subsequent
-    runs go silent."""
+    runs go silent.
+
+    In non-interactive contexts (no TTY on stdin, e.g. MCP server), the headed
+    fallback is skipped and the LoopFetchError propagates immediately.
+    """
     try:
         return fetch_loop_markdown(loop_url, headless=True)
     except LoopFetchError as exc:
+        if not sys.stdin.isatty():
+            raise  # MCP server / subprocess — never block on input()
         print(f"[loop_fetch] silent fetch failed ({exc}); falling back to "
               f"headed mode for SSO ...", file=sys.stderr)
         shutdown_browser()  # close headless ctx before opening headed
