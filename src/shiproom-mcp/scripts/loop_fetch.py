@@ -387,18 +387,15 @@ def fetch_loop_markdown(loop_url: str, *, headless: bool = True,
 
 
 def fetch_loop_with_fallback(loop_url: str) -> str:
-    """Try headed (visible) browser first for reliability; fall back to
-    headless if headed fails (e.g. no display on a remote server).
-
-    The headed approach is more reliable because Loop's heavy SPA renders
-    fully and popup/print-export works without browser restrictions.
+    """Try headless first (fast, no UI); fall back to headed if headless
+    fails (e.g. popup blocked by headless Chrome restrictions).
     """
     _rs = sys.__stderr__
     print(f"[fetch_loop_with_fallback] called, url={loop_url[:60]}…", file=_rs, flush=True)
     try:
-        return fetch_loop_markdown(loop_url, headless=False)
-    except LoopFetchError as exc:
-        print(f"[loop_fetch] headed fetch failed ({exc}); falling back to "
-              f"headless ...", file=_rs, flush=True)
-        shutdown_browser()  # close headed ctx before opening headless
         return fetch_loop_markdown(loop_url, headless=True)
+    except LoopFetchError as exc:
+        print(f"[loop_fetch] headless fetch failed ({exc}); falling back to "
+              f"headed ...", file=_rs, flush=True)
+        shutdown_browser()  # close headless ctx before opening headed
+        return fetch_loop_markdown(loop_url, headless=False)

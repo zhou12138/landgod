@@ -273,7 +273,7 @@ def cmd_fetch_loop(args, cloud: ShiproomCloud) -> int:
         print("ERROR: no Loop URL configured (set loop_source.url or references.loop_current).", file=sys.stderr)
         return 2
 
-    print(f"Fetching Loop content (headed; headless fallback) ...")
+    print(f"Fetching Loop content (headless; headed fallback) ...")
     try:
         markdown = fetch_loop_with_fallback(loop_url)
     except LoopFetchError as exc:
