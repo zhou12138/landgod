@@ -69,21 +69,27 @@ async def _get_or_create_context(headless: bool = True):
     # Fresh context needed.
     if _pw is None:
         from playwright.async_api import async_playwright
+        print(f"[_get_or_create_context] starting playwright…", file=sys.__stderr__, flush=True)
         _pw = await async_playwright().start()
+        print(f"[_get_or_create_context] playwright started", file=sys.__stderr__, flush=True)
 
     last_exc: Exception | None = None
     for kw in ({"channel": "chrome"}, {"channel": "msedge"}, {}):
         try:
+            print(f"[_get_or_create_context] launching persistent context headless={headless} {kw}",
+                  file=sys.__stderr__, flush=True)
             _pw_ctx = await _pw.chromium.launch_persistent_context(
                 user_data_dir=USER_DATA_DIR,
                 headless=headless,
                 viewport={"width": 1500, "height": 1000},
                 **kw,
             )
+            print(f"[_get_or_create_context] browser launched OK", file=sys.__stderr__, flush=True)
             _ctx_headless = headless
             _hot_count = 0
             return _pw_ctx, True       # cold
         except Exception as exc:
+            print(f"[_get_or_create_context] launch failed ({kw}): {exc}", file=sys.__stderr__, flush=True)
             last_exc = exc
     raise LoopFetchError(
         f"Could not launch browser: {last_exc}. "
@@ -129,24 +135,30 @@ class LoopFetchError(RuntimeError):
 
 def _ensure_playwright() -> None:
     """Lazy-install playwright + chromium driver if missing."""
+    _rs = sys.__stderr__
+    print("[_ensure_playwright] checking import…", file=_rs, flush=True)
     try:
         import playwright  # noqa: F401
     except ImportError:
-        print("[loop_fetch] installing playwright ...", file=sys.stderr)
+        print("[_ensure_playwright] installing playwright …", file=_rs, flush=True)
         subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "--quiet", "playwright>=1.40"]
+            [sys.executable, "-m", "pip", "install", "--quiet", "playwright>=1.40"],
+            stdin=subprocess.DEVNULL,
         )
     # Ensure chromium driver / msedge channel is available. We only need the
     # 'chrome' channel (system Chrome). If user has no Chrome, we fall back
     # to bundled chromium.
     try:
         # Just verify the playwright CLI works.
+        print("[_ensure_playwright] verifying playwright CLI…", file=_rs, flush=True)
         subprocess.check_call(
             [sys.executable, "-m", "playwright", "--version"],
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
+        print("[_ensure_playwright] done", file=_rs, flush=True)
     except Exception:
-        pass
+        print("[_ensure_playwright] version check failed (non-fatal)", file=_rs, flush=True)
 
 
 async def _open_overflow(page) -> bool:
@@ -361,10 +373,15 @@ def fetch_loop_markdown(loop_url: str, *, headless: bool = True,
     """
     if not loop_url or not loop_url.startswith("http"):
         raise LoopFetchError(f"Invalid Loop URL: {loop_url!r}")
+    _rs = sys.__stderr__
+    print(f"[fetch_loop_markdown] headless={headless} wait_for_user={wait_for_user}", file=_rs, flush=True)
     _ensure_playwright()
+    print(f"[fetch_loop_markdown] playwright ensured, creating bg loop", file=_rs, flush=True)
     loop = _ensure_bg_loop()
+    print(f"[fetch_loop_markdown] bg loop ready, submitting coro", file=_rs, flush=True)
     coro = _fetch_async(loop_url, headless=headless, wait_for_user=wait_for_user)
     future = asyncio.run_coroutine_threadsafe(coro, loop)
+    print(f"[fetch_loop_markdown] coro submitted, waiting for result (300s cap)", file=_rs, flush=True)
     text = future.result(timeout=300)   # 5-min safety cap
     return _clean(text)
 
@@ -376,10 +393,12 @@ def fetch_loop_with_fallback(loop_url: str) -> str:
     The headed approach is more reliable because Loop's heavy SPA renders
     fully and popup/print-export works without browser restrictions.
     """
+    _rs = sys.__stderr__
+    print(f"[fetch_loop_with_fallback] called, url={loop_url[:60]}…", file=_rs, flush=True)
     try:
         return fetch_loop_markdown(loop_url, headless=False)
     except LoopFetchError as exc:
         print(f"[loop_fetch] headed fetch failed ({exc}); falling back to "
-              f"headless ...", file=sys.stderr)
+              f"headless ...", file=_rs, flush=True)
         shutdown_browser()  # close headed ctx before opening headless
         return fetch_loop_markdown(loop_url, headless=True)

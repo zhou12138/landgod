@@ -367,10 +367,14 @@ def _call_cli_inproc(subcommand: str, extra_args: list[str] | None = None) -> st
 
     stdout_buf = io.StringIO()
     stderr_buf = io.StringIO()
+    _rs = sys.__stderr__
+    print(f"[_call_cli_inproc] entering handler for {subcommand!r}", file=_rs, flush=True)
     try:
         with redirect_stdout(stdout_buf), redirect_stderr(stderr_buf):
             rc = handler(args_ns, cloud)
+        print(f"[_call_cli_inproc] handler returned rc={rc}", file=_rs, flush=True)
     except Exception as exc:
+        print(f"[_call_cli_inproc] handler raised {type(exc).__name__}: {exc}", file=_rs, flush=True)
         return json.dumps({"error": str(exc)})
 
     output = stdout_buf.getvalue()
