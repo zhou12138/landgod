@@ -88,15 +88,13 @@ Download it to your user profile:
 
 ```powershell
 # Windows — save to your user profile
-Invoke-WebRequest `
-  -Uri "https://raw.githubusercontent.com/gim-home/praesto-claw/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml" `
-  -OutFile "$env:USERPROFILE\shiproom-config.yaml"
+Invoke-WebRequest -Uri "https://github.com/gim-home/praesto-claw/tree/main/apps/client_agent/praestoclaw/skills/bundled/soc…" -OutFile "./shiproom-config.yaml"
 ```
 
 ```bash
 # macOS
 curl -o ~/shiproom-config.yaml \
-  "https://raw.githubusercontent.com/gim-home/praesto-claw/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml"
+  "https://github.com/gim-home/praesto-claw/tree/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml"
 ```
 
 > If the download fails (private repo), open the GitHub link above in a browser, copy the raw content, and save it manually as `shiproom-config.yaml`.
