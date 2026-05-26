@@ -228,16 +228,10 @@ async def _fetch_async(loop_url: str, timeout_ms: int = 60000,
                 "Could not find Loop's '更多选项' / 'more options' button. "
                 "Likely not signed in -- delete the user-data-dir and re-run."
             )
-        await page.wait_for_timeout(800)
 
         # Click "Print & PDF export" → popup.
-        try:
-            async with ctx.expect_page(timeout=30000) as info:
-                await page.get_by_text("打印和 PDF 导出", exact=False).first.click()
-        except Exception:
-            async with ctx.expect_page(timeout=30000) as info:
-                await page.get_by_text("Print & PDF export", exact=False).first.click()
-        popup = await info.value
+        # Poll for the menu item to appear (dropdown may render slowly).
+        popup = await _click_print_export(ctx, page, timeout_ms=30000)
         pages_opened.append(popup)
         await popup.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
         print_url = popup.url
@@ -274,6 +268,35 @@ async def _poll_and_click_overflow(page, max_wait_s: int = 60) -> bool:
             return True
         await page.wait_for_timeout(2000)
     return False
+
+
+async def _click_print_export(ctx, page, timeout_ms: int = 30000):
+    """Click 'Print & PDF export' in the overflow menu and return the popup.
+
+    The overflow menu may render slowly after the button click, so we poll
+    for the menu item text (zh-CN / en) up to ``timeout_ms`` ms.  Once found,
+    we click it inside ``ctx.expect_page()`` to capture the popup.
+    """
+    labels = ["打印和 PDF 导出", "Print & PDF export"]
+    deadline = asyncio.get_event_loop().time() + timeout_ms / 1000
+    last_err: Exception | None = None
+    while asyncio.get_event_loop().time() < deadline:
+        for label in labels:
+            loc = page.get_by_text(label, exact=False).first
+            if await loc.count() > 0:
+                try:
+                    async with ctx.expect_page(timeout=15000) as info:
+                        await loc.click()
+                    return await info.value
+                except Exception as exc:
+                    last_err = exc
+                    # Menu may have closed; re-open overflow and retry.
+                    await _open_overflow(page)
+                    await page.wait_for_timeout(800)
+        await page.wait_for_timeout(1000)
+    raise LoopFetchError(
+        f"Could not click 'Print & PDF export' within {timeout_ms}ms: {last_err}"
+    )
 
 
 async def _wait_until_stable(page, idle_ms: int = 3000, max_ms: int = 60000,
@@ -347,20 +370,16 @@ def fetch_loop_markdown(loop_url: str, *, headless: bool = True,
 
 
 def fetch_loop_with_fallback(loop_url: str) -> str:
-    """Try silent headless first; on LoopFetchError, retry with a visible
-    browser so the host can SSO / approve once. After the first successful
-    interactive run, the persistent profile holds the cookie and subsequent
-    runs go silent.
+    """Try headed (visible) browser first for reliability; fall back to
+    headless if headed fails (e.g. no display on a remote server).
 
-    In non-interactive contexts (no TTY on stdin, e.g. MCP server), the headed
-    fallback is skipped and the LoopFetchError propagates immediately.
+    The headed approach is more reliable because Loop's heavy SPA renders
+    fully and popup/print-export works without browser restrictions.
     """
     try:
-        return fetch_loop_markdown(loop_url, headless=True)
+        return fetch_loop_markdown(loop_url, headless=False)
     except LoopFetchError as exc:
-        if not sys.stdin.isatty():
-            raise  # MCP server / subprocess — never block on input()
-        print(f"[loop_fetch] silent fetch failed ({exc}); falling back to "
-              f"headed mode for SSO ...", file=sys.stderr)
-        shutdown_browser()  # close headless ctx before opening headed
-        return fetch_loop_markdown(loop_url, headless=False, wait_for_user=True)
+        print(f"[loop_fetch] headed fetch failed ({exc}); falling back to "
+              f"headless ...", file=sys.stderr)
+        shutdown_browser()  # close headed ctx before opening headless
+        return fetch_loop_markdown(loop_url, headless=True)
