@@ -1,7 +1,7 @@
 {
   "name": "landgod",
   "productName": "LandGod",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "AI-driven remote device management — LandGod Worker Node",
   "author": "LandGod",
   "bin": {
@@ -68,6 +68,6 @@
     "tailwindcss": "^3.4.15",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
-    "landgod": "file:downloads/landgod-0.1.6.tgz"
+    "landgod": "file:downloads/landgod-0.1.7.tgz"
   }
 }

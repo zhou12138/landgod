@@ -18,14 +18,14 @@
 Open a terminal (Windows: PowerShell, macOS: Terminal):
 
 ```bash
-npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.6.tgz
+npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.7.tgz
 ```
 
 Verify the installation:
 
 ```bash
 landgod --version
-# Expected output: landgod 0.1.6
+# Expected output: landgod 0.1.7
 ```
 
 > 💡 If `landgod` is not recognized, close and reopen your terminal.
