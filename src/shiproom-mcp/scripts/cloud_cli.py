@@ -296,6 +296,13 @@ def cmd_fetch_loop(args, cloud: ShiproomCloud) -> int:
     print(f"✅ Fetched Loop -> current/currentloop.md ({len(markdown)} chars)")
     print(f"   {web_url}")
 
+    # Shut down Playwright browser to free resources before Graph API sync
+    try:
+        from loop_fetch import shutdown_browser
+        shutdown_browser()
+    except Exception:
+        pass
+
     # Auto-split into per-section update files (1-todo / 4-release / ...).
     sync_cfg = (cfg.get("loop_sync") or {})
     if sync_cfg.get("enabled", True):
@@ -331,23 +338,26 @@ def _sync_loop_to_updates(cloud: ShiproomCloud, loop_text: str,
     stops = sync_cfg.get("stop_headings") or default_stop_headings()
     sliced = split_loop(loop_text, section_map, stop_headings=stops)
 
-    print("--- Auto-syncing Loop sections into team updates ---")
+    print("--- Auto-syncing Loop sections into team updates ---", flush=True)
     for target, snippets in sliced.items():
+        print(f"  [{target}] reading...", end="", flush=True)
         try:
             existing = cloud.read_text("current", "updates", target)
         except Exception:
             existing = ""
+        print(f" merging...", end="", flush=True)
         block = render_sync_block(snippets, source_url=source_url)
         new_text = merge_block(existing, block, file_header_for(target))
         if new_text == existing:
-            print(f"  [skip] {target} (no change)")
+            print(f" skip (no change)")
             continue
         import tempfile
         tmp = Path(tempfile.gettempdir()) / f"shiproom_sync_{target}"
         tmp.write_text(new_text, encoding="utf-8")
+        print(f" uploading...", end="", flush=True)
         cloud.upload_file(tmp, "current", "updates", target)
         tag = f"{len(snippets)} snippet(s)" if snippets else "empty (no match)"
-        print(f"  [sync] current/updates/{target}  ({tag})")
+        print(f" done ({tag})")
 
 
 def cmd_split_loop(args, cloud: ShiproomCloud) -> int:
@@ -464,12 +474,20 @@ def _is_stale(item: dict, kind: str, cutoff: Optional[dt.datetime] = None) -> tu
 def cmd_prep(_args, cloud: ShiproomCloud) -> int:
     """Print a pre-meeting checklist comparing current/ to expected files,
     flagging stale 'refresh' artifacts that must be re-fetched."""
+    import time as _t
+    t_total = _t.time()
+    t0 = _t.time()
     cur_root = {it["name"]: it for it in cloud.list_dir("current")}
+    print(f"[prep] list_dir current/ [{_t.time()-t0:.1f}s]", flush=True)
+    t0 = _t.time()
     cur_updates = {it["name"]: it for it in cloud.list_dir("current", "updates")}
-    cutoff = _load_archive_cutoff(cloud)
+    print(f"[prep] list_dir current/updates/ [{_t.time()-t0:.1f}s]", flush=True)
+    t0 = _t.time()
+    cutoff = _load_archive_cutoff(cloud, known_items=cur_root)
+    print(f"[prep] load_archive_cutoff [{_t.time()-t0:.1f}s]", flush=True)
 
     print("=== Shiproom pre-meeting checklist ===")
-    print(f"folder: {cloud.web_url('current')}")
+    print(f"folder: {cloud.base_path}/current")
     if cutoff:
         print(f"cutoff: {cutoff.astimezone().isoformat(timespec='minutes')}  (from current/.last-archive)")
     else:
@@ -548,6 +566,7 @@ def cmd_prep(_args, cloud: ShiproomCloud) -> int:
         print("\nDo not skip the REFRESH step even if a file with the same name already exists.")
     elif not stale_accumulate:
         print("\nAll prep artifacts present and fresh. Generate/refresh 0-meeting-prep-summary.md last.")
+    print(f"\n[prep] total: {_t.time()-t_total:.1f}s", flush=True)
     return 0
 
 
@@ -638,12 +657,18 @@ def cmd_list_history(_args, cloud: ShiproomCloud) -> int:
     return 0
 
 
-def _load_archive_cutoff(cloud: ShiproomCloud) -> Optional[dt.datetime]:
+def _load_archive_cutoff(cloud: ShiproomCloud, *, known_items: dict | None = None) -> Optional[dt.datetime]:
     """Read current/.last-archive ISO timestamp written by archive_current().
 
     Returns None if the marker is absent (first run / legacy repo) so callers
     fall back to their own default (e.g. this week's Monday).
+
+    If known_items (dict of name->item from list_dir("current")) is provided,
+    skip the read_text call when .last-archive is absent — saves one Graph API
+    round-trip.
     """
+    if known_items is not None and ".last-archive" not in known_items:
+        return None
     raw = cloud.read_text("current", ".last-archive", default="").strip()
     if not raw:
         return None
@@ -696,8 +721,10 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
     Preferred source is a workbook path under the Shiproom SharePoint folder.
     Falls back to a share URL source for backward compatibility.
     """
+    import time as _t
     import yaml
 
+    t_total = _t.time()
     cfg_path = _resolve_config(args.config)
     cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
     from cloud_io import _request
@@ -709,6 +736,8 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
         return 2
 
     parts = [p for p in remote_path.split("/") if p]
+    print(f"[ocv] resolving item: {cloud.base_path}/{remote_path} ...", flush=True)
+    t0 = _t.time()
     r = _request("GET", cloud._item_url(*parts))
     if r.status_code == 404:
         print(f"ERROR: OCV workbook not found at {cloud.base_path}/{remote_path}", file=sys.stderr)
@@ -718,12 +747,19 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
     item = r.json()
     drive_id = cloud.drive_id
     item_id = item["id"]
+    print(f"[ocv] item resolved (id={item_id[:8]}\u2026) [{_t.time()-t0:.1f}s]", flush=True)
+    t0 = _t.time()
     source_label = cloud.web_url(*parts) or f"{cloud.base_path}/{remote_path}"
+    print(f"[ocv] web_url resolved [{_t.time()-t0:.1f}s]", flush=True)
 
     # List worksheets
-    ws = _request("GET", f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/workbook/worksheets")
+    print("[ocv] listing worksheets ...", flush=True)
+    t0 = _t.time()
+    ws = _request("GET", f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/workbook/worksheets",
+                  timeout=120, retries=2)
     ws.raise_for_status()
     sheets = [s["name"] for s in ws.json().get("value", [])]
+    print(f"[ocv] worksheets done [{_t.time()-t0:.1f}s]", flush=True)
     if not sheets:
         print("ERROR: OCV workbook has no sheets", file=sys.stderr)
         return 1
@@ -737,13 +773,18 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
         sheet = sheets[-1]
 
     max_rows = int((cfg.get("ocv_source") or {}).get("max_rows", 30))
+    print(f"[ocv] sheets={sheets}, pick={pick} -> '{sheet}', max_rows={max_rows}", flush=True)
 
     # Step 1: Get used-range dimensions only (address field, no values — tiny response).
     # This avoids downloading thousands of rows that we immediately discard.
     base_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/workbook/worksheets('{sheet}')"
-    dim_resp = _request("GET", f"{base_url}/usedRange(valuesOnly=true)?$select=address")
+    print("[ocv] step 1: getting usedRange address ...", flush=True)
+    t0 = _t.time()
+    dim_resp = _request("GET", f"{base_url}/usedRange(valuesOnly=true)?$select=address",
+                         timeout=120, retries=2)
     dim_resp.raise_for_status()
     full_address = dim_resp.json().get("address", "")
+    print(f"[ocv] usedRange done [{_t.time()-t0:.1f}s]", flush=True)
 
     # Step 2: Derive a trimmed range address covering only header + max_rows data rows.
     # Graph address is like "Sheet1!A1:AB4828" or "A1:AB4828".
@@ -761,9 +802,15 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
         # Including it causes double-quoting errors for sheet names with special chars.
         _rng_addr = f"{col_start}1:{col_end}{fetch_rows}"
 
+    print(f"[ocv] step 2: full_address={full_address}, trimmed={_rng_addr}", flush=True)
+
     # Step 3: Fetch only the needed rows (header + max_rows).
-    rng = _request("GET", f"{base_url}/range(address='{_rng_addr}')?$select=values")
+    print(f"[ocv] step 3: fetching range {_rng_addr} ...", flush=True)
+    t0 = _t.time()
+    rng = _request("GET", f"{base_url}/range(address='{_rng_addr}')?$select=values",
+                    timeout=120, retries=2)
     rng.raise_for_status()
+    print(f"[ocv] range done [{_t.time()-t0:.1f}s]", flush=True)
     payload = rng.json()
     rows = payload.get("values") or []
     if not rows:
@@ -795,11 +842,15 @@ def cmd_fetch_ocv(args, cloud: ShiproomCloud) -> int:
 
     import tempfile
     body = "\n".join(md_lines) + "\n"
+    print("[ocv] uploading merged 3-ocv.md ...", flush=True)
+    t0 = _t.time()
     _merge_auto_into(cloud, body,
                      parts=("current", "updates", "3-ocv.md"),
                      header="# 3 \u2014 OCV\n",
                      source_label=source_label,
                      summary=f"sheet '{sheet}', {len(body)} rows")
+    print(f"[ocv] upload done [{_t.time()-t0:.1f}s]", flush=True)
+    print(f"[ocv] total: {_t.time()-t_total:.1f}s", flush=True)
     return 0
 
 

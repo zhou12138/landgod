@@ -88,14 +88,14 @@ open the GitHub link above in a browser, copy the raw content, and save it manua
 
 ### 3. Start with your config
 
-Pass the config path directly via `--config` — no environment variable needed:
+Pass the config path using an **absolute path** via `--config`:
 
 ```powershell
-# Windows
-landgod start --ui --config "$env:USERPROFILE\shiproom-config.yaml"
+# Windows — use absolute path
+landgod start --ui --demo --config C:\edge_workspace_1\shiproom-config.yaml
 
 # macOS
-landgod start --ui --config ~/shiproom-config.yaml
+landgod start --ui --demo --config ~/shiproom-config.yaml
 ```
 
 Or set it once as a permanent environment variable (takes effect after restarting LandGod):
@@ -119,10 +119,10 @@ Restart LandGod. Shiproom tools (e.g. `shiproom_prep`, `shiproom_update`, `shipr
 ## ▶️ Start
 
 ```bash
-landgod start --ui --demo --config "$env:USERPROFILE\shiproom-config.yaml"
+landgod start --ui --demo --config C:\edge_workspace_1\shiproom-config.yaml
 ```
 
-> 💡 `--config` sets the Shiproom config path without needing an environment variable.
+> 💡 `--config` requires an **absolute path** to the Shiproom config file.
 >
 > ⚠️ `--demo` mode disables all security restrictions (command allowlist, content filtering, etc.). **Use only for demos and local testing.**
 

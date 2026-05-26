@@ -408,8 +408,8 @@ export class ManagedClientMcpToolRegistry {
 
     // Stdio servers injected as built-in (computer-use, shiproom) run slow subprocesses.
     // They are registered with source='local' but sourceName is the server name, not 'local'.
-    // Give any non-truly-local binding 5 minutes to match server.py's subprocess timeout.
-    const callOptions = binding.sourceName !== 'local' ? { timeout: 300_000 } : undefined;
+    // Give any non-truly-local binding 10 minutes (Playwright fetch + Graph API retries).
+    const callOptions = binding.sourceName !== 'local' ? { timeout: 600_000 } : undefined;
 
     const result = await binding.client.callTool({
       name: binding.upstreamName,

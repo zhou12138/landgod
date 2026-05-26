@@ -74,7 +74,7 @@ async def _get_or_create_context(headless: bool = True):
         print(f"[_get_or_create_context] playwright started", file=sys.__stderr__, flush=True)
 
     last_exc: Exception | None = None
-    for kw in ({"channel": "chrome"}, {"channel": "msedge"}, {}):
+    for kw in ({}, {"channel": "chrome"}, {"channel": "msedge"}):
         try:
             print(f"[_get_or_create_context] launching persistent context headless={headless} {kw}",
                   file=sys.__stderr__, flush=True)
@@ -273,9 +273,76 @@ async def _fetch_async(loop_url: str, timeout_ms: int = 60000,
                 pass
 
 
+async def _dismiss_dialogs(page) -> None:
+    """Dismiss any modal dialog / popover overlay that blocks pointer events.
+
+    Known blockers:
+    - fui-DialogSurface__backdrop: Welcome / What's new / consent dialogs
+    - "Present in Teams" popover (presentInTeamsPopoverImage): promo popup
+    - Any portal-rendered overlay with aria-hidden backdrop
+    """
+    try:
+        # 1. Fluent UI Dialog backdrop (Welcome / What's new / consent)
+        backdrop = page.locator(".fui-DialogSurface__backdrop")
+        if await backdrop.count() > 0:
+            surface = page.locator(".fui-DialogSurface")
+            for selector in [
+                'button[aria-label="Close"]',
+                'button[aria-label="关闭"]',
+                'button[aria-label="Dismiss"]',
+                'button[aria-label="Got it"]',
+                'button[aria-label="知道了"]',
+                'button[aria-label="Not now"]',
+                'button[aria-label="以后再说"]',
+            ]:
+                btn = surface.locator(selector).first
+                if await btn.count() > 0:
+                    await btn.click(timeout=3000)
+                    await page.wait_for_timeout(500)
+                    return
+            # Click any dismiss/close button inside the dialog
+            for role_btn in [
+                surface.locator('button:has-text("Close")').first,
+                surface.locator('button:has-text("关闭")').first,
+                surface.locator('button:has-text("Got it")').first,
+                surface.locator('button:has-text("OK")').first,
+            ]:
+                if await role_btn.count() > 0:
+                    await role_btn.click(timeout=3000)
+                    await page.wait_for_timeout(500)
+                    return
+            await page.keyboard.press("Escape")
+            await page.wait_for_timeout(500)
+
+        # 2. "Present in Teams" popover and similar portal-rendered overlays
+        #    These are div[data-portal-node] containing promo images that
+        #    intercept pointer events on the menu items underneath.
+        dismissed = await page.evaluate("""() => {
+            let count = 0;
+            // Remove portal overlays containing promo/popover images
+            for (const portal of document.querySelectorAll('div[data-portal-node]')) {
+                const img = portal.querySelector('img[src*="presentInTeams"], img[src*="popover"], img[src*="Popover"]');
+                if (img) { portal.remove(); count++; continue; }
+                // Also catch generic popover surfaces that block clicks
+                const popover = portal.querySelector('.fui-PopoverSurface');
+                if (popover) { portal.remove(); count++; }
+            }
+            return count;
+        }""")
+        if dismissed:
+            print(f"[_dismiss_dialogs] removed {dismissed} portal overlay(s)",
+                  file=sys.__stderr__, flush=True)
+            await page.wait_for_timeout(300)
+
+    except Exception:
+        # Non-fatal — if no dialog, proceed normally
+        pass
+
+
 async def _poll_and_click_overflow(page, max_wait_s: int = 60) -> bool:
     """Poll every 2 s for the overflow button; click it as soon as found."""
     for _ in range(max_wait_s // 2):
+        await _dismiss_dialogs(page)
         if await _open_overflow(page):
             return True
         await page.wait_for_timeout(2000)
@@ -293,6 +360,7 @@ async def _click_print_export(ctx, page, timeout_ms: int = 30000):
     deadline = asyncio.get_event_loop().time() + timeout_ms / 1000
     last_err: Exception | None = None
     while asyncio.get_event_loop().time() < deadline:
+        await _dismiss_dialogs(page)
         for label in labels:
             loc = page.get_by_text(label, exact=False).first
             if await loc.count() > 0:
@@ -387,15 +455,21 @@ def fetch_loop_markdown(loop_url: str, *, headless: bool = True,
 
 
 def fetch_loop_with_fallback(loop_url: str) -> str:
-    """Try headless first (fast, no UI); fall back to headed if headless
-    fails (e.g. popup blocked by headless Chrome restrictions).
+    """Try headless first (fast, bundled chromium avoids conflicts);
+    if not signed in, fall back to headed+interactive so user can login.
     """
     _rs = sys.__stderr__
-    print(f"[fetch_loop_with_fallback] called, url={loop_url[:60]}…", file=_rs, flush=True)
+    print(f"[fetch_loop_with_fallback] called, url={loop_url[:60]}\u2026", file=_rs, flush=True)
     try:
         return fetch_loop_markdown(loop_url, headless=True)
     except LoopFetchError as exc:
-        print(f"[loop_fetch] headless fetch failed ({exc}); falling back to "
+        msg = str(exc).lower()
+        if "not signed in" in msg or "more options" in msg or "button" in msg:
+            print(f"[loop_fetch] headless failed (likely not signed in); "
+                  f"retrying headed+interactive ...", file=_rs, flush=True)
+            shutdown_browser()
+            return fetch_loop_markdown(loop_url, headless=False, wait_for_user=True)
+        print(f"[loop_fetch] headless failed ({exc}); falling back to "
               f"headed ...", file=_rs, flush=True)
-        shutdown_browser()  # close headless ctx before opening headed
+        shutdown_browser()
         return fetch_loop_markdown(loop_url, headless=False)

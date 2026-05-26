@@ -156,6 +156,18 @@ def short_name() -> str:
 # Graph helpers
 # ============================================================================
 
+# Persistent HTTP session — reuses TCP+TLS connections across requests.
+# Graph API calls drop from ~3s (cold TLS handshake) to <1s (warm keep-alive).
+_session: Optional[requests.Session] = None
+
+
+def _get_session() -> requests.Session:
+    global _session
+    if _session is None:
+        _session = requests.Session()
+    return _session
+
+
 def _headers(extra: Optional[dict] = None) -> dict:
     h = {"Authorization": f"Bearer {get_token()}"}
     if extra:
@@ -163,10 +175,39 @@ def _headers(extra: Optional[dict] = None) -> dict:
     return h
 
 
-def _request(method: str, url: str, **kw) -> requests.Response:
+def _request(method: str, url: str, *, retries: int = 2, **kw) -> requests.Response:
+    """Graph API request with automatic retry on transient failures.
+
+    Retries on: connection/read timeouts, HTTP 429 (throttle), 502/503/504.
+    Uses exponential back-off (5s, 10s, …) — or the Retry-After header for 429.
+    Uses a persistent requests.Session for TCP+TLS connection reuse.
+    """
+    sess = _get_session()
     h = kw.pop("headers", {})
     h = {**_headers(), **h}
-    return requests.request(method, url, headers=h, timeout=60, **kw)
+    if "timeout" not in kw:
+        kw["timeout"] = 30
+    last_exc: Exception | None = None
+    for attempt in range(1 + retries):
+        try:
+            resp = sess.request(method, url, headers=h, **kw)
+            if resp.status_code == 429 or resp.status_code in (502, 503, 504):
+                if attempt < retries:
+                    wait = int(resp.headers.get("Retry-After", 5 * (attempt + 1)))
+                    print(f"  [retry] {method} {resp.status_code}, waiting {wait}s …",
+                          flush=True)
+                    time.sleep(wait)
+                    continue
+            return resp
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            last_exc = exc
+            if attempt < retries:
+                wait = 5 * (attempt + 1)
+                print(f"  [retry] {method} {type(exc).__name__}, waiting {wait}s …",
+                      flush=True)
+                time.sleep(wait)
+                continue
+            raise
 
 
 # ============================================================================
