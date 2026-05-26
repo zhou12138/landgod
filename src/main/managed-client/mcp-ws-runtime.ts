@@ -1397,10 +1397,14 @@ export class ManagedClientMcpWsRuntime {
       defenseFindings: requestInspection.findings,
     }, 0);
     emitServerEvent('managed-client-mcp-ws:task:started', { requestId, toolName });
+    console.log(`[tool-call] ▶ ${toolName} (requestId=${requestId.slice(0, 8)}…) source=${binding.sourceName}`);
+    const toolCallStartMs = Date.now();
 
     try {
       const { result } = await this.toolRegistry!.callTool(toolName, effectiveArgumentsPayload);
+      const elapsedSec = ((Date.now() - toolCallStartMs) / 1000).toFixed(1);
       const text = flattenToolResult(result);
+      console.log(`[tool-call] ${result.isError ? '✖' : '✔'} ${toolName} done in ${elapsedSec}s (${(text?.length ?? 0)} chars)`);
 
       if (result.isError) {
         const rawMessage = text && text !== '(no output)' ? text : 'Tool execution failed';
@@ -1521,6 +1525,8 @@ export class ManagedClientMcpWsRuntime {
       });
     } catch (error) {
       const message = toErrorMessage(error);
+      const elapsedSec = ((Date.now() - toolCallStartMs) / 1000).toFixed(1);
+      console.error(`[tool-call] ✖ ${toolName} EXCEPTION after ${elapsedSec}s: ${message}`);
       this.pullStatus = 'task-failed';
       this.appendAuditEntry(`[managed-client-mcp-ws] tool_call failed: ${toolName}`, {
         requestId,
