@@ -33,8 +33,13 @@ export function isShiproomAvailable(): boolean {
 }
 
 /**
- * Detect a working Python command that can import mcp.server.fastmcp.
+ * Detect a working Python command.
  * Returns the resolved python executable path, or false if unavailable.
+ *
+ * NOTE: We intentionally do NOT import mcp.server.fastmcp here — that pulls
+ * in pydantic/starlette/httpx and easily exceeds the 5 s timeout on a cold
+ * Python start.  If FastMCP is missing the server process will fail with a
+ * clear ImportError which is better than silently skipping injection.
  */
 function detectShiproomPython(): boolean {
   if (cachedShiproomPython !== undefined) {
@@ -44,7 +49,7 @@ function detectShiproomPython(): boolean {
   for (const cmd of candidates) {
     try {
       const out = execSync(
-        `${cmd} -c "import mcp.server.fastmcp; import sys; print(sys.executable)"`,
+        `${cmd} -c "import sys; print(sys.executable)"`,
         { timeout: 5000, stdio: 'pipe' },
       );
       cachedShiproomPython = out.toString().trim();
