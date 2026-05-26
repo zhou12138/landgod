@@ -84,20 +84,7 @@ The Societas team's config is maintained in the praesto-claw repo:
 
 > Requires Microsoft EMU SSO — sign in with your `@microsoft.com` account.
 
-Download it to your user profile:
-
-```powershell
-# Windows — save to your user profile
-Invoke-WebRequest -Uri "https://github.com/gim-home/praesto-claw/tree/main/apps/client_agent/praestoclaw/skills/bundled/soc…" -OutFile "./shiproom-config.yaml"
-```
-
-```bash
-# macOS
-curl -o ~/shiproom-config.yaml \
-  "https://github.com/gim-home/praesto-claw/tree/main/apps/client_agent/praestoclaw/skills/bundled/societas-shiproom/shiproom-config.yaml"
-```
-
-> If the download fails (private repo), open the GitHub link above in a browser, copy the raw content, and save it manually as `shiproom-config.yaml`.
+open the GitHub link above in a browser, copy the raw content, and save it manually as `shiproom-config.yaml`.
 
 ### 3. Start with your config
 
