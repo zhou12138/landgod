@@ -329,7 +329,7 @@ export class ManagedClientMcpToolRegistry {
           args: serverConfig.args,
           cwd: resolvedWorkingDirectory,
           env: stdioEnv,
-          stderr: 'pipe',
+          stderr: 'inherit',
         });
 
       try {
@@ -546,7 +546,7 @@ export class ManagedClientMcpToolRegistry {
           args: serverConfig.args,
           cwd: resolvedWorkingDirectory,
           env: stdioEnv,
-          stderr: 'pipe',
+          stderr: 'inherit',
         });
 
       try {

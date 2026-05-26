@@ -160,7 +160,19 @@ def shiproom_fetch_loop() -> str:
 
     Data source: Loop page (virtual-scrolled SPA, captured via Playwright).
     Auth: browser cookie in persistent Playwright profile."""
-    return _call_cli_inproc("fetch-loop")
+    import time as _t
+    _real_stderr = sys.__stderr__
+    print(f"[shiproom_fetch_loop] >>> starting", file=_real_stderr, flush=True)
+    t0 = _t.time()
+    try:
+        result = _call_cli_inproc("fetch-loop")
+        print(f"[shiproom_fetch_loop] <<< done in {_t.time()-t0:.1f}s, {len(result)} chars",
+              file=_real_stderr, flush=True)
+        return result
+    except Exception as exc:
+        print(f"[shiproom_fetch_loop] !!! EXCEPTION after {_t.time()-t0:.1f}s: {exc}",
+              file=_real_stderr, flush=True)
+        raise
 
 
 # ---- 4. OCV Excel fetch ---------------------------------------------------
