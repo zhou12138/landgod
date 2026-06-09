@@ -502,10 +502,12 @@ RGB→BGR 转换公式: BGR = R + G*256 + B*65536"""
 2. **pptx_inspect** — 查看当前结构（open 已返回，通常不需要再调）
 3. **pptx_help** — 查看可用 actions 和参数（你现在正在读的）
 4. **pptx_exec_actions** — 执行编辑操作（可批量多个 action 一次性提交）
-5. **pptx_save** — 保存（可选 output_path 另存为）
-6. **pptx_close** — 关闭释放资源
+5. **pptx_switch** — 切换到指定页（配合截图工具可视觉审查每页）
+6. **pptx_save** — 保存（可选 output_path 另存为）
+7. **pptx_close** — 关闭释放资源
 
-典型流程: open → (inspect if needed) → exec_actions → save → close"""
+典型流程: open → (inspect if needed) → exec_actions → save → close
+视觉审查: open(visible=true) → switch(1) → screenshot → switch(2) → screenshot → ..."""
 
     # Filter by topic
     if topic == "all":
@@ -524,6 +526,53 @@ RGB→BGR 转换公式: BGR = R + G*256 + B*65536"""
         "topic": topic,
         "reference": "\n\n".join(parts),
     }
+
+
+def tool_pptx_switch(arguments: dict) -> dict:
+    """Switch to a specific slide in the PowerPoint UI."""
+    global _ppt, _filepath
+
+    if _ppt is None:
+        return {"success": False, "error": "No presentation open. Use pptx_open first."}
+
+    slide = arguments.get("slide")
+    if slide is None:
+        return {"success": False, "error": "slide number is required (1-based)."}
+
+    slide = int(slide)
+
+    try:
+        app = _ppt.app
+        if not app:
+            return {"success": False, "error": "COM application not available."}
+
+        # Get total slide count
+        if hasattr(_ppt, 'prs') and _ppt.prs:
+            total = int(_ppt.prs.Slides.Count)
+        else:
+            total = None
+
+        if total is not None and (slide < 1 or slide > total):
+            return {"success": False, "error": f"Slide {slide} out of range (1-{total})."}
+
+        # Ensure visible
+        if not app.Visible:
+            app.Visible = True
+
+        win = app.ActiveWindow
+        if win is None:
+            return {"success": False, "error": "No active window. Open with visible=true."}
+
+        win.View.GotoSlide(slide)
+
+        return {
+            "success": True,
+            "slide": slide,
+            "total_slides": total,
+            "message": f"Switched to slide {slide}" + (f" of {total}" if total else ""),
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 def tool_pptx_close(arguments: dict) -> dict:
@@ -664,6 +713,26 @@ TOOLS = {
             },
         },
     },
+    "pptx_switch": {
+        "name": "pptx_switch",
+        "description": (
+            "Switch the PowerPoint UI to a specific slide. "
+            "Use this to navigate between slides for visual review — "
+            "combine with screenshot tools to visually inspect each slide. "
+            "Automatically makes the window visible if it was hidden. "
+            "Returns the current slide number and total slide count."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "slide": {
+                    "type": "integer",
+                    "description": "1-based slide number to navigate to.",
+                },
+            },
+            "required": ["slide"],
+        },
+    },
     "pptx_close": {
         "name": "pptx_close",
         "description": (
@@ -707,6 +776,7 @@ TOOL_HANDLERS = {
     "pptx_inspect": tool_pptx_inspect,
     "pptx_exec_actions": tool_pptx_exec_actions,
     "pptx_save": tool_pptx_save,
+    "pptx_switch": tool_pptx_switch,
     "pptx_close": tool_pptx_close,
     "pptx_help": tool_pptx_help,
 }
