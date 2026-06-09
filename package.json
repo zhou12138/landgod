@@ -1,7 +1,7 @@
 {
   "name": "landgod",
   "productName": "LandGod",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "AI-driven remote device management — LandGod Worker Node",
   "author": "LandGod",
   "bin": {
