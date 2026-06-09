@@ -277,6 +277,7 @@ make clean && make    # Build all packages → downloads/
 
 ## Documentation
 
+- [`QUICKSTART.md`](QUICKSTART.md) — Windows & macOS desktop quick start guide
 - [`docs/`](docs/) — Technical documentation
 - [`examples/`](examples/) — Deployment guide with real-world example
 - [`skills/landgod-gateway-setup/ + skills/landgod-setup/`](skills/landgod-gateway-setup/ + skills/landgod-setup/) — Skill for deploying LandGod

@@ -18,14 +18,14 @@
 Open a terminal (Windows: PowerShell, macOS: Terminal):
 
 ```bash
-npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.15.tgz
+npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.22.tgz
 ```
 
 Verify the installation:
 
 ```bash
 landgod --version
-# Expected output: landgod 0.1.15
+# Expected output: landgod 0.1.22
 ```
 
 > 💡 If `landgod` is not recognized, close and reopen your terminal.
@@ -83,7 +83,7 @@ python -m pip install pywin32
 
 ### How it works
 
-The Worker automatically detects Python + pywin32 at startup and registers 6 tools:
+The Worker automatically detects Python + pywin32 at startup and registers 7 tools:
 
 | Tool | Description |
 |------|-------------|
@@ -93,6 +93,7 @@ The Worker automatically detects Python + pywin32 at startup and registers 6 too
 | `pptx_save` | Save (or Save As) |
 | `pptx_close` | Close and release COM resources |
 | `pptx_help` | Show available actions and usage reference |
+| `pptx_slide_image` | Capture slide as inline image (base64) |
 
 **Two backends** — `vba` (default, 10-20x faster) with auto-fallback to `pywin32` if Trust Center is not enabled. Switch dynamically via `pptx_open(backend="pywin32")` or `pptx_open(backend="vba")`.
 
@@ -124,7 +125,7 @@ The Societas team's config is maintained in the praesto-claw repo:
 
 > Requires Microsoft EMU SSO — sign in with your `@microsoft.com` account.
 
-open the GitHub link above in a browser, copy the raw content, and save it manually as `shiproom-config.yaml`.
+Open the GitHub link above in a browser, copy the raw content, and save it locally as `shiproom-config.yaml`.
 
 ### 3. Start with your config
 
@@ -132,7 +133,7 @@ Pass the config path using an **absolute path** via `--config`:
 
 ```powershell
 # Windows — use absolute path
-landgod start --ui --demo --config C:\edge_workspace_1\shiproom-config.yaml
+landgod start --ui --demo --config C:\Users\YourName\shiproom-config.yaml
 
 # macOS
 landgod start --ui --demo --config ~/shiproom-config.yaml
@@ -158,8 +159,16 @@ Restart LandGod. Shiproom tools (e.g. `shiproom_prep`, `shiproom_update`, `shipr
 
 ## ▶️ Start
 
+Basic start (no Shiproom):
+
 ```bash
-landgod start --ui --demo --config C:\edge_workspace_1\shiproom-config.yaml
+landgod start --ui --demo
+```
+
+With Shiproom config:
+
+```bash
+landgod start --ui --demo --config <path-to-shiproom-config.yaml>
 ```
 
 > 💡 `--config` requires an **absolute path** to the Shiproom config file.
@@ -172,7 +181,7 @@ landgod start --ui --demo --config C:\edge_workspace_1\shiproom-config.yaml
 
 After launching, a UI window will appear prompting you to **Choose Startup Mode**:
 
-![Startup Mode Selection](./images/startup-mode.png)
+![Startup Mode Selection](downloads/images/startup-mode.png)
 
 Select **"Managed MCP WebSocket Mode"** (the right option) to connect this device to a remote LandGod Gateway and publish its local tools over WebSocket. This is the recommended mode for remote management.
 
@@ -198,5 +207,5 @@ Select **"Managed MCP WebSocket Mode"** (the right option) to connect this devic
 
 ## 🔗 Links
 
-- [Gateway Setup Guide](./QUICKSTART-GATEWAY.md)
-- [Full Documentation](../docs/)
+- [Gateway Setup Guide](downloads/QUICKSTART-GATEWAY.md)
+- [Full Documentation](docs/)
