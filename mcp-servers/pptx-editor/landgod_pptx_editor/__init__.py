@@ -148,6 +148,25 @@ def tool_pptx_inspect(arguments: dict) -> dict:
         return {"success": False, "error": str(e)}
 
 
+def _goto_slide(slide_num: int) -> None:
+    """Navigate PowerPoint UI to the given slide (1-based) when visible."""
+    global _ppt
+    if _ppt is None:
+        return
+    try:
+        app = _ppt.app
+        if not app or not app.Visible:
+            return
+        win = app.ActiveWindow
+        if win is None:
+            return
+        # ppViewNormal = 9, ppViewSlide = 1 — both support GotoSlide
+        view = win.View
+        view.GotoSlide(int(slide_num))
+    except Exception:
+        pass  # Non-critical — don't break editing if UI nav fails
+
+
 def tool_pptx_exec_actions(arguments: dict) -> dict:
     """Execute batch JSON actions on the open presentation."""
     global _ppt, _filepath, _backend_name
@@ -177,6 +196,9 @@ def tool_pptx_exec_actions(arguments: dict) -> dict:
         # VBA backend: route through Application.Run("ExecuteActionJson")
         for i, act in enumerate(actions):
             try:
+                slide_num = act.get("slide")
+                if slide_num is not None:
+                    _goto_slide(slide_num)
                 result = _ppt.execute_action(act)
                 results.append({
                     "index": i + 1,
@@ -202,6 +224,8 @@ def tool_pptx_exec_actions(arguments: dict) -> dict:
             params = act.get("params", {})
 
             try:
+                if slide is not None:
+                    _goto_slide(slide)
                 result = _dispatch(_ppt, action, slide, target, params)
                 results.append({
                     "index": i + 1,
