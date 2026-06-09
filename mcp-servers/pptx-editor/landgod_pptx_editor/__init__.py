@@ -37,12 +37,12 @@ _com_initialized = False
 # ============================================
 
 def _get_default_backend() -> str:
-    """Get default backend from env or fall back to 'pywin32'."""
-    return os.environ.get("PPTX_EDITOR_BACKEND", "pywin32").lower()
+    """Get default backend from env or fall back to 'vba'."""
+    return os.environ.get("PPTX_EDITOR_BACKEND", "vba").lower()
 
 
 def tool_pptx_open(arguments: dict) -> dict:
-    """Open a PPTX file via COM (pywin32 or VBA backend)."""
+    """Open a PPTX file via COM (pywin32 or VBA backend, with auto-fallback)."""
     global _ppt, _filepath, _backend_name, _com_initialized
 
     filepath = arguments.get("filepath")
@@ -77,14 +77,30 @@ def tool_pptx_open(arguments: dict) -> dict:
             except Exception:
                 pass
 
+        fallback_used = False
+
         if backend == "vba":
-            from .ppt_backend import PowerPointVBA
-            ppt = PowerPointVBA(visible=visible)
+            try:
+                from .ppt_backend import PowerPointVBA
+                ppt = PowerPointVBA(visible=visible)
+                ppt.open(filepath)
+            except Exception as vba_err:
+                # VBA failed (Trust Center not enabled, etc.) — fallback to pywin32
+                logger.warning("VBA backend failed (%s), falling back to pywin32", vba_err)
+                try:
+                    ppt.close()
+                except Exception:
+                    pass
+                from .pptx_editor_com import PowerPointCOM
+                ppt = PowerPointCOM(visible=visible)
+                ppt.open(filepath)
+                backend = "pywin32"
+                fallback_used = True
         else:
             from .pptx_editor_com import PowerPointCOM
             ppt = PowerPointCOM(visible=visible)
+            ppt.open(filepath)
 
-        ppt.open(filepath)
         _ppt = ppt
         _filepath = filepath
         _backend_name = backend
@@ -95,13 +111,21 @@ def tool_pptx_open(arguments: dict) -> dict:
         except Exception:
             structure = {"note": "File opened but inspect failed"}
 
-        return {
+        result = {
             "success": True,
             "filepath": filepath,
             "backend": backend,
             "visible": visible,
             "structure": structure,
         }
+        if fallback_used:
+            result["warning"] = (
+                "VBA backend failed, auto-fell back to pywin32. "
+                "To enable VBA: PowerPoint -> File -> Options -> Trust Center -> "
+                "Trust Center Settings -> Macro Settings -> "
+                "Trust access to the VBA project object model"
+            )
+        return result
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -513,9 +537,8 @@ TOOLS = {
             "Open a PowerPoint file (.pptx) via COM automation. "
             "Returns the presentation structure (slides, shapes, text). "
             "Only one file can be open at a time — opening a new file closes the previous one. "
-            "Backend 'pywin32' (default) uses direct COM calls; "
-            "'vba' uses VBA macro bridge (10-20x faster for inspect/batch ops, "
-            "requires Trust Center macro access enabled)."
+            "Default backend is 'vba' (10-20x faster); auto-falls back to 'pywin32' "
+            "if Trust Center macro access is not enabled."
         ),
         "inputSchema": {
             "type": "object",
@@ -533,9 +556,10 @@ TOOLS = {
                     "type": "string",
                     "enum": ["pywin32", "vba"],
                     "description": (
-                        "COM backend to use. 'pywin32' (default): direct COM, zero config. "
-                        "'vba': VBA macro bridge, 10-20x faster but requires Trust Center macro access. "
-                        "Can also be set via env PPTX_EDITOR_BACKEND."
+                        "COM backend to use. "
+                        "'vba' (default): VBA macro bridge, 10-20x faster, auto-imports macros on open. "
+                        "'pywin32': direct COM, zero config fallback. "
+                        "Default is 'vba' with auto-fallback to 'pywin32' if VBA fails."
                     ),
                 },
             },
