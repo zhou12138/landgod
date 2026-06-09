@@ -404,6 +404,10 @@ export function getEffectiveMcpServersForDisplay(): Record<string, ManagedClient
     parseBooleanFlag(process.env.DISABLE_PPTX_EDITOR);
   const shouldInjectPptxEditor = !disablePptxEditor && !userMcpConfig['pptx-editor'] && isPptxEditorPythonAvailable();
 
+  const disableShiproom =
+    parseBooleanFlag(process.env.DISABLE_SHIPROOM);
+  const shouldInjectShiproom = !disableShiproom && !userMcpConfig['shiproom'] && isShiproomPythonAvailable();
+
   const injected: Record<string, ManagedClientFileMcpServerConfig> = {};
 
   if (shouldInjectComputerUse) {
@@ -427,6 +431,19 @@ export function getEffectiveMcpServersForDisplay(): Record<string, ManagedClient
       trustLevel: 'trusted' as const,
       publishedRemotely: true,
       enabled: true,
+    };
+  }
+
+  if (shouldInjectShiproom) {
+    injected['shiproom'] = {
+      command: getShiproomPythonCommand(),
+      args: [getShiproomServerPath()],
+      env: getShiproomEnv(),
+      tools: [...SHIPROOM_TOOL_NAMES],
+      trustLevel: 'trusted' as const,
+      publishedRemotely: true,
+      enabled: true,
+      requiredPermissionProfile: 'full-local-admin' as const,
     };
   }
 
