@@ -154,6 +154,10 @@ class PowerPointCOM:
         else:
             print(f"💾 已保存")
 
+    def save_as(self, path):
+        """Alias for save(out=path) — explicit save-as API."""
+        self.save(out=path)
+
     # ---- 结构查看 ----
     def inspect(self):
         result = {"slides": []}

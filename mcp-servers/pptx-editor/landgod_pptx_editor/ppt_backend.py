@@ -590,6 +590,54 @@ class PowerPointVBA:
                     f"({element.get('position_label', '')}) → {txt}"
                 )
 
+    def save_as(self, path):
+        """Alias for save(out=path) — ensures API parity with PowerPointCOM."""
+        self.save(out=path)
+
+    # ---- 3D / Visual effects (API parity with PowerPointCOM) ----
+    # When called via _dispatch in pptx_editor_llm.py, `shape` is a COM object.
+    # We apply effects directly via COM — same as PowerPointCOM implementation.
+
+    def set_shadow(self, shape, preset):
+        """Set shadow preset (0-20+). 0 = no shadow."""
+        shape.Shadow.Type = 1 if preset > 0 else 0
+        if preset > 0:
+            try:
+                shape.Shadow.Style = preset
+            except Exception:
+                shape.Shadow.Visible = True
+        else:
+            shape.Shadow.Visible = False
+        return f"Shadow preset {preset} set on [{shape.Name}]"
+
+    def set_reflection(self, shape, preset):
+        """Set reflection preset."""
+        try:
+            shape.Reflection.Type = preset
+        except Exception:
+            return f"Reflection not supported on [{shape.Name}]"
+        return f"Reflection preset {preset} set on [{shape.Name}]"
+
+    def set_glow(self, shape, color_bgr, radius=10):
+        """Set glow effect."""
+        color_bgr = max(0, min(16777215, int(color_bgr)))
+        try:
+            shape.Glow.Color.RGB = color_bgr
+            shape.Glow.Radius = radius
+        except Exception:
+            return f"Glow not supported on [{shape.Name}]"
+        return f"Glow set on [{shape.Name}] color={hex(color_bgr)} radius={radius}"
+
+    def set_3d_rotation(self, shape, x=0, y=0, z=0):
+        """Set 3D rotation on shape."""
+        try:
+            shape.ThreeD.RotationX = x
+            shape.ThreeD.RotationY = y
+            shape.ThreeD.RotationZ = z
+        except Exception:
+            return f"3D rotation not supported on [{shape.Name}]"
+        return f"3D rotation [{shape.Name}] x={x} y={y} z={z}"
+
     def set_notes(self, slide, text):
         return self._run_macro("SetNotes", int(slide), text)
 
