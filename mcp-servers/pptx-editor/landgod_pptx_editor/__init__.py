@@ -260,7 +260,7 @@ def tool_pptx_save(arguments: dict) -> dict:
 
     try:
         if output_path:
-            _ppt.save_as(output_path)
+            _ppt.save(output_path)
             return {
                 "success": True,
                 "message": f"Saved as {output_path}",

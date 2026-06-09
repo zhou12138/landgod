@@ -161,6 +161,14 @@ Public Function ExecuteActionJson(ByVal actionJson As String) As String
             )
         Case "sleep"
             ExecuteActionJson = HandleSleep(actionObj)
+        Case "set_shadow"
+            ExecuteActionJson = HandleSetShadow(actionObj)
+        Case "set_reflection"
+            ExecuteActionJson = HandleSetReflection(actionObj)
+        Case "set_glow"
+            ExecuteActionJson = HandleSetGlow(actionObj)
+        Case "set_3d_rotation"
+            ExecuteActionJson = HandleSet3DRotation(actionObj)
         Case Else
             Err.Raise vbObjectError + 2049, "PptEditorBridge", _
                 "Unsupported action for VBA backend: " & actionName
@@ -839,6 +847,121 @@ Private Function HandleSleep(ByVal actionObj As Object) As String
         DoEvents
     Loop
     HandleSleep = "等待 " & seconds & "s"
+End Function
+
+Private Function HandleSetShadow(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim preset As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    preset = GetOptionalLong(actionObj("params"), "preset", 1)
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        If preset > 0 Then
+            shp.Shadow.Type = 1
+            shp.Shadow.Style = preset
+            shp.Shadow.Visible = msoTrue
+        Else
+            shp.Shadow.Visible = msoFalse
+        End If
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Shadow not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Shadow preset " & preset & " set on [" & shp.Name & "]"
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetShadow = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetReflection(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim preset As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    preset = GetOptionalLong(actionObj("params"), "preset", 1)
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.Reflection.Type = preset
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Reflection not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Reflection preset " & preset & " set on [" & shp.Name & "]"
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetReflection = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetGlow(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim colorValue As Long
+    Dim radius As Double
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    colorValue = CLng(actionObj("params")("color_bgr"))
+    radius = GetOptionalDouble(actionObj("params"), "radius", 10)
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.Glow.Color.RGB = colorValue
+        shp.Glow.radius = radius
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Glow not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Glow set on [" & shp.Name & "] color=" & ToHexColor(colorValue) & " radius=" & radius
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetGlow = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSet3DRotation(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim xVal As Double
+    Dim yVal As Double
+    Dim zVal As Double
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    xVal = GetOptionalDouble(actionObj("params"), "x", 0)
+    yVal = GetOptionalDouble(actionObj("params"), "y", 0)
+    zVal = GetOptionalDouble(actionObj("params"), "z", 0)
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.ThreeD.RotationX = xVal
+        shp.ThreeD.RotationY = yVal
+        shp.ThreeD.RotationZ = zVal
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "3D rotation not supported on [" & shp.Name & "]"
+        Else
+            results.Add "3D rotation [" & shp.Name & "] x=" & xVal & " y=" & yVal & " z=" & zVal
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSet3DRotation = JoinCollection(results, "; ")
 End Function
 
 Private Function FindFirstShape(ByVal slideIndex As Long, ByVal target As Object) As Shape
