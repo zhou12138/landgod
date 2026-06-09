@@ -532,14 +532,32 @@ class PowerPointVBA:
 
     def inspect(self):
         raw = self._run_macro("InspectPresentationJson")
-        if not raw:
-            return {"slides": []}
-        if isinstance(raw, str):
-            data = json.loads(raw)
-            if isinstance(data, dict) and data.get("error"):
-                raise RuntimeError(f"VBA backend inspect 失败: {data['error']}")
-            return data
-        return raw
+        if raw and isinstance(raw, str):
+            try:
+                data = json.loads(raw)
+                if isinstance(data, dict) and data.get("error"):
+                    raise RuntimeError(f"VBA backend inspect 失败: {data['error']}")
+                return data
+            except json.JSONDecodeError:
+                pass  # Fall through to per-slide fallback
+        elif raw and not isinstance(raw, str):
+            return raw
+
+        # Fallback: full-deck JSON was empty or corrupt (large file / COM truncation).
+        # Inspect one slide at a time and merge results.
+        print("⚠️  全量 inspect 返回空，改用逐页 inspect 降级策略")
+        slide_count = self.prs.Slides.Count
+        merged = {"slides": []}
+        for si in range(1, slide_count + 1):
+            try:
+                part = self.inspect_slide(si)
+                if part and part.get("slides"):
+                    merged["slides"].extend(part["slides"])
+                else:
+                    merged["slides"].append({"index": si, "elements": [], "note": "inspect failed"})
+            except Exception as exc:
+                merged["slides"].append({"index": si, "elements": [], "error": str(exc)})
+        return merged
 
     def inspect_slide(self, slide):
         raw = self._run_macro("InspectSlideJson", int(slide))

@@ -495,7 +495,7 @@ Private Function HandleSetFill(ByVal actionObj As Object) As String
     Set results = New Collection
     For Each shp In shapes
         shp.Fill.Solid
-        shp.Fill.ForeColor.RGB = colorValue
+        shp.Fill.ForeColor.RGB = ClampColor(colorValue)
         results.Add "填充颜色 → " & ToHexColor(colorValue)
     Next shp
     HandleSetFill = JoinCollection(results, "; ")
@@ -518,7 +518,7 @@ Private Function HandleSetBorder(ByVal actionObj As Object) As String
     For Each shp In shapes
         Set changes = New Collection
         If ExistsKey(params, "color_bgr") Then
-            shp.Line.ForeColor.RGB = CLng(params("color_bgr"))
+            shp.Line.ForeColor.RGB = ClampColor(CLng(params("color_bgr")))
             changes.Add "边框颜色→" & ToHexColor(CLng(params("color_bgr")))
         End If
         If ExistsKey(params, "weight") Then
@@ -570,6 +570,8 @@ Private Function HandleResizeShape(ByVal actionObj As Object) As String
     Dim changes As Collection
     Dim params As Object
     Dim factor As Double
+    Dim newW As Double
+    Dim newH As Double
 
     Set params = actionObj("params")
     Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
@@ -582,18 +584,31 @@ Private Function HandleResizeShape(ByVal actionObj As Object) As String
         Set changes = New Collection
         If ExistsKey(params, "scale_factor") Then
             factor = CDbl(params("scale_factor"))
-            shp.Width = shp.Width * factor
-            shp.Height = shp.Height * factor
+            newW = shp.Width * factor
+            newH = shp.Height * factor
+            ' Clamp to safe range
+            If newW < 0.1 Then newW = 0.1
+            If newH < 0.1 Then newH = 0.1
+            If newW > 5000 Then newW = 5000
+            If newH > 5000 Then newH = 5000
+            shp.Width = newW
+            shp.Height = newH
             changes.Add "Width→" & Round(shp.Width, 1)
             changes.Add "Height→" & Round(shp.Height, 1)
         Else
             If ExistsKey(params, "width") Then
-                shp.Width = CDbl(params("width"))
-                changes.Add "Width→" & CStr(params("width"))
+                newW = CDbl(params("width"))
+                If newW < 0.1 Then newW = 0.1
+                If newW > 5000 Then newW = 5000
+                shp.Width = newW
+                changes.Add "Width→" & CStr(newW)
             End If
             If ExistsKey(params, "height") Then
-                shp.Height = CDbl(params("height"))
-                changes.Add "Height→" & CStr(params("height"))
+                newH = CDbl(params("height"))
+                If newH < 0.1 Then newH = 0.1
+                If newH > 5000 Then newH = 5000
+                shp.Height = newH
+                changes.Add "Height→" & CStr(newH)
             End If
         End If
         results.Add "缩放 [" & shp.Name & "] " & JoinCollection(changes, ", ")
@@ -667,13 +682,13 @@ Private Function HandleAddTextbox(ByVal actionObj As Object) As String
 
     If ExistsKey(params, "fill_color") Then
         shp.Fill.Solid
-        shp.Fill.ForeColor.RGB = CLng(params("fill_color"))
+        shp.Fill.ForeColor.RGB = ClampColor(CLng(params("fill_color")))
     End If
     If ExistsKey(params, "font_size") Then
         shp.TextFrame.TextRange.Font.Size = CDbl(params("font_size"))
     End If
     If ExistsKey(params, "font_color") Then
-        shp.TextFrame.TextRange.Font.Color.RGB = CLng(params("font_color"))
+        shp.TextFrame.TextRange.Font.Color.RGB = ClampColor(CLng(params("font_color")))
     End If
 
     HandleAddTextbox = "第" & slideIndex & "页添加文本框: '" & Left$(textValue, 30) & "'"
@@ -703,7 +718,7 @@ Private Function HandleAddShape(ByVal actionObj As Object) As String
 
     If ExistsKey(params, "fill_color") Then
         shp.Fill.Solid
-        shp.Fill.ForeColor.RGB = CLng(params("fill_color"))
+        shp.Fill.ForeColor.RGB = ClampColor(CLng(params("fill_color")))
     End If
     If ExistsKey(params, "line_visible") Then
         shp.Line.Visible = CBool(params("line_visible"))
@@ -763,7 +778,7 @@ Private Function HandleSetSlideBackground(ByVal actionObj As Object) As String
 
     sld.FollowMasterBackground = msoFalse
     sld.Background.Fill.Solid
-    sld.Background.Fill.ForeColor.RGB = colorValue
+    sld.Background.Fill.ForeColor.RGB = ClampColor(colorValue)
     HandleSetSlideBackground = "第" & slideIndex & "页背景 → " & ToHexColor(colorValue)
 End Function
 
@@ -979,16 +994,22 @@ Private Function HandleSetGlow(ByVal actionObj As Object) As String
     Dim results As Collection
     Dim colorValue As Long
     Dim radius As Double
+    Dim hasColor As Boolean
 
     Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
     If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
 
-    colorValue = CLng(actionObj("params")("color_bgr"))
+    hasColor = ExistsKey(actionObj("params"), "color_bgr")
+    If hasColor Then
+        colorValue = CLng(actionObj("params")("color_bgr"))
+    Else
+        colorValue = CLng(16776960)  ' default: cyan (#00FFFF in BGR = 16776960)
+    End If
     radius = GetOptionalDouble(actionObj("params"), "radius", 10)
     Set results = New Collection
     For Each shp In shapes
         On Error Resume Next
-        shp.Glow.Color.RGB = colorValue
+        shp.Glow.Color.RGB = ClampColor(colorValue)
         shp.Glow.radius = radius
         If Err.Number <> 0 Then
             Err.Clear
@@ -1892,6 +1913,12 @@ Private Function JoinCollection(ByVal values As Collection, Optional ByVal separ
     Next i
 End Function
 
+Private Function ClampColor(ByVal c As Long) As Long
+    If c < 0 Then c = 0
+    If c > 16777215 Then c = 16777215
+    ClampColor = c
+End Function
+
 Private Function ToHexColor(ByVal value As Long) As String
     ToHexColor = "0x" & Right$("000000" & Hex$(value), 6)
 End Function
@@ -1906,14 +1933,21 @@ Private Function ApplyModifyFont(ByVal shp As Shape, ByVal params As Object) As 
     Set changes = New Collection
 
     If ExistsKey(params, "font_size") Then
-        tr.Font.Size = CDbl(params("font_size"))
-        changes.Add "字号→" & CStr(params("font_size"))
+        Dim fontSize As Double
+        fontSize = CDbl(params("font_size"))
+        If fontSize < 1 Then fontSize = 1
+        If fontSize > 400 Then fontSize = 400
+        fontSize = CLng(fontSize)
+        tr.Font.Size = fontSize
+        changes.Add "字号→" & CStr(fontSize)
     End If
 
     If ExistsKey(params, "font_size_factor") Then
         oldSize = tr.Font.Size
         If oldSize > 0 Then
             newSize = Round(oldSize * CDbl(params("font_size_factor")), 1)
+            If newSize < 1 Then newSize = 1
+            If newSize > 400 Then newSize = 400
             tr.Font.Size = newSize
             changes.Add "字号 " & oldSize & "→" & newSize
         End If
@@ -1944,7 +1978,7 @@ Private Function ApplyModifyFont(ByVal shp As Shape, ByVal params As Object) As 
         End If
     End If
     If ExistsKey(params, "color") Then
-        tr.Font.Color.RGB = CLng(params("color"))
+        tr.Font.Color.RGB = ClampColor(CLng(params("color")))
         changes.Add "颜色→" & ToHexColor(CLng(params("color")))
     End If
     If ExistsKey(params, "font_name") Then
@@ -2114,9 +2148,23 @@ End Function
 
 Private Function EscapeJsonString(ByVal value As String) As String
     value = Replace(value, "\", "\\")
-    value = Replace(value, """", "\"")
+    value = Replace(value, """", "\""")
     value = Replace(value, vbCrLf, "\n")
     value = Replace(value, vbCr, "\n")
     value = Replace(value, vbLf, "\n")
-    EscapeJsonString = value
+    ' Strip control characters that break JSON
+    Dim i As Long
+    Dim ch As String
+    Dim cleaned As String
+    cleaned = ""
+    For i = 1 To Len(value)
+        ch = Mid$(value, i, 1)
+        Select Case AscW(ch)
+            Case 0 To 8, 11, 12, 14 To 31
+                cleaned = cleaned & "\u" & Right$("0000" & Hex$(AscW(ch)), 4)
+            Case Else
+                cleaned = cleaned & ch
+        End Select
+    Next i
+    EscapeJsonString = cleaned
 End Function

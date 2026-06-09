@@ -25,6 +25,29 @@ except ImportError:
     sys.exit(1)
 
 # ========== 颜色 (COM 用 BGR!) ==========
+
+def _clamp_color(c):
+    """Clamp BGR color to valid range [0, 16777215]."""
+    return max(0, min(int(c), 16777215))
+
+def _format_error(action, e):
+    """Format COM exception to user-friendly message."""
+    msg = str(e)
+    if msg.startswith("(-"):
+        m = re.search(r"'([^']*Microsoft[^']*)'.*?'([^']*)'", msg)
+        if m:
+            msg = f"{m.group(1)}: {m.group(2)}"
+        else:
+            msg = f"COM error in {action}"
+    return msg
+
+_CONTROL_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f]')
+def _sanitize_text(s):
+    """Replace control characters with Unicode escapes for JSON safety."""
+    if not s:
+        return s
+    return _CONTROL_CHARS.sub(lambda m: f'\\u{ord(m.group()):04x}', s)
+
 COLOR_MAP = {
     "红": 0x0000FF, "红色": 0x0000FF, "蓝": 0xFF0000, "蓝色": 0xFF0000,
     "绿": 0x00AA00, "绿色": 0x00AA00, "黄": 0x00D7FF, "黄色": 0x00D7FF,
@@ -179,11 +202,11 @@ class PowerPointCOM:
                 
                 try:
                     if shape.HasTextFrame:
-                        e["text"] = shape.TextFrame.TextRange.Text
+                        e["text"] = _sanitize_text(shape.TextFrame.TextRange.Text)
                         e["paragraphs"] = []
                         for pi in range(1, shape.TextFrame.TextRange.Paragraphs().Count + 1):
                             p = shape.TextFrame.TextRange.Paragraphs(pi)
-                            pd = {"text": p.Text, "font": p.Font.Name,
+                            pd = {"text": _sanitize_text(p.Text), "font": p.Font.Name,
                                   "size": p.Font.Size, "bold": bool(p.Font.Bold)}
                             try: pd["color"] = p.Font.Color.RGB
                             except: pass
@@ -285,11 +308,14 @@ class PowerPointCOM:
             return f"跳过 [{shape.Name}] (无文本框)"
         tr = shape.TextFrame.TextRange
         ch = []
-        if "font_size" in kw:       tr.Font.Size = kw["font_size"];       ch.append(f"字号→{kw['font_size']}")
+        if "font_size" in kw:
+            fs = max(1, min(int(kw["font_size"]), 400))
+            tr.Font.Size = fs;       ch.append(f"字号→{fs}")
         if "font_size_factor" in kw:
             old = tr.Font.Size
             if old > 0:
                 new = round(old * kw["font_size_factor"], 1)
+                new = max(1, min(int(new), 400))
                 tr.Font.Size = new; ch.append(f"字号 {old}→{new}")
         if "bold" in kw:          tr.Font.Bold = kw["bold"];          ch.append("加粗" if kw["bold"] else "取消加粗")
         if "italic" in kw:        tr.Font.Italic = kw["italic"];      ch.append("斜体")
@@ -302,7 +328,7 @@ class PowerPointCOM:
             except Exception:
                 pass  # Strikethrough not supported on all shapes
             ch.append("删除线" if kw["strikethrough"] else "取消删除线")
-        if "color" in kw:         tr.Font.Color.RGB = kw["color"];    ch.append(f"颜色→{hex(kw['color'])}")
+        if "color" in kw:         tr.Font.Color.RGB = _clamp_color(kw["color"]);    ch.append(f"颜色→{hex(kw['color'])}")
         if "font_name" in kw:     tr.Font.Name = kw["font_name"];    ch.append(f"字体→{kw['font_name']}")
         return ", ".join(ch)
 
@@ -322,6 +348,7 @@ class PowerPointCOM:
     # ---- 形状外观 ----
     def set_fill(self, shape, color_bgr):
         """设置形状填充颜色 (BGR)"""
+        color_bgr = _clamp_color(color_bgr)
         shape.Fill.Solid()
         shape.Fill.ForeColor.RGB = color_bgr
         return f"填充颜色 → {hex(color_bgr)}"
@@ -330,7 +357,7 @@ class PowerPointCOM:
         """设置形状边框"""
         ch = []
         if color_bgr is not None:
-            shape.Line.ForeColor.RGB = color_bgr; ch.append(f"边框颜色→{hex(color_bgr)}")
+            shape.Line.ForeColor.RGB = _clamp_color(color_bgr); ch.append(f"边框颜色→{hex(color_bgr)}")
         if weight is not None:
             shape.Line.Weight = weight; ch.append(f"边框粗细→{weight}")
         return ", ".join(ch) if ch else "边框未修改"
@@ -344,8 +371,12 @@ class PowerPointCOM:
 
     def resize_shape(self, shape, width=None, height=None):
         ch = []
-        if width is not None:  shape.Width = width;   ch.append(f"Width→{width}")
-        if height is not None: shape.Height = height; ch.append(f"Height→{height}")
+        if width is not None:
+            width = max(0.1, min(width, 5000))
+            shape.Width = width;   ch.append(f"Width→{width}")
+        if height is not None:
+            height = max(0.1, min(height, 5000))
+            shape.Height = height; ch.append(f"Height→{height}")
         return f"缩放 [{shape.Name}] {', '.join(ch)}"
 
     def delete_shape(self, shape):
@@ -360,11 +391,12 @@ class PowerPointCOM:
         shape.TextFrame.TextRange.Text = text
         if fill_color is not None:
             shape.Fill.Solid()
-            shape.Fill.ForeColor.RGB = fill_color
+            shape.Fill.ForeColor.RGB = _clamp_color(fill_color)
         if font_size is not None:
+            font_size = max(1, min(int(font_size), 400))
             shape.TextFrame.TextRange.Font.Size = font_size
         if font_color is not None:
-            shape.TextFrame.TextRange.Font.Color.RGB = font_color
+            shape.TextFrame.TextRange.Font.Color.RGB = _clamp_color(font_color)
         return f"第{slide_idx}页添加文本框: '{text[:30]}'"
 
     def add_shape(self, slide_idx, shape_type=1, left=100, top=100,
@@ -374,7 +406,7 @@ class PowerPointCOM:
         shape = slide.Shapes.AddShape(shape_type, left, top, width, height)
         if fill_color is not None:
             shape.Fill.Solid()
-            shape.Fill.ForeColor.RGB = fill_color
+            shape.Fill.ForeColor.RGB = _clamp_color(fill_color)
         if not line_visible:
             shape.Line.Visible = False
         return f"第{slide_idx}页添加形状: type={shape_type} at ({left},{top})"
@@ -506,6 +538,7 @@ class PowerPointCOM:
     # ---- Background ----
     def set_slide_background(self, slide_idx, color_bgr):
         """Set slide background to a solid color (BGR)."""
+        color_bgr = _clamp_color(color_bgr)
         slide = self.prs.Slides(slide_idx)
         slide.FollowMasterBackground = False
         slide.Background.Fill.Solid()
@@ -878,7 +911,7 @@ class PowerPointCOM:
         """Set theme colors. color_scheme is a dict of {index: rgb_bgr_value}."""
         tc = self.prs.SlideMaster.Theme.ThemeColorScheme
         for idx, rgb in color_scheme.items():
-            tc(int(idx)).RGB = rgb
+            tc(int(idx)).RGB = _clamp_color(rgb)
         return f"Theme colors updated"
 
     # ---- 3D / Visual effects ----
@@ -904,6 +937,7 @@ class PowerPointCOM:
 
     def set_glow(self, shape, color_bgr, radius=10):
         """Set glow effect."""
+        color_bgr = _clamp_color(color_bgr)
         try:
             shape.Glow.Color.RGB = color_bgr
             shape.Glow.Radius = radius

@@ -28,9 +28,25 @@ PPTX 编辑器 — LLM 意图解析 + COM 执行 (Windows Only)
   OPENAI_MODEL         模型名 (默认 gpt-4o)
 """
 
-import sys, os, json, argparse
+import sys, os, json, argparse, re
 
 from .ppt_backend import add_backend_arguments, create_backend
+
+
+def _clamp_color(c):
+    """Clamp BGR color to valid range [0, 16777215]."""
+    return max(0, min(int(c), 16777215))
+
+def _format_error(action, e):
+    """Format COM exception to user-friendly message."""
+    msg = str(e)
+    if msg.startswith("(-"):
+        m = re.search(r"'([^']*Microsoft[^']*)'.*?'([^']*)'", msg)
+        if m:
+            msg = f"{m.group(1)}: {m.group(2)}"
+        else:
+            msg = f"COM error in {action}"
+    return msg
 
 
 CLOSE_DELAY_SECONDS = 30
@@ -731,7 +747,8 @@ def execute_actions(ppt, actions, dry_run=False, progress_callback=None):
             if progress_callback:
                 progress_callback(entry, slide=slide)
         except Exception as e:
-            entry = _format_progress_entry(f"{action} 失败: {e}", slide=slide, index=i + 1, success=False)
+            err_msg = _format_error(action, e)
+            entry = _format_progress_entry(f"{action} 失败: {err_msg}", slide=slide, index=i + 1, success=False)
             print(f"  {entry}")
             if progress_callback:
                 progress_callback(entry, slide=slide)
@@ -946,11 +963,11 @@ def _dispatch(ppt, action, slide, target, params):
             results.append(ppt.set_paragraph_spacing(shape,
                            before=params.get("before", 0), after=params.get("after", 0)))
         elif action == "set_shadow":
-            results.append(ppt.set_shadow(shape, params["preset"]))
+            results.append(ppt.set_shadow(shape, params.get("preset", 1)))
         elif action == "set_reflection":
-            results.append(ppt.set_reflection(shape, params["preset"]))
+            results.append(ppt.set_reflection(shape, params.get("preset", 1)))
         elif action == "set_glow":
-            results.append(ppt.set_glow(shape, params["color_bgr"], params.get("radius", 10)))
+            results.append(ppt.set_glow(shape, params.get("color_bgr", 16776960), params.get("radius", 10)))
         elif action == "set_3d_rotation":
             results.append(ppt.set_3d_rotation(shape,
                            x=params.get("x", 0), y=params.get("y", 0), z=params.get("z", 0)))
