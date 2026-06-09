@@ -20,6 +20,9 @@ import json
 import os
 import sys
 import logging
+import base64
+import io
+import tempfile
 
 logger = logging.getLogger("landgod-pptx-editor")
 
@@ -575,6 +578,76 @@ def tool_pptx_switch(arguments: dict) -> dict:
         return {"success": False, "error": str(e)}
 
 
+def tool_pptx_slide_image(arguments: dict) -> dict:
+    """Export a slide as an image and return base64 for inline display."""
+    global _ppt, _filepath
+
+    if _ppt is None:
+        return {"success": False, "error": "No presentation open. Use pptx_open first."}
+
+    slide = arguments.get("slide")
+    if slide is None:
+        return {"success": False, "error": "slide number is required (1-based)."}
+
+    slide = int(slide)
+    max_width = arguments.get("max_width", 1280)
+    quality = arguments.get("quality", 60)
+
+    try:
+        total = int(_ppt.prs.Slides.Count)
+        if slide < 1 or slide > total:
+            return {"success": False, "error": f"Slide {slide} out of range (1-{total})."}
+
+        # Export slide to temp PNG file via COM
+        tmp_path = os.path.join(tempfile.gettempdir(), f"pptx_slide_{slide}.png")
+        # Use 1920 width for initial export (high quality source)
+        export_w = 1920
+        export_h = 1080
+        _ppt.prs.Slides(slide).Export(os.path.abspath(tmp_path), "PNG", export_w, export_h)
+
+        if not os.path.exists(tmp_path):
+            return {"success": False, "error": f"Export failed — file not created: {tmp_path}"}
+
+        # Read and resize if needed, convert to JPEG for smaller transfer
+        try:
+            from PIL import Image
+            img = Image.open(tmp_path)
+            if img.width > max_width:
+                ratio = max_width / img.width
+                img = img.resize((max_width, int(img.height * ratio)), Image.LANCZOS)
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG", quality=quality)
+            b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            w, h = img.width, img.height
+            fmt = "jpeg"
+        except ImportError:
+            # Fallback: read raw PNG without resize
+            with open(tmp_path, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+            w, h = export_w, export_h
+            fmt = "png"
+
+        # Clean up temp file
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+
+        return {
+            "success": True,
+            "image_base64": b64,
+            "format": fmt,
+            "width": w,
+            "height": h,
+            "screen_width": export_w,
+            "screen_height": export_h,
+            "slide": slide,
+            "total_slides": total,
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def tool_pptx_close(arguments: dict) -> dict:
     """Close the presentation and clean up COM."""
     global _ppt, _filepath, _backend_name
@@ -733,6 +806,34 @@ TOOLS = {
             "required": ["slide"],
         },
     },
+    "pptx_slide_image": {
+        "name": "pptx_slide_image",
+        "description": (
+            "Capture a slide as an image and return it inline (base64). "
+            "Use this to visually preview slides without leaving the conversation. "
+            "Returns image data in the same format as computer_screenshot."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "slide": {
+                    "type": "integer",
+                    "description": "1-based slide number to capture.",
+                },
+                "max_width": {
+                    "type": "integer",
+                    "default": 1280,
+                    "description": "Max image width in pixels (default 1280). Smaller = faster transfer.",
+                },
+                "quality": {
+                    "type": "integer",
+                    "default": 60,
+                    "description": "JPEG quality 1-100 (default 60). Lower = smaller file.",
+                },
+            },
+            "required": ["slide"],
+        },
+    },
     "pptx_close": {
         "name": "pptx_close",
         "description": (
@@ -777,6 +878,7 @@ TOOL_HANDLERS = {
     "pptx_exec_actions": tool_pptx_exec_actions,
     "pptx_save": tool_pptx_save,
     "pptx_switch": tool_pptx_switch,
+    "pptx_slide_image": tool_pptx_slide_image,
     "pptx_close": tool_pptx_close,
     "pptx_help": tool_pptx_help,
 }
