@@ -22,6 +22,7 @@ export const PPTX_EDITOR_TOOL_NAMES = [
   'pptx_inspect',
   'pptx_exec_actions',
   'pptx_save',
+  'pptx_switch',
   'pptx_close',
   'pptx_help',
 ] as const;
