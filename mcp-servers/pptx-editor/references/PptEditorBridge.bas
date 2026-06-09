@@ -169,6 +169,74 @@ Public Function ExecuteActionJson(ByVal actionJson As String) As String
             ExecuteActionJson = HandleSetGlow(actionObj)
         Case "set_3d_rotation"
             ExecuteActionJson = HandleSet3DRotation(actionObj)
+        Case "rotate_shape"
+            ExecuteActionJson = HandleRotateShape(actionObj)
+        Case "flip_shape"
+            ExecuteActionJson = HandleFlipShape(actionObj)
+        Case "crop_picture"
+            ExecuteActionJson = HandleCropPicture(actionObj)
+        Case "set_brightness"
+            ExecuteActionJson = HandleSetBrightness(actionObj)
+        Case "set_contrast"
+            ExecuteActionJson = HandleSetContrast(actionObj)
+        Case "replace_picture"
+            ExecuteActionJson = HandleReplacePicture(actionObj)
+        Case "set_line_spacing"
+            ExecuteActionJson = HandleSetLineSpacing(actionObj)
+        Case "set_paragraph_spacing"
+            ExecuteActionJson = HandleSetParagraphSpacing(actionObj)
+        Case "set_text_autofit"
+            ExecuteActionJson = HandleSetTextAutofit(actionObj)
+        Case "add_bullet"
+            ExecuteActionJson = HandleAddBullet(actionObj)
+        Case "add_hyperlink"
+            ExecuteActionJson = HandleAddHyperlink(actionObj)
+        Case "set_word_art"
+            ExecuteActionJson = HandleSetWordArt(actionObj)
+        Case "set_media_playback"
+            ExecuteActionJson = HandleSetMediaPlayback(actionObj)
+        Case "set_chart_title"
+            ExecuteActionJson = HandleSetChartTitle(actionObj)
+        Case "set_chart_style"
+            ExecuteActionJson = HandleSetChartStyle(actionObj)
+        Case "modify_chart_data"
+            ExecuteActionJson = HandleModifyChartData(actionObj)
+        Case "add_chart"
+            ExecuteActionJson = HandleAddChart(actionObj)
+        Case "add_smartart"
+            ExecuteActionJson = HandleAddSmartArt(actionObj)
+        Case "add_freeform"
+            ExecuteActionJson = HandleAddFreeform(actionObj)
+        Case "add_audio"
+            ExecuteActionJson = HandleAddAudio(actionObj)
+        Case "add_video"
+            ExecuteActionJson = HandleAddVideo(actionObj)
+        Case "set_slide_size"
+            ExecuteActionJson = HandleSetSlideSize(actionObj)
+        Case "set_slide_size_preset"
+            ExecuteActionJson = HandleSetSlideSizePreset(actionObj)
+        Case "add_comment"
+            ExecuteActionJson = HandleAddComment(actionObj)
+        Case "delete_comment"
+            ExecuteActionJson = HandleDeleteComment(actionObj)
+        Case "add_section"
+            ExecuteActionJson = HandleAddSection(actionObj)
+        Case "rename_section"
+            ExecuteActionJson = HandleRenameSection(actionObj)
+        Case "delete_section"
+            ExecuteActionJson = HandleDeleteSection(actionObj)
+        Case "export_image"
+            ExecuteActionJson = HandleExportImage(actionObj)
+        Case "export_pdf"
+            ExecuteActionJson = HandleExportPdf(actionObj)
+        Case "set_slideshow_settings"
+            ExecuteActionJson = HandleSetSlideshowSettings(actionObj)
+        Case "start_slideshow"
+            ExecuteActionJson = HandleStartSlideshow(actionObj)
+        Case "merge_presentations"
+            ExecuteActionJson = HandleMergePresentations(actionObj)
+        Case "print_presentation"
+            ExecuteActionJson = HandlePrintPresentation(actionObj)
         Case Else
             Err.Raise vbObjectError + 2049, "PptEditorBridge", _
                 "Unsupported action for VBA backend: " & actionName
@@ -964,6 +1032,726 @@ Private Function HandleSet3DRotation(ByVal actionObj As Object) As String
     HandleSet3DRotation = JoinCollection(results, "; ")
 End Function
 
+' ---------------------------------------------------------------------------
+' Shape Transform handlers
+' ---------------------------------------------------------------------------
+Private Function HandleRotateShape(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim angle As Double
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    angle = CDbl(actionObj("params")("angle"))
+    Set results = New Collection
+    For Each shp In shapes
+        shp.Rotation = angle
+        results.Add "Rotated [" & shp.Name & "] to " & angle & " degrees"
+    Next shp
+    HandleRotateShape = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleFlipShape(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim direction As String
+    Dim flipVal As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    direction = GetOptionalString(actionObj("params"), "direction", "horizontal")
+    If LCase$(direction) = "vertical" Then
+        flipVal = 1  ' msoFlipVertical
+    Else
+        flipVal = 0  ' msoFlipHorizontal
+    End If
+
+    Set results = New Collection
+    For Each shp In shapes
+        shp.Flip flipVal
+        results.Add "Flipped [" & shp.Name & "] " & direction
+    Next shp
+    HandleFlipShape = JoinCollection(results, "; ")
+End Function
+
+' ---------------------------------------------------------------------------
+' Picture handlers
+' ---------------------------------------------------------------------------
+Private Function HandleCropPicture(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim params As Object
+    Dim l As Double, t As Double, r As Double, b As Double
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+    Set params = actionObj("params")
+
+    l = GetOptionalDouble(params, "left", 0)
+    t = GetOptionalDouble(params, "top", 0)
+    r = GetOptionalDouble(params, "right", 0)
+    b = GetOptionalDouble(params, "bottom", 0)
+
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.PictureFormat.CropLeft = l
+        shp.PictureFormat.CropTop = t
+        shp.PictureFormat.CropRight = r
+        shp.PictureFormat.CropBottom = b
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Crop not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Cropped [" & shp.Name & "] L=" & l & " T=" & t & " R=" & r & " B=" & b
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleCropPicture = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetBrightness(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim val As Double
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    val = CDbl(actionObj("params")("value"))
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.PictureFormat.Brightness = val
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Brightness not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Brightness [" & shp.Name & "] -> " & val
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetBrightness = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetContrast(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim val As Double
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    val = CDbl(actionObj("params")("value"))
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.PictureFormat.Contrast = val
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Contrast not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Contrast [" & shp.Name & "] -> " & val
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetContrast = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleReplacePicture(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim shp As Shape
+    Dim newPath As String
+    Dim l As Double, t As Double, w As Double, h As Double
+    Dim sld As Slide
+
+    slideIndex = CLng(actionObj("slide"))
+    Set shp = FindFirstShape(slideIndex, actionObj("target"))
+    If shp Is Nothing Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    newPath = CStr(actionObj("params")("new_path"))
+    l = shp.Left: t = shp.Top: w = shp.Width: h = shp.Height
+    Set sld = ActivePresentation.Slides(slideIndex)
+    shp.Delete
+    sld.Shapes.AddPicture newPath, msoFalse, msoTrue, l, t, w, h
+    HandleReplacePicture = "Replaced picture on slide " & slideIndex
+End Function
+
+' ---------------------------------------------------------------------------
+' Text enhancement handlers
+' ---------------------------------------------------------------------------
+Private Function HandleSetLineSpacing(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim spacing As Double
+    Dim pi As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    spacing = CDbl(actionObj("params")("spacing"))
+    Set results = New Collection
+    For Each shp In shapes
+        For pi = 1 To shp.TextFrame.TextRange.Paragraphs().Count
+            shp.TextFrame.TextRange.Paragraphs(pi).ParagraphFormat.SpaceWithin = spacing
+        Next pi
+        results.Add "Line spacing [" & shp.Name & "] -> " & spacing
+    Next shp
+    HandleSetLineSpacing = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetParagraphSpacing(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim params As Object
+    Dim bef As Double, aft As Double
+    Dim pi As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    Set params = actionObj("params")
+    bef = GetOptionalDouble(params, "before", 0)
+    aft = GetOptionalDouble(params, "after", 0)
+    Set results = New Collection
+    For Each shp In shapes
+        For pi = 1 To shp.TextFrame.TextRange.Paragraphs().Count
+            shp.TextFrame.TextRange.Paragraphs(pi).ParagraphFormat.SpaceBefore = bef
+            shp.TextFrame.TextRange.Paragraphs(pi).ParagraphFormat.SpaceAfter = aft
+        Next pi
+        results.Add "Paragraph spacing [" & shp.Name & "] before=" & bef & " after=" & aft
+    Next shp
+    HandleSetParagraphSpacing = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetTextAutofit(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim mode As String
+    Dim modeVal As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    mode = CStr(actionObj("params")("mode"))
+    Select Case LCase$(mode)
+        Case "fit": modeVal = 1  ' ppAutoSizeShapeToFitText
+        Case "shrink": modeVal = 2  ' ppAutoSizeMixed
+        Case Else: modeVal = 0  ' ppAutoSizeNone
+    End Select
+
+    Set results = New Collection
+    For Each shp In shapes
+        shp.TextFrame.AutoSize = modeVal
+        results.Add "Text autofit [" & shp.Name & "] -> " & mode
+    Next shp
+    HandleSetTextAutofit = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleAddBullet(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim level As Long
+    Dim cnt As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    level = GetOptionalLong(actionObj("params"), "level", 1)
+    Set results = New Collection
+    For Each shp In shapes
+        cnt = shp.TextFrame.TextRange.Paragraphs().Count
+        shp.TextFrame.TextRange.Paragraphs(cnt).IndentLevel = level
+        results.Add "Bullet level " & level & " set on [" & shp.Name & "]"
+    Next shp
+    HandleAddBullet = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleAddHyperlink(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim params As Object
+    Dim url As String
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    Set params = actionObj("params")
+    url = CStr(params("url"))
+    Set results = New Collection
+    For Each shp In shapes
+        If ExistsKey(params, "text") Then
+            shp.TextFrame.TextRange.Text = CStr(params("text"))
+        End If
+        shp.TextFrame.TextRange.ActionSettings(1).Hyperlink.Address = url  ' ppMouseClick=1
+        results.Add "Hyperlink added to [" & shp.Name & "]: " & url
+    Next shp
+    HandleAddHyperlink = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetWordArt(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim style As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    style = CLng(actionObj("params")("style"))
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.TextFrame.TextRange.Font.WordArt = True
+        shp.TextEffect.PresetTextEffect = style
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "WordArt not supported on [" & shp.Name & "]"
+        Else
+            results.Add "WordArt style " & style & " set on [" & shp.Name & "]"
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetWordArt = JoinCollection(results, "; ")
+End Function
+
+' ---------------------------------------------------------------------------
+' Media playback handler
+' ---------------------------------------------------------------------------
+Private Function HandleSetMediaPlayback(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim params As Object
+    Dim autoPlay As Boolean, loopMedia As Boolean, hideStop As Boolean
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    Set params = actionObj("params")
+    autoPlay = GetOptionalBool(params, "auto_play", False)
+    loopMedia = GetOptionalBool(params, "loop", False)
+    hideStop = GetOptionalBool(params, "hide_on_stop", False)
+
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.AnimationSettings.PlaySettings.PlayOnEntry = autoPlay
+        shp.AnimationSettings.PlaySettings.LoopUntilStopped = loopMedia
+        shp.AnimationSettings.PlaySettings.HideWhileNotPlaying = hideStop
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Media playback not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Media playback [" & shp.Name & "] auto=" & autoPlay & " loop=" & loopMedia & " hide=" & hideStop
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetMediaPlayback = JoinCollection(results, "; ")
+End Function
+
+' ---------------------------------------------------------------------------
+' Chart handlers
+' ---------------------------------------------------------------------------
+Private Function HandleSetChartTitle(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim title As String
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    title = CStr(actionObj("params")("title"))
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.Chart.HasTitle = True
+        shp.Chart.ChartTitle.Text = title
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Chart title not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Chart title set to '" & title & "'"
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetChartTitle = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleSetChartStyle(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim styleId As Long
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    styleId = CLng(actionObj("params")("style_id"))
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        shp.Chart.ChartStyle = styleId
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Chart style not supported on [" & shp.Name & "]"
+        Else
+            results.Add "Chart style set to " & styleId
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleSetChartStyle = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleModifyChartData(ByVal actionObj As Object) As String
+    Dim shapes As Collection
+    Dim shp As Shape
+    Dim results As Collection
+    Dim seriesIdx As Long
+    Dim params As Object
+
+    Set shapes = FindShapes(CLng(actionObj("slide")), actionObj("target"))
+    If shapes.Count = 0 Then Err.Raise vbObjectError + 2050, "PptEditorBridge", "未找到匹配的 shape"
+
+    Set params = actionObj("params")
+    seriesIdx = CLng(params("series_idx"))
+    Set results = New Collection
+    For Each shp In shapes
+        On Error Resume Next
+        Dim vals As Object
+        Set vals = params("values")
+        ' Convert Collection to array for SeriesCollection.Values
+        Dim arr() As Variant
+        ReDim arr(1 To vals.Count)
+        Dim vi As Long
+        For vi = 1 To vals.Count
+            arr(vi) = vals(vi)
+        Next vi
+        shp.Chart.SeriesCollection(seriesIdx).Values = arr
+        If Err.Number <> 0 Then
+            Err.Clear
+            results.Add "Chart data update failed on [" & shp.Name & "]"
+        Else
+            results.Add "Chart series " & seriesIdx & " data updated"
+        End If
+        On Error GoTo 0
+    Next shp
+    HandleModifyChartData = JoinCollection(results, "; ")
+End Function
+
+Private Function HandleAddChart(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim chartType As Long
+    Dim sld As Slide
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    chartType = GetOptionalLong(params, "chart_type", 4)  ' xlLine=4
+    Set sld = ActivePresentation.Slides(slideIndex)
+
+    On Error Resume Next
+    sld.Shapes.AddChart2 -1, chartType, _
+        GetOptionalDouble(params, "left", 100), _
+        GetOptionalDouble(params, "top", 100), _
+        GetOptionalDouble(params, "width", 400), _
+        GetOptionalDouble(params, "height", 300)
+    If Err.Number <> 0 Then
+        Err.Clear
+        sld.Shapes.AddChart chartType, _
+            GetOptionalDouble(params, "left", 100), _
+            GetOptionalDouble(params, "top", 100), _
+            GetOptionalDouble(params, "width", 400), _
+            GetOptionalDouble(params, "height", 300)
+    End If
+    On Error GoTo 0
+    HandleAddChart = "Chart added on slide " & slideIndex & " type=" & chartType
+End Function
+
+Private Function HandleAddSmartArt(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim layoutId As Long
+    Dim sld As Slide
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    layoutId = GetOptionalLong(params, "layout_id", 1)
+    Set sld = ActivePresentation.Slides(slideIndex)
+
+    On Error Resume Next
+    Dim layout As Object
+    Set layout = Application.SmartArtLayouts(layoutId)
+    sld.Shapes.AddSmartArt layout, _
+        GetOptionalDouble(params, "left", 100), _
+        GetOptionalDouble(params, "top", 100), _
+        GetOptionalDouble(params, "width", 400), _
+        GetOptionalDouble(params, "height", 300)
+    If Err.Number <> 0 Then
+        Dim errMsg As String
+        errMsg = Err.Description
+        Err.Clear
+        On Error GoTo 0
+        HandleAddSmartArt = "SmartArt failed: " & errMsg
+        Exit Function
+    End If
+    On Error GoTo 0
+    HandleAddSmartArt = "SmartArt added on slide " & slideIndex
+End Function
+
+Private Function HandleAddFreeform(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim points As Object
+    Dim sld As Slide
+    Dim builder As Object
+    Dim i As Long
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    Set points = params("points")
+    Set sld = ActivePresentation.Slides(slideIndex)
+
+    If points.Count < 2 Then
+        HandleAddFreeform = "Need at least 2 points"
+        Exit Function
+    End If
+
+    ' points(1) is first [x, y] pair
+    Set builder = sld.Shapes.BuildFreeform(0, CDbl(points(1)(1)), CDbl(points(1)(2)))  ' msoEditingAuto=0
+    For i = 2 To points.Count
+        builder.AddNodes 0, 0, CDbl(points(i)(1)), CDbl(points(i)(2))  ' msoSegmentLine=0, msoEditingAuto=0
+    Next i
+    builder.ConvertToShape
+    HandleAddFreeform = "Freeform added on slide " & slideIndex & " with " & points.Count & " points"
+End Function
+
+Private Function HandleAddAudio(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim audioPath As String
+    Dim sld As Slide
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    audioPath = CStr(params("audio_path"))
+    Set sld = ActivePresentation.Slides(slideIndex)
+
+    sld.Shapes.AddMediaObject2 audioPath, msoFalse, msoTrue, _
+        GetOptionalDouble(params, "left", 100), _
+        GetOptionalDouble(params, "top", 100), _
+        GetOptionalDouble(params, "width", 50), _
+        GetOptionalDouble(params, "height", 50)
+    HandleAddAudio = "Audio added on slide " & slideIndex & ": " & audioPath
+End Function
+
+Private Function HandleAddVideo(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim videoPath As String
+    Dim sld As Slide
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    videoPath = CStr(params("video_path"))
+    Set sld = ActivePresentation.Slides(slideIndex)
+
+    sld.Shapes.AddMediaObject2 videoPath, msoFalse, msoTrue, _
+        GetOptionalDouble(params, "left", 100), _
+        GetOptionalDouble(params, "top", 100), _
+        GetOptionalDouble(params, "width", 400), _
+        GetOptionalDouble(params, "height", 300)
+    HandleAddVideo = "Video added on slide " & slideIndex & ": " & videoPath
+End Function
+
+' ---------------------------------------------------------------------------
+' Slide management handlers
+' ---------------------------------------------------------------------------
+Private Function HandleSetSlideSize(ByVal actionObj As Object) As String
+    Dim params As Object
+    Set params = actionObj("params")
+    ActivePresentation.PageSetup.SlideWidth = CDbl(params("width"))
+    ActivePresentation.PageSetup.SlideHeight = CDbl(params("height"))
+    HandleSetSlideSize = "Slide size set to " & params("width") & "x" & params("height")
+End Function
+
+Private Function HandleSetSlideSizePreset(ByVal actionObj As Object) As String
+    Dim preset As String
+    Dim presetVal As Long
+
+    preset = CStr(actionObj("params")("preset"))
+    Select Case LCase$(preset)
+        Case "standard": presetVal = 0   ' ppSlideSizeOnScreen
+        Case "letter": presetVal = 1     ' ppSlideSizeLetterPaper
+        Case "a4": presetVal = 3         ' ppSlideSizeA4Paper
+        Case "overhead": presetVal = 5   ' ppSlideSizeOverhead
+        Case "banner": presetVal = 6     ' ppSlideSizeBanner
+        Case "widescreen": presetVal = 8 ' ppSlideSizeOnScreen16x9
+        Case Else: presetVal = CLng(preset)
+    End Select
+    ActivePresentation.PageSetup.SlideSize = presetVal
+    HandleSetSlideSizePreset = "Slide size preset set to " & preset
+End Function
+
+Private Function HandleAddComment(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim sld As Slide
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    Set sld = ActivePresentation.Slides(slideIndex)
+
+    sld.Comments.Add _
+        GetOptionalDouble(params, "x", 10), _
+        GetOptionalDouble(params, "y", 10), _
+        GetOptionalString(params, "author", "Author"), _
+        "", _
+        CStr(params("text"))
+    HandleAddComment = "Comment added on slide " & slideIndex & " by " & GetOptionalString(params, "author", "Author")
+End Function
+
+Private Function HandleDeleteComment(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim commentIdx As Long
+
+    slideIndex = CLng(actionObj("slide"))
+    commentIdx = CLng(actionObj("params")("comment_idx"))
+    ActivePresentation.Slides(slideIndex).Comments(commentIdx).Delete
+    HandleDeleteComment = "Deleted comment " & commentIdx & " on slide " & slideIndex
+End Function
+
+Private Function HandleAddSection(ByVal actionObj As Object) As String
+    Dim params As Object
+    Set params = actionObj("params")
+    ActivePresentation.SectionProperties.AddSection CLng(params("slide_idx")), CStr(params("name"))
+    HandleAddSection = "Section '" & params("name") & "' added at slide " & params("slide_idx")
+End Function
+
+Private Function HandleRenameSection(ByVal actionObj As Object) As String
+    Dim params As Object
+    Set params = actionObj("params")
+    ActivePresentation.SectionProperties.Rename CLng(params("section_idx")), CStr(params("new_name"))
+    HandleRenameSection = "Section " & params("section_idx") & " renamed to '" & params("new_name") & "'"
+End Function
+
+Private Function HandleDeleteSection(ByVal actionObj As Object) As String
+    Dim sectionIdx As Long
+    sectionIdx = CLng(actionObj("params")("section_idx"))
+    ActivePresentation.SectionProperties.Delete sectionIdx, False
+    HandleDeleteSection = "Section " & sectionIdx & " deleted"
+End Function
+
+' ---------------------------------------------------------------------------
+' Export / slideshow / merge / print handlers
+' ---------------------------------------------------------------------------
+Private Function HandleExportImage(ByVal actionObj As Object) As String
+    Dim slideIndex As Long
+    Dim params As Object
+    Dim outPath As String
+
+    slideIndex = CLng(actionObj("slide"))
+    Set params = actionObj("params")
+    outPath = GetOptionalString(params, "output_path", "slide" & slideIndex & ".png")
+    ActivePresentation.Slides(slideIndex).Export outPath, "PNG", _
+        GetOptionalLong(params, "width", 1920), _
+        GetOptionalLong(params, "height", 1080)
+    HandleExportImage = "导出图片: " & outPath
+End Function
+
+Private Function HandleExportPdf(ByVal actionObj As Object) As String
+    Dim pdfPath As String
+    Dim params As Object
+    Set params = actionObj("params")
+
+    If ExistsKey(params, "output_path") Then
+        pdfPath = CStr(params("output_path"))
+    Else
+        ' Derive from presentation name
+        Dim prsName As String
+        prsName = ActivePresentation.FullName
+        If InStr(prsName, ".") > 0 Then
+            pdfPath = Left$(prsName, InStrRev(prsName, ".") - 1) & ".pdf"
+        Else
+            pdfPath = prsName & ".pdf"
+        End If
+    End If
+    ActivePresentation.SaveAs pdfPath, 32  ' ppSaveAsPDF=32
+    HandleExportPdf = "导出 PDF: " & pdfPath
+End Function
+
+Private Function HandleSetSlideshowSettings(ByVal actionObj As Object) As String
+    Dim params As Object
+    Set params = actionObj("params")
+    With ActivePresentation.SlideShowSettings
+        .LoopUntilStopped = GetOptionalBool(params, "loop", False)
+        .ShowWithNarration = GetOptionalBool(params, "show_narration", True)
+        .ShowWithAnimation = GetOptionalBool(params, "show_animation", True)
+    End With
+    HandleSetSlideshowSettings = "Slideshow settings updated"
+End Function
+
+Private Function HandleStartSlideshow(ByVal actionObj As Object) As String
+    Dim params As Object
+    Set params = actionObj("params")
+    With ActivePresentation.SlideShowSettings
+        .StartingSlide = GetOptionalLong(params, "from_slide", 1)
+        If ExistsKey(params, "to_slide") Then
+            .EndingSlide = CLng(params("to_slide"))
+        End If
+        .Run
+    End With
+    HandleStartSlideshow = "Slideshow started from slide " & GetOptionalLong(params, "from_slide", 1)
+End Function
+
+Private Function HandleMergePresentations(ByVal actionObj As Object) As String
+    Dim params As Object
+    Dim filePaths As Object
+    Dim i As Long
+    Dim idx As Long
+
+    Set params = actionObj("params")
+    Set filePaths = params("file_paths")
+
+    For i = 1 To filePaths.Count
+        idx = ActivePresentation.Slides.Count
+        ActivePresentation.Slides.InsertFromFile CStr(filePaths(i)), idx
+    Next i
+    HandleMergePresentations = "Merged " & filePaths.Count & " presentations"
+End Function
+
+Private Function HandlePrintPresentation(ByVal actionObj As Object) As String
+    Dim params As Object
+    Set params = actionObj("params")
+
+    If ExistsKey(params, "printer_name") Then
+        Application.ActivePrinter = CStr(params("printer_name"))
+    End If
+
+    If ExistsKey(params, "print_range") Then
+        Dim pr As Object
+        Set pr = params("print_range")
+        ActivePresentation.PrintOptions.RangeType = 4  ' ppPrintSlideRange
+        ActivePresentation.PrintOptions.Ranges.Add CLng(pr(1)), CLng(pr(2))
+    End If
+
+    ActivePresentation.PrintOut Copies:=GetOptionalLong(params, "copies", 1)
+    HandlePrintPresentation = "Printed " & GetOptionalLong(params, "copies", 1) & " copies"
+End Function
+
 Private Function FindFirstShape(ByVal slideIndex As Long, ByVal target As Object) As Shape
     Dim matches As Collection
     Set matches = FindShapes(slideIndex, target)
@@ -1085,6 +1873,14 @@ Private Function GetOptionalDouble(ByVal dict As Object, ByVal key As String, By
         GetOptionalDouble = CDbl(dict(key))
     Else
         GetOptionalDouble = defaultValue
+    End If
+End Function
+
+Private Function GetOptionalBool(ByVal dict As Object, ByVal key As String, ByVal defaultValue As Boolean) As Boolean
+    If ExistsKey(dict, key) Then
+        GetOptionalBool = CBool(dict(key))
+    Else
+        GetOptionalBool = defaultValue
     End If
 End Function
 

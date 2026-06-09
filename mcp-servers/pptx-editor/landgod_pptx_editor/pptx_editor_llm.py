@@ -807,11 +807,12 @@ def _dispatch(ppt, action, slide, target, params):
         ppt.prs.Slides(slide).Export(os.path.abspath(out), "PNG", w, h)
         return f"导出图片: {out}"
     if action == "transition":
-        emap = {"fade": 1, "push": 2, "wipe": 3, "split": 4, "reveal": 5,
-                "random": 6, "dissolve": 7, "checkerboard": 8, "blinds": 9, "none": 0}
+        emap = {"fade": 3849, "push": 3334, "wipe": 769, "split": 3073,
+                "dissolve": 1537, "cut": 257, "cover": 1025, "uncover": 1793,
+                "random": 513, "none": 0}
         s = ppt.prs.Slides(slide)
         t = params.get("transition", "fade")
-        s.SlideShowTransition.EntryEffect = emap.get(t, 1)
+        s.SlideShowTransition.EntryEffect = emap.get(t, 2745)
         if "duration" in params:
             s.SlideShowTransition.Duration = params["duration"]
         return f"第{slide}页切换效果: {t}"
