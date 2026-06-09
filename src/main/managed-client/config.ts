@@ -61,6 +61,15 @@ interface PersistedManagedClientMcpServerConfig extends ManagedClientFileMcpServ
   name?: string;
 }
 
+/**
+ * Strip UTF-8 BOM (byte-order mark) from a string.
+ * Windows editors (Notepad, some PowerShell cmdlets) often prepend BOM to JSON files,
+ * which breaks JSON.parse().
+ */
+function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+}
+
 function getManagedClientConfigPath(): string {
   return path.resolve(process.cwd(), 'managed-client.config.json');
 }
@@ -273,7 +282,7 @@ export function loadManagedClientFileConfig(): ManagedClientFileConfig {
     return {};
   }
 
-  const raw = fs.readFileSync(configPath, 'utf-8');
+  const raw = stripBom(fs.readFileSync(configPath, 'utf-8'));
   const parsed = JSON.parse(raw) as ManagedClientFileConfig;
   return parsed ?? {};
 }
@@ -345,7 +354,7 @@ export function setToolCallApprovalMode(mode: ToolCallApprovalMode): void {
 function loadManagedClientMcpFileConfig(): Record<string, ManagedClientFileMcpServerConfig> {
   const configPath = getManagedClientMcpConfigPath();
   if (fs.existsSync(configPath)) {
-    const raw = fs.readFileSync(configPath, 'utf-8');
+    const raw = stripBom(fs.readFileSync(configPath, 'utf-8'));
     const parsed = JSON.parse(raw) as unknown;
     return normalizeManagedClientMcpServers(parsed);
   }

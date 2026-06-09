@@ -55,12 +55,16 @@ function fileExists(filePath) {
   }
 }
 
+function stripBom(text) {
+  return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+}
+
 function loadConfig() {
   if (!fileExists(CONFIG_PATH)) {
     return {};
   }
 
-  return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) || {};
+  return JSON.parse(stripBom(fs.readFileSync(CONFIG_PATH, 'utf-8'))) || {};
 }
 
 function sanitizeValue(value) {
@@ -260,7 +264,7 @@ function getDaemonMeta() {
   }
 
   try {
-    return JSON.parse(fs.readFileSync(DAEMON_META_PATH, 'utf-8'));
+    return JSON.parse(stripBom(fs.readFileSync(DAEMON_META_PATH, 'utf-8')));
   } catch {
     return null;
   }
