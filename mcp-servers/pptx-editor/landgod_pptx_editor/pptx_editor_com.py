@@ -30,23 +30,14 @@ def _clamp_color(c):
     """Clamp BGR color to valid range [0, 16777215]."""
     return max(0, min(int(c), 16777215))
 
-def _format_error(action, e):
-    """Format COM exception to user-friendly message."""
-    msg = str(e)
-    if msg.startswith("(-"):
-        m = re.search(r"'([^']*Microsoft[^']*)'.*?'([^']*)'", msg)
-        if m:
-            msg = f"{m.group(1)}: {m.group(2)}"
-        else:
-            msg = f"COM error in {action}"
-    return msg
-
 _CONTROL_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f]')
 def _sanitize_text(s):
-    """Replace control characters with Unicode escapes for JSON safety."""
+    """Strip control characters (0x00-0x08, 0x0B-0x0C, 0x0E-0x1F) from text.
+    json.dumps already escapes these to \\uXXXX, but removing them avoids
+    downstream confusion since PPT text rarely intentionally contains them."""
     if not s:
         return s
-    return _CONTROL_CHARS.sub(lambda m: f'\\u{ord(m.group()):04x}', s)
+    return _CONTROL_CHARS.sub('', s)
 
 COLOR_MAP = {
     "红": 0x0000FF, "红色": 0x0000FF, "蓝": 0xFF0000, "蓝色": 0xFF0000,

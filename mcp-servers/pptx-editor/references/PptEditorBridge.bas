@@ -685,7 +685,11 @@ Private Function HandleAddTextbox(ByVal actionObj As Object) As String
         shp.Fill.ForeColor.RGB = ClampColor(CLng(params("fill_color")))
     End If
     If ExistsKey(params, "font_size") Then
-        shp.TextFrame.TextRange.Font.Size = CDbl(params("font_size"))
+        Dim tbFontSize As Double
+        tbFontSize = CDbl(params("font_size"))
+        If tbFontSize < 1 Then tbFontSize = 1
+        If tbFontSize > 400 Then tbFontSize = 400
+        shp.TextFrame.TextRange.Font.Size = CLng(tbFontSize)
     End If
     If ExistsKey(params, "font_color") Then
         shp.TextFrame.TextRange.Font.Color.RGB = ClampColor(CLng(params("font_color")))
