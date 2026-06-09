@@ -18,14 +18,14 @@
 Open a terminal (Windows: PowerShell, macOS: Terminal):
 
 ```bash
-npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.8.tgz
+npm install -g https://raw.githubusercontent.com/zhou12138/cli-server/master/downloads/landgod-0.1.15.tgz
 ```
 
 Verify the installation:
 
 ```bash
 landgod --version
-# Expected output: landgod 0.1.8
+# Expected output: landgod 0.1.15
 ```
 
 > 💡 If `landgod` is not recognized, close and reopen your terminal.
@@ -59,6 +59,46 @@ python3 -m pip install Pillow
 ```
 
 > The Worker automatically detects Python at startup. If Python is not available, Computer Use is silently skipped — all other features work normally.
+
+---
+
+## 📊 Enable PPTX Editor (Optional — PowerPoint automation)
+
+LandGod includes a built-in PPTX Editor MCP server that provides full PowerPoint automation: inspect slide structure, modify text/shapes/tables/charts, add elements, export PDF/images, and more. Skip this step if you don't need PowerPoint editing.
+
+### Windows
+
+```powershell
+# Install dependencies
+python -m pip install pywin32
+
+# (Optional) For 10-20x faster batch operations via VBA backend:
+# Open PowerPoint → File → Options → Trust Center → Trust Center Settings →
+# Macro Settings → ✅ Trust access to the VBA project object model
+```
+
+### macOS
+
+> ⚠️ PPTX Editor requires Microsoft Office COM automation and is **Windows-only**. On macOS, this feature is not available.
+
+### How it works
+
+The Worker automatically detects Python + pywin32 at startup and registers 6 tools:
+
+| Tool | Description |
+|------|-------------|
+| `pptx_open` | Open a .pptx file (returns slide structure) |
+| `pptx_inspect` | Get current presentation structure |
+| `pptx_exec_actions` | Execute editing actions (batch supported) |
+| `pptx_save` | Save (or Save As) |
+| `pptx_close` | Close and release COM resources |
+| `pptx_help` | Show available actions and usage reference |
+
+**Two backends** — `vba` (default, 10-20x faster) with auto-fallback to `pywin32` if Trust Center is not enabled. Switch dynamically via `pptx_open(backend="pywin32")` or `pptx_open(backend="vba")`.
+
+**Visible mode** — use `pptx_open(filepath, visible=true)` to watch edits live. The UI auto-navigates to the target slide before each action.
+
+> If pywin32 is not installed, PPTX Editor is silently skipped — all other features work normally.
 
 ---
 
@@ -150,6 +190,9 @@ Select **"Managed MCP WebSocket Mode"** (the right option) to connect this devic
 | Shiproom login popup not appearing | Run `landgod` from a real terminal (not a background service) — MSAL WAM login requires a console window |
 | Electron errors | First run of `landgod start --ui` auto-installs Electron dependencies — requires internet |
 | macOS permission prompt | Screenshot requires granting Screen Recording permission in System Settings → Privacy & Security |
+| PPTX tools not showing | Verify: `python -c "import win32com.client"` succeeds; Worker must run from a desktop session (not Session 0/schtasks) |
+| VBA backend fails | Enable Trust Center macro access (see PPTX Editor section above); auto-fallback to pywin32 handles this gracefully |
+| PowerPoint OOM on 2GB RAM | Close other Office instances; run `taskkill /f /im POWERPNT.EXE` before opening |
 
 ---
 
