@@ -7,6 +7,7 @@ const nodeExternals = [
   ...builtinModules.map((m) => `node:${m}`),
   'bufferutil',
   'utf-8-validate',
+  'express',  // Externalize to avoid CJS bundling issues (iconv-lite/raw-body)
 ];
 
 export default defineConfig(({ command }) => ({
