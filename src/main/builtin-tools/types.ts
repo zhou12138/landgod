@@ -17,6 +17,15 @@ export const SHIPROOM_TOOL_NAMES = [
   'shiproom_render_view',
 ] as const;
 
+export const PPTX_EDITOR_TOOL_NAMES = [
+  'pptx_open',
+  'pptx_inspect',
+  'pptx_exec_actions',
+  'pptx_save',
+  'pptx_close',
+  'pptx_help',
+] as const;
+
 export interface ShellExecuteSecurityConfig {
   enabled: boolean;
   allowedExecutableNames: string[];
@@ -72,6 +81,7 @@ const FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES = new Set([
   'session_wait',
   'session_read_output',
   ...SHIPROOM_TOOL_NAMES,
+  ...PPTX_EDITOR_TOOL_NAMES,
 ]);
 // Demo profile exposes the full tool surface — identical to full-local-admin.
 const DEMO_DESKTOP_TOOL_NAMES = FULL_LOCAL_ADMIN_DESKTOP_TOOL_NAMES;

@@ -22,6 +22,12 @@ Read in order — each document builds on the previous one.
 | 05 | [Deploy Worker](05-deploy-worker.md) | Install Worker on target machines | 01, 04 |
 | 06 | [Worker Configuration](06-worker-config.md) | Configure Worker settings and permissions | 05 |
 
+## Publishing
+
+| # | Document | Description | Prerequisites |
+|---|----------|-------------|---------------|
+| 07 | [npm Publish](07-npm-publish.md) | 发布到 npm 公共仓库 | — |
+
 ## Reference
 
 | # | Document | Description | Prerequisites |

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "landgod-pptx-editor"
+version = "0.1.0"
+description = "PowerPoint COM-based MCP server for LandGod — pptx_open, pptx_inspect, pptx_exec_actions, pptx_save, pptx_close"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pywin32>=306",
+]
+
+[project.scripts]
+landgod-pptx-editor = "landgod_pptx_editor:main"

@@ -13,7 +13,9 @@ import {
 } from '../builtin-tools/types';
 import { buildSandboxEnv } from '../sandbox-env';
 import { SHIPROOM_TOOL_NAMES } from '../builtin-tools/types';
+import { PPTX_EDITOR_TOOL_NAMES } from '../builtin-tools/types';
 import { isShiproomPythonAvailable } from '../builtin-tools/shiproom';
+import { isPptxEditorPythonAvailable } from '../builtin-tools/pptx-editor';
 
 const SESSION_DESKTOP_TOOL_NAMES = [
   'session_create',
@@ -28,12 +30,14 @@ const ADVERTISED_DESKTOP_TOOL_NAMES = new Set([
   'remote_configure_mcp_server',
   ...SESSION_DESKTOP_TOOL_NAMES,
   ...(isShiproomPythonAvailable() ? SHIPROOM_TOOL_NAMES : []),
+  ...(isPptxEditorPythonAvailable() ? PPTX_EDITOR_TOOL_NAMES : []),
 ]);
 
 const EXTERNAL_MCP_CONNECT_TIMEOUT_MS = 5 * 60 * 1000;
 const EXTERNAL_MCP_LIST_TOOLS_TIMEOUT_MS = 5 * 60 * 1000;
 const COMPUTER_USE_SERVER_NAME = 'computer-use';
 const SHIPROOM_SERVER_NAME = 'shiproom';
+const PPTX_EDITOR_SERVER_NAME = 'pptx-editor';
 
 function getEnabledDesktopToolNames(): Set<string> {
   const config = getBuiltInToolsSecurityConfig();
@@ -63,6 +67,15 @@ function getEnabledDesktopToolNames(): Set<string> {
     }
   }
 
+  // PPTX Editor tools — promoted to built-in when pptx-editor MCP server is injected
+  if (isPptxEditorPythonAvailable()) {
+    for (const toolName of PPTX_EDITOR_TOOL_NAMES) {
+      if (isDesktopToolPublishedForPermissionProfile(config.permissionProfile, toolName)) {
+        enabledTools.add(toolName);
+      }
+    }
+  }
+
   return enabledTools;
 }
 
@@ -71,9 +84,10 @@ function filterExternalServersByPermissionProfile(
 ): ManagedClientExternalMcpServerConfig[] {
   const permissionProfile = getBuiltInToolsSecurityConfig().permissionProfile;
   return serverConfigs.filter((serverConfig) => {
-    // computer-use and shiproom are promoted to built-in — always allow through.
+    // computer-use, shiproom, and pptx-editor are promoted to built-in — always allow through.
     if (serverConfig.name === COMPUTER_USE_SERVER_NAME) return true;
     if (serverConfig.name === SHIPROOM_SERVER_NAME) return true;
+    if (serverConfig.name === PPTX_EDITOR_SERVER_NAME) return true;
     return getExternalMcpAccessDecision(
       permissionProfile,
       serverConfig.transport,
@@ -446,8 +460,8 @@ export class ManagedClientMcpToolRegistry {
       });
     }
 
-    // Inject computer-use and shiproom tools as built-in (source: 'local') when available
-    const builtInServerNames = [COMPUTER_USE_SERVER_NAME, SHIPROOM_SERVER_NAME];
+    // Inject computer-use, shiproom, and pptx-editor tools as built-in (source: 'local') when available
+    const builtInServerNames = [COMPUTER_USE_SERVER_NAME, SHIPROOM_SERVER_NAME, PPTX_EDITOR_SERVER_NAME];
     for (const serverName of builtInServerNames) {
       const builtInServer = this.externalServers.find((s) => s.config.name === serverName);
       if (!builtInServer) continue;

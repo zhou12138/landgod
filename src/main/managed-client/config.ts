@@ -21,6 +21,12 @@ import {
   getShiproomEnv,
   SHIPROOM_TOOL_NAMES,
 } from '../builtin-tools/shiproom';
+import {
+  isPptxEditorPythonAvailable,
+  getPptxEditorPythonCommand,
+  getPptxEditorPythonPath,
+  PPTX_EDITOR_TOOL_NAMES,
+} from '../builtin-tools/pptx-editor';
 
 export type ToolCallApprovalMode = 'auto' | 'manual';
 
@@ -384,9 +390,15 @@ export function getEffectiveMcpServersForDisplay(): Record<string, ManagedClient
     parseBooleanFlag(process.env.DISABLE_COMPUTER_USE)
     || fileConfig.enableComputerUse === false;
   const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
-  if (!shouldInjectComputerUse) return userMcpConfig;
-  return {
-    'computer-use': {
+
+  const disablePptxEditor =
+    parseBooleanFlag(process.env.DISABLE_PPTX_EDITOR);
+  const shouldInjectPptxEditor = !disablePptxEditor && !userMcpConfig['pptx-editor'] && isPptxEditorPythonAvailable();
+
+  const injected: Record<string, ManagedClientFileMcpServerConfig> = {};
+
+  if (shouldInjectComputerUse) {
+    injected['computer-use'] = {
       command: getPythonCommand(),
       args: ['-m', 'landgod_computer_use'],
       env: { PYTHONPATH: getComputerUsePythonPath() },
@@ -394,7 +406,24 @@ export function getEffectiveMcpServersForDisplay(): Record<string, ManagedClient
       trustLevel: 'trusted' as const,
       publishedRemotely: true,
       enabled: true,
-    },
+    };
+  }
+
+  if (shouldInjectPptxEditor) {
+    injected['pptx-editor'] = {
+      command: getPptxEditorPythonCommand(),
+      args: ['-m', 'landgod_pptx_editor'],
+      env: { PYTHONPATH: getPptxEditorPythonPath() },
+      tools: [...PPTX_EDITOR_TOOL_NAMES],
+      trustLevel: 'trusted' as const,
+      publishedRemotely: true,
+      enabled: true,
+    };
+  }
+
+  if (Object.keys(injected).length === 0) return userMcpConfig;
+  return {
+    ...injected,
     ...userMcpConfig,
   };
 }
@@ -662,6 +691,27 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
       publishedRemotely: true,
       enabled: true,
       requiredPermissionProfile: 'full-local-admin' as const,
+    };
+  }
+
+  // Built-in pptx-editor MCP server: auto-injected on Windows when Python + pywin32 available.
+  const disablePptxEditor =
+    hasArg(args, '--disable-pptx-editor')
+    || parseBooleanFlag(process.env.DISABLE_PPTX_EDITOR);
+
+  const shouldInjectPptxEditor = !disablePptxEditor && !userMcpConfig['pptx-editor'] && isPptxEditorPythonAvailable();
+  console.log('[config] getManagedClientRuntimeConfig pptx-editor:', { disablePptxEditor, hasUserPptxEditor: Boolean(userMcpConfig['pptx-editor']), pythonAvailable: isPptxEditorPythonAvailable(), shouldInject: shouldInjectPptxEditor });
+
+  if (shouldInjectPptxEditor) {
+    injectedConfigs['pptx-editor'] = {
+      command: getPptxEditorPythonCommand(),
+      args: ['-m', 'landgod_pptx_editor'],
+      env: { PYTHONPATH: getPptxEditorPythonPath() },
+      tools: [...PPTX_EDITOR_TOOL_NAMES],
+      trustLevel: 'trusted' as const,
+      publishedRemotely: true,
+      enabled: true,
+      requiredPermissionProfile: 'command-only' as const,
     };
   }
 
