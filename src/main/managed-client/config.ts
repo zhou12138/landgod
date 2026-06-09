@@ -715,7 +715,12 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     injectedConfigs['pptx-editor'] = {
       command: getPptxEditorPythonCommand(),
       args: ['-m', 'landgod_pptx_editor'],
-      env: { PYTHONPATH: getPptxEditorPythonPath(), PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' },
+      env: {
+        PYTHONPATH: getPptxEditorPythonPath(),
+        PYTHONUTF8: '1',
+        PYTHONIOENCODING: 'utf-8',
+        ...(process.env.PPTX_EDITOR_BACKEND ? { PPTX_EDITOR_BACKEND: process.env.PPTX_EDITOR_BACKEND } : {}),
+      },
       tools: [...PPTX_EDITOR_TOOL_NAMES],
       trustLevel: 'trusted' as const,
       publishedRemotely: true,

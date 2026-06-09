@@ -1,26 +1,34 @@
 """
 LandGod PPTX Editor MCP Server
 ===============================
-PowerPoint COM-based MCP server providing pptx_open, pptx_inspect,
+PowerPoint MCP server providing pptx_open, pptx_inspect,
 pptx_exec_actions, pptx_save, and pptx_close tools for Windows desktop
-PowerPoint automation via COM (pywin32).
+PowerPoint automation.
 
-Stateful — keeps a single PowerPointCOM connection alive across tool calls.
+Supports two backends:
+  - pywin32 (default): Direct COM automation via win32com — zero config, flexible
+  - vba: VBA macro bridge via Application.Run — 10-20x faster for inspect/batch ops
+
+Backend selection: pptx_open(backend="vba") or env PPTX_EDITOR_BACKEND=vba
+
+Stateful — keeps a single COM connection alive across tool calls.
 
 Install: pip install landgod-pptx-editor
 Run:     python -m landgod_pptx_editor
 """
 import json
+import os
 import sys
 import logging
 
 logger = logging.getLogger("landgod-pptx-editor")
 
 # ============================================
-# Stateful globals — one COM instance at a time
+# Stateful globals — one instance at a time
 # ============================================
-_ppt = None        # PowerPointCOM instance (or None)
-_filepath = None   # Currently open file path
+_ppt = None          # PowerPointCOM or PowerPointVBA instance (or None)
+_filepath = None     # Currently open file path
+_backend_name = None # "pywin32" or "vba"
 _com_initialized = False
 
 
@@ -28,15 +36,24 @@ _com_initialized = False
 # Tool Implementations
 # ============================================
 
+def _get_default_backend() -> str:
+    """Get default backend from env or fall back to 'pywin32'."""
+    return os.environ.get("PPTX_EDITOR_BACKEND", "pywin32").lower()
+
+
 def tool_pptx_open(arguments: dict) -> dict:
-    """Open a PPTX file via COM."""
-    global _ppt, _filepath, _com_initialized
+    """Open a PPTX file via COM (pywin32 or VBA backend)."""
+    global _ppt, _filepath, _backend_name, _com_initialized
 
     filepath = arguments.get("filepath")
     if not filepath:
         return {"success": False, "error": "filepath is required"}
 
     visible = arguments.get("visible", False)
+    backend = arguments.get("backend", _get_default_backend())
+
+    if backend not in ("pywin32", "vba"):
+        return {"success": False, "error": f"Unknown backend '{backend}'. Use 'pywin32' or 'vba'."}
 
     try:
         # Close previous if open
@@ -47,6 +64,7 @@ def tool_pptx_open(arguments: dict) -> dict:
                 pass
             _ppt = None
             _filepath = None
+            _backend_name = None
 
         # COM needs CoInitialize on the thread (Windows only)
         if not _com_initialized:
@@ -55,15 +73,21 @@ def tool_pptx_open(arguments: dict) -> dict:
                 pythoncom.CoInitialize()
                 _com_initialized = True
             except ImportError:
-                pass  # Not on Windows — COM won't work anyway
+                pass  # Not on Windows -- COM won't work anyway
             except Exception:
                 pass
 
-        from .pptx_editor_com import PowerPointCOM
-        ppt = PowerPointCOM(visible=visible)
+        if backend == "vba":
+            from .ppt_backend import PowerPointVBA
+            ppt = PowerPointVBA(visible=visible)
+        else:
+            from .pptx_editor_com import PowerPointCOM
+            ppt = PowerPointCOM(visible=visible)
+
         ppt.open(filepath)
         _ppt = ppt
         _filepath = filepath
+        _backend_name = backend
 
         # Return structure for immediate context
         try:
@@ -74,6 +98,7 @@ def tool_pptx_open(arguments: dict) -> dict:
         return {
             "success": True,
             "filepath": filepath,
+            "backend": backend,
             "visible": visible,
             "structure": structure,
         }
@@ -101,7 +126,7 @@ def tool_pptx_inspect(arguments: dict) -> dict:
 
 def tool_pptx_exec_actions(arguments: dict) -> dict:
     """Execute batch JSON actions on the open presentation."""
-    global _ppt, _filepath
+    global _ppt, _filepath, _backend_name
 
     if _ppt is None:
         return {"success": False, "error": "No presentation open. Use pptx_open first."}
@@ -122,34 +147,56 @@ def tool_pptx_exec_actions(arguments: dict) -> dict:
     if not isinstance(actions, list):
         return {"success": False, "error": f"actions must be an array, got {type(actions).__name__}"}
 
-    from .pptx_editor_llm import _dispatch
-
     results = []
-    for i, act in enumerate(actions):
-        action = act.get("action", "")
-        slide = act.get("slide")
-        target = act.get("target", {})
-        params = act.get("params", {})
 
-        try:
-            result = _dispatch(_ppt, action, slide, target, params)
-            results.append({
-                "index": i + 1,
-                "action": action,
-                "success": True,
-                "result": str(result) if result is not None else "ok",
-            })
-        except Exception as e:
-            results.append({
-                "index": i + 1,
-                "action": action,
-                "success": False,
-                "error": str(e),
-            })
+    if _backend_name == "vba":
+        # VBA backend: route through Application.Run("ExecuteActionJson")
+        for i, act in enumerate(actions):
+            try:
+                result = _ppt.execute_action(act)
+                results.append({
+                    "index": i + 1,
+                    "action": act.get("action", ""),
+                    "success": True,
+                    "result": str(result) if result is not None else "ok",
+                })
+            except Exception as e:
+                results.append({
+                    "index": i + 1,
+                    "action": act.get("action", ""),
+                    "success": False,
+                    "error": str(e),
+                })
+    else:
+        # pywin32 backend: use _dispatch from pptx_editor_llm
+        from .pptx_editor_llm import _dispatch
+
+        for i, act in enumerate(actions):
+            action = act.get("action", "")
+            slide = act.get("slide")
+            target = act.get("target", {})
+            params = act.get("params", {})
+
+            try:
+                result = _dispatch(_ppt, action, slide, target, params)
+                results.append({
+                    "index": i + 1,
+                    "action": action,
+                    "success": True,
+                    "result": str(result) if result is not None else "ok",
+                })
+            except Exception as e:
+                results.append({
+                    "index": i + 1,
+                    "action": action,
+                    "success": False,
+                    "error": str(e),
+                })
 
     return {
         "success": True,
         "total": len(actions),
+        "backend": _backend_name or "pywin32",
         "results": results,
     }
 
@@ -433,7 +480,7 @@ RGB→BGR 转换公式: BGR = R + G*256 + B*65536"""
 
 def tool_pptx_close(arguments: dict) -> dict:
     """Close the presentation and clean up COM."""
-    global _ppt, _filepath
+    global _ppt, _filepath, _backend_name
 
     if _ppt is None:
         return {"success": True, "message": "No presentation was open."}
@@ -444,12 +491,14 @@ def tool_pptx_close(arguments: dict) -> dict:
         logger.warning("Error closing COM: %s", e)
 
     closed_path = _filepath
+    closed_backend = _backend_name
     _ppt = None
     _filepath = None
+    _backend_name = None
 
     return {
         "success": True,
-        "message": f"Closed {closed_path}",
+        "message": f"Closed {closed_path} (backend: {closed_backend})",
     }
 
 
@@ -463,7 +512,10 @@ TOOLS = {
         "description": (
             "Open a PowerPoint file (.pptx) via COM automation. "
             "Returns the presentation structure (slides, shapes, text). "
-            "Only one file can be open at a time — opening a new file closes the previous one."
+            "Only one file can be open at a time — opening a new file closes the previous one. "
+            "Backend 'pywin32' (default) uses direct COM calls; "
+            "'vba' uses VBA macro bridge (10-20x faster for inspect/batch ops, "
+            "requires Trust Center macro access enabled)."
         ),
         "inputSchema": {
             "type": "object",
@@ -476,6 +528,15 @@ TOOLS = {
                     "type": "boolean",
                     "default": False,
                     "description": "Whether to show the PowerPoint window. Default false (hidden).",
+                },
+                "backend": {
+                    "type": "string",
+                    "enum": ["pywin32", "vba"],
+                    "description": (
+                        "COM backend to use. 'pywin32' (default): direct COM, zero config. "
+                        "'vba': VBA macro bridge, 10-20x faster but requires Trust Center macro access. "
+                        "Can also be set via env PPTX_EDITOR_BACKEND."
+                    ),
                 },
             },
             "required": ["filepath"],
