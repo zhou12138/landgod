@@ -82,5 +82,77 @@ export function getPptxEditorPythonPath(): string {
   return getPptxEditorMcpRoot();
 }
 
+// ── C# / .NET SDK detection ─────────────────────────────────────────────────
+
+let cachedDotnetVersion: string | false | undefined;
+
+/**
+ * Detect .NET SDK availability (needed for csharp backend auto-build).
+ * Returns the version string or false.
+ */
+function detectDotnetSdk(): string | false {
+  if (cachedDotnetVersion !== undefined) {
+    return cachedDotnetVersion;
+  }
+  try {
+    const out = execSync('dotnet --version', { timeout: 10000, stdio: 'pipe' });
+    cachedDotnetVersion = out.toString().trim();
+    return cachedDotnetVersion;
+  } catch {
+    cachedDotnetVersion = false;
+    return false;
+  }
+}
+
+/**
+ * Check if the C# host exe is already built (skip build detection noise).
+ */
+function isCSharpHostBuilt(): boolean {
+  const root = getPptxEditorMcpRoot();
+  const hostDir = path.join(root, 'csharp_host', 'PptInteropHost', 'bin');
+  if (!fs.existsSync(hostDir)) return false;
+  // Check common build output paths
+  for (const cfg of ['Release', 'Debug']) {
+    for (const tfm of ['net9.0-windows', 'net8.0-windows', 'net10.0-windows']) {
+      if (fs.existsSync(path.join(hostDir, cfg, tfm, 'PptInteropHost.exe'))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if the C# host source (.csproj) is bundled in the package.
+ */
+function isCSharpSourceBundled(): boolean {
+  const root = getPptxEditorMcpRoot();
+  return fs.existsSync(path.join(root, 'csharp_host', 'PptInteropHost', 'PptInteropHost.csproj'));
+}
+
+/**
+ * Log C# backend readiness during startup.
+ */
+export function logCSharpBackendStatus(): void {
+  if (process.platform !== 'win32') {
+    console.log('[pptx-editor] csharp backend: skipped (not Windows)');
+    return;
+  }
+
+  const hasCsproj = isCSharpSourceBundled();
+  const hostBuilt = isCSharpHostBuilt();
+  const dotnetVersion = detectDotnetSdk();
+
+  if (hostBuilt) {
+    console.log('[pptx-editor] csharp backend: ✅ ready (PptInteropHost.exe built)');
+  } else if (hasCsproj && dotnetVersion) {
+    console.log(`[pptx-editor] csharp backend: ⏳ will auto-build on first use (.NET SDK ${dotnetVersion})`);
+  } else if (hasCsproj && !dotnetVersion) {
+    console.log('[pptx-editor] csharp backend: ⚠️  .NET SDK not found — install with: winget install Microsoft.DotNet.SDK.9');
+  } else {
+    console.log('[pptx-editor] csharp backend: ❌ source not bundled');
+  }
+}
+
 // Re-export tool names from types (which is renderer-safe, no Node.js imports)
 export { PPTX_EDITOR_TOOL_NAMES } from './types';

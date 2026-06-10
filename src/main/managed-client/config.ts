@@ -26,6 +26,7 @@ import {
   getPptxEditorPythonCommand,
   getPptxEditorPythonPath,
   PPTX_EDITOR_TOOL_NAMES,
+  logCSharpBackendStatus,
 } from '../builtin-tools/pptx-editor';
 
 export type ToolCallApprovalMode = 'auto' | 'manual';
@@ -744,6 +745,7 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
       enabled: true,
       requiredPermissionProfile: 'command-only' as const,
     };
+    logCSharpBackendStatus();
   }
 
   const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = {

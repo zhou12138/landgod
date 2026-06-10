@@ -133,6 +133,26 @@ internal static class Program
             case "append_notes":
                 return AppendNotes(GetInt(req, "slide", 1), GetStr(req, "text", ""), GetStr(req, "separator", "\n"));
 
+            case "slide_count":
+                return SlideCount();
+
+            case "slide_image":
+            {
+                int slide = GetInt(req, "slide", 1);
+                string path = GetStr(req, "path", "");
+                int width = GetInt(req, "width", 1920);
+                int height = GetInt(req, "height", 1080);
+                _prs.Slides[slide].Export(path, "PNG", width, height);
+                return new Dictionary<string, object>
+                {
+                    ["path"] = path,
+                    ["slide"] = slide,
+                    ["total_slides"] = SlideCount(),
+                    ["width"] = width,
+                    ["height"] = height,
+                };
+            }
+
             case "close":
             case "quit":
                 quit = true;

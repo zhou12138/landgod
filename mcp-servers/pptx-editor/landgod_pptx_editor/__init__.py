@@ -599,7 +599,10 @@ def tool_pptx_slide_image(arguments: dict) -> dict:
     quality = arguments.get("quality", 60)
 
     try:
-        total = int(_ppt.prs.Slides.Count)
+        if _backend_name == "csharp":
+            total = int(_ppt.get_slide_count())
+        else:
+            total = int(_ppt.prs.Slides.Count)
         if slide < 1 or slide > total:
             return {"success": False, "error": f"Slide {slide} out of range (1-{total})."}
 
@@ -608,7 +611,10 @@ def tool_pptx_slide_image(arguments: dict) -> dict:
         # Use 1920 width for initial export (high quality source)
         export_w = 1920
         export_h = 1080
-        _ppt.prs.Slides(slide).Export(os.path.abspath(tmp_path), "PNG", export_w, export_h)
+        if _backend_name == "csharp":
+            _ppt.export_slide_image(slide, os.path.abspath(tmp_path), export_w, export_h)
+        else:
+            _ppt.prs.Slides(slide).Export(os.path.abspath(tmp_path), "PNG", export_w, export_h)
 
         if not os.path.exists(tmp_path):
             return {"success": False, "error": f"Export failed — file not created: {tmp_path}"}

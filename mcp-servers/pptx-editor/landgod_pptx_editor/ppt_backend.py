@@ -251,6 +251,20 @@ class PowerPointCSharp:
     def execute_action(self, action_payload):
         return self._rpc({"cmd": "execute_action", "action": action_payload})
 
+    def get_slide_count(self):
+        """Return the number of slides in the open presentation."""
+        return self._rpc({"cmd": "slide_count"})
+
+    def export_slide_image(self, slide, path, width=1920, height=1080):
+        """Export a slide to a PNG image file via the C# host."""
+        return self._rpc({
+            "cmd": "slide_image",
+            "slide": int(slide),
+            "path": path,
+            "width": width,
+            "height": height,
+        })
+
     def execute_code(self, code):
         """Execute a C# script in-process against PptApi (CodeAct pattern).
 
