@@ -53,13 +53,57 @@ def create_backend(name="pywin32", visible=False, vba_module="PptEditorBridge", 
     raise ValueError(f"不支持的 backend: {name}")
 
 
+def _find_csharp_project():
+    """Locate the .csproj file for PptInteropHost (bundled with the package)."""
+    cur = os.path.dirname(os.path.abspath(__file__))
+    for _ in range(6):
+        for proj_dir in ("csharp_host", "csharp_interop"):
+            csproj = os.path.join(cur, proj_dir, "PptInteropHost", "PptInteropHost.csproj")
+            if os.path.isfile(csproj):
+                return os.path.dirname(csproj)
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return None
+
+
+def _auto_build_csharp_host(project_dir):
+    """Run ``dotnet build`` and return the exe path, or raise on failure."""
+    print("🔨 首次使用 C# 后端，正在自动构建 PptInteropHost ...")
+    try:
+        result = subprocess.run(
+            ["dotnet", "build", project_dir, "-c", "Release", "--nologo", "-v", "q"],
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"dotnet build 失败 (exit {result.returncode}):\n{result.stderr or result.stdout}"
+            )
+    except FileNotFoundError:
+        raise RuntimeError(
+            "找不到 dotnet CLI。请先安装 .NET SDK:\n"
+            "  winget install Microsoft.DotNet.SDK.9\n"
+            "  或 https://dotnet.microsoft.com/download"
+        )
+    # Find the built exe
+    bin_dir = os.path.join(project_dir, "bin")
+    for cfg in ("Release", "Debug"):
+        for tfm in ("net9.0-windows", "net8.0-windows", "net10.0-windows"):
+            exe = os.path.join(bin_dir, cfg, tfm, "PptInteropHost.exe")
+            if os.path.isfile(exe):
+                print(f"✅ 构建完成: {exe}")
+                return exe
+    raise RuntimeError(f"dotnet build 成功但找不到输出 exe (搜索目录: {bin_dir})")
+
+
 def _resolve_csharp_host():
     """Locate the C# Interop host exe (PptInteropHost.exe).
 
-    Search order: PPTX_EDITOR_CSHARP_HOST env var, then walk up from this file
-    looking for either a bundled/published host (``csharp_host/PptInteropHost.exe``,
-    used by the installed skill) or a dev build output
-    (``csharp_interop/PptInteropHost/bin/<cfg>/<tfm>/PptInteropHost.exe``).
+    Search order:
+    1. PPTX_EDITOR_CSHARP_HOST env var
+    2. Pre-built exe in csharp_host/ or csharp_interop/ (walk up from this file)
+    3. Auto-build: find .csproj and run ``dotnet build`` (lazy first-use build)
     """
     env = os.environ.get("PPTX_EDITOR_CSHARP_HOST")
     if env and os.path.isfile(env):
@@ -84,6 +128,11 @@ def _resolve_csharp_host():
         if parent == cur:
             break
         cur = parent
+
+    # Not found — try auto-build
+    project_dir = _find_csharp_project()
+    if project_dir:
+        return _auto_build_csharp_host(project_dir)
     return None
 
 
@@ -108,8 +157,8 @@ class PowerPointCSharp:
         self.host_exe = host_exe or _resolve_csharp_host()
         if not self.host_exe or not os.path.isfile(self.host_exe):
             raise RuntimeError(
-                "找不到 C# host (PptInteropHost.exe)。请先构建:\n"
-                "  dotnet build csharp_interop/PptInteropHost -c Release\n"
+                "找不到 C# host (PptInteropHost.exe) 且自动构建失败。\n"
+                "请确认已安装 .NET SDK (winget install Microsoft.DotNet.SDK.9)\n"
                 "或用环境变量 PPTX_EDITOR_CSHARP_HOST 指定 exe 路径。"
             )
         self.proc = subprocess.Popen(
