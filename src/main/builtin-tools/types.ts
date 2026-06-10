@@ -21,6 +21,7 @@ export const PPTX_EDITOR_TOOL_NAMES = [
   'pptx_open',
   'pptx_inspect',
   'pptx_exec_actions',
+  'pptx_exec_code',
   'pptx_save',
   'pptx_switch',
   'pptx_slide_image',

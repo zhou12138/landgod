@@ -202,6 +202,18 @@ class PowerPointCSharp:
     def execute_action(self, action_payload):
         return self._rpc({"cmd": "execute_action", "action": action_payload})
 
+    def execute_code(self, code):
+        """Execute a C# script in-process against PptApi (CodeAct pattern).
+
+        The script runs inside the C# host process with PptApi globals (App, Prs,
+        SlideCount, Title(), SetText(), SetFont(), etc.). All N operations collapse
+        into a single stdin/stdout round-trip.
+
+        Returns the Print() output captured during script execution.
+        """
+        result = self._rpc({"cmd": "execute_code", "code": code})
+        return result
+
 
 def _resolve_powerpnt_exe():
     """Locate POWERPNT.EXE for launching an interactive PowerPoint instance

@@ -2,14 +2,15 @@
 LandGod PPTX Editor MCP Server
 ===============================
 PowerPoint MCP server providing pptx_open, pptx_inspect,
-pptx_exec_actions, pptx_save, and pptx_close tools for Windows desktop
-PowerPoint automation.
+pptx_exec_actions, pptx_exec_code, pptx_save, and pptx_close tools
+for Windows desktop PowerPoint automation.
 
-Supports two backends:
+Supports three backends:
   - pywin32 (default): Direct COM automation via win32com — zero config, flexible
   - vba: VBA macro bridge via Application.Run — 10-20x faster for inspect/batch ops
+  - csharp: C# Interop host with CodeAct — LLM generates C# scripts, 1 round-trip
 
-Backend selection: pptx_open(backend="vba") or env PPTX_EDITOR_BACKEND=vba
+Backend selection: pptx_open(backend="csharp") or env PPTX_EDITOR_BACKEND=csharp
 
 Stateful — keeps a single COM connection alive across tool calls.
 
@@ -55,8 +56,8 @@ def tool_pptx_open(arguments: dict) -> dict:
     visible = arguments.get("visible", False)
     backend = arguments.get("backend", _get_default_backend())
 
-    if backend not in ("pywin32", "vba"):
-        return {"success": False, "error": f"Unknown backend '{backend}'. Use 'pywin32' or 'vba'."}
+    if backend not in ("pywin32", "vba", "csharp"):
+        return {"success": False, "error": f"Unknown backend '{backend}'. Use 'pywin32', 'vba', or 'csharp'."}
 
     try:
         # Close previous if open
@@ -99,6 +100,10 @@ def tool_pptx_open(arguments: dict) -> dict:
                 ppt.open(filepath)
                 backend = "pywin32"
                 fallback_used = True
+        elif backend == "csharp":
+            from .ppt_backend import PowerPointCSharp
+            ppt = PowerPointCSharp(visible=visible)
+            ppt.open(filepath)
         else:
             from .pptx_editor_com import PowerPointCOM
             ppt = PowerPointCOM(visible=visible)
@@ -195,12 +200,12 @@ def tool_pptx_exec_actions(arguments: dict) -> dict:
 
     results = []
 
-    if _backend_name == "vba":
-        # VBA backend: route through Application.Run("ExecuteActionJson")
+    if _backend_name in ("vba", "csharp"):
+        # VBA/C# backend: route through backend's execute_action()
         for i, act in enumerate(actions):
             try:
                 slide_num = act.get("slide")
-                if slide_num is not None:
+                if slide_num is not None and _backend_name == "vba":
                     _goto_slide(slide_num)
                 result = _ppt.execute_action(act)
                 results.append({
@@ -672,6 +677,39 @@ def tool_pptx_close(arguments: dict) -> dict:
     }
 
 
+def tool_pptx_exec_code(arguments: dict) -> dict:
+    """Execute a C# script against the open presentation (CodeAct pattern).
+
+    Only works with the 'csharp' backend. The script runs inside the C# host
+    process with PptApi as globals — all operations happen in one round-trip.
+    """
+    global _ppt, _backend_name
+
+    if _ppt is None:
+        return {"success": False, "error": "No presentation open. Use pptx_open first."}
+
+    if _backend_name != "csharp":
+        return {
+            "success": False,
+            "error": f"pptx_exec_code requires backend='csharp', current backend is '{_backend_name}'. "
+                     f"Re-open with pptx_open(backend='csharp').",
+        }
+
+    code = arguments.get("code")
+    if not code:
+        return {"success": False, "error": "code is required"}
+
+    try:
+        result = _ppt.execute_code(code)
+        return {
+            "success": True,
+            "backend": "csharp",
+            "result": result,
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ============================================
 # MCP Server Protocol (stdio JSON-RPC)
 # ============================================
@@ -768,6 +806,74 @@ TOOLS = {
                 },
             },
             "required": ["actions"],
+        },
+    },
+    "pptx_exec_code": {
+        "name": "pptx_exec_code",
+        "description": (
+            "Execute a C# script against the open presentation (CodeAct). "
+            "Requires backend='csharp'. The script runs in-process with PptApi globals — "
+            "all operations collapse into ONE round-trip (vs N round-trips with pptx_exec_actions).\n\n"
+            "## PptApi Reference (available as globals in your script)\n\n"
+            "### Output\n"
+            "- `Print(msg)` — append to script output (returned as result.output)\n\n"
+            "### Navigation\n"
+            "- `SlideCount` — number of slides\n"
+            "- `Slide(i)` — get slide by 1-based index\n"
+            "- `Shape(slide, idx)` — shape by 1-based slide+shape index\n"
+            "- `ShapeCount(slide)` — number of shapes on slide\n"
+            "- `Title(slide)` — first title placeholder (or null)\n"
+            "- `FindByText(slide, contains)` — first shape containing text (or null)\n"
+            "- `FindByName(slide, name)` — first shape with matching Name (or null)\n"
+            "- `FindById(slide, id)` — first shape with matching Id (or null)\n\n"
+            "### Text & Font\n"
+            "- `SetText(shp, text)` — replace shape text\n"
+            "- `GetText(shp)` — read shape text\n"
+            "- `SetFont(shp, size?, bold?, italic?, colorBgr?, name?)` — modify font\n\n"
+            "### Geometry (units: points, 72pt = 1 inch)\n"
+            "- `Move(shp, left, top)` — reposition shape\n"
+            "- `Resize(shp, width, height)` — resize shape\n\n"
+            "### Appearance\n"
+            "- `SetFill(shp, colorBgr)` — solid fill\n"
+            "- `SetBorder(shp, colorBgr, weight?)` — border\n"
+            "- `SetSlideBackground(slide, colorBgr)` — slide background\n\n"
+            "### Create\n"
+            "- `AddTextbox(slide, text, left, top, width, height)` — returns new shape\n\n"
+            "### Notes\n"
+            "- `SetNotes(slide, text)` — set speaker notes\n\n"
+            "### Raw COM (escape hatch for anything not wrapped)\n"
+            "- `App` — PowerPoint.Application COM object\n"
+            "- `Prs` — active Presentation COM object\n\n"
+            "### Colors: BGR! (red=0x0000FF, blue=0xFF0000)\n"
+            "### All indices: 1-based\n\n"
+            "## Example\n"
+            "```csharp\n"
+            "var t = Title(1);\n"
+            "if (t != null) {\n"
+            "    SetText(t, \"New Title\");\n"
+            "    SetFont(t, bold: true, colorBgr: 0x0000FF);\n"
+            "}\n"
+            "for (int i = 1; i <= SlideCount; i++) {\n"
+            "    var s = FindByText(i, \"TODO\");\n"
+            "    if (s != null) SetText(s, \"DONE\");\n"
+            "}\n"
+            "Print($\"Updated {SlideCount} slides\");\n"
+            "```"
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["code"],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "description": (
+                        "C# script to execute. Runs against PptApi globals (Print, SlideCount, Title, "
+                        "SetText, SetFont, Move, Resize, SetFill, SetBorder, AddTextbox, etc.). "
+                        "Use Print() for output. Can use loops, conditionals, LINQ. "
+                        "Access raw COM via App/Prs for anything not wrapped."
+                    ),
+                },
+            },
         },
     },
     "pptx_save": {
@@ -876,6 +982,7 @@ TOOL_HANDLERS = {
     "pptx_open": tool_pptx_open,
     "pptx_inspect": tool_pptx_inspect,
     "pptx_exec_actions": tool_pptx_exec_actions,
+    "pptx_exec_code": tool_pptx_exec_code,
     "pptx_save": tool_pptx_save,
     "pptx_switch": tool_pptx_switch,
     "pptx_slide_image": tool_pptx_slide_image,
