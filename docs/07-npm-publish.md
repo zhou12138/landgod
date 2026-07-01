@@ -58,7 +58,7 @@ npm view landgod
     ".vite/build/",
     ".vite/renderer/",
     "mcp-servers/",
-    "src/shiproom-mcp/"
+    "mcp-servers/shiproom-mcp/"
   ]
 }
 ```

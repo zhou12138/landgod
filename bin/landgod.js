@@ -25,9 +25,10 @@ function printUsage() {
   console.log('Commands:');
   console.log('  onboard                   Interactive setup wizard');
   console.log('  start                     Start worker daemon');
-  console.log('  start --ui [--demo]       Start in UI mode (foreground, with Electron GUI). --demo bypasses all security checks.');
-  console.log('  start [--demo]            Start in headless daemon mode.');
+  console.log('  start --ui [--demo]       Start in UI mode (foreground, with Electron GUI). --demo bypasses tool security checks.');
+  console.log('  start [--demo]            Start in headless daemon mode. --demo does not change approval mode.');
   console.log('  start --headless          Start in headless mode (no GUI, recommended for servers)');
+  console.log('  start --approval-mode <auto|manual>  Override tool call approval mode for this process.');
   console.log('  start --config <path>     Path to shiproom-config.yaml (overrides SHIPROOM_CONFIG env var)');
   console.log('  stop                      Stop worker daemon');
   console.log('  status                    Show worker status');
@@ -381,8 +382,24 @@ function ensureElectronBinary() {
 
 function buildHeadlessArgs() {
   const args = [ROOT_DIR, '--enable-managed-client-mcp-ws', '--managed-client-mcp-ws-only'];
-  if (process.argv.includes('--demo')) args.push('--demo');
+  args.push(...getForwardedRuntimeArgs());
   return args;
+}
+
+function getFlagValue(args, name) {
+  const inline = args.find((arg) => arg.startsWith(`${name}=`));
+  if (inline) return inline.slice(name.length + 1);
+  const index = args.indexOf(name);
+  return index >= 0 && args[index + 1] ? args[index + 1] : null;
+}
+
+function getForwardedRuntimeArgs() {
+  const forwarded = [];
+  if (process.argv.includes('--demo')) forwarded.push('--demo');
+  const approvalMode = getFlagValue(process.argv, '--approval-mode')
+    || getFlagValue(process.argv, '--tool-call-approval-mode');
+  if (approvalMode) forwarded.push('--approval-mode', approvalMode);
+  return forwarded;
 }
 
 function startDaemon(useHeadlessNode = false) {
@@ -417,12 +434,13 @@ function startDaemon(useHeadlessNode = false) {
     // 纯 Node.js headless 模式（无 Electron）
     const headlessEntry = path.join(ROOT_DIR, '.vite', 'build', 'headless-entry.js');
     const nodeCmd = process.execPath; // 当前 node 二进制
+    const nodeArgs = [headlessEntry, ...getForwardedRuntimeArgs()];
 
     if (!fileExists(headlessEntry)) {
       throw new Error(`Headless entry not found: ${headlessEntry}. Run build first or use --electron mode.`);
     }
 
-    child = spawn(nodeCmd, [headlessEntry], {
+    child = spawn(nodeCmd, nodeArgs, {
       cwd: ROOT_DIR,
       detached: true,
       stdio: ['ignore', logFd, logFd],
@@ -853,9 +871,8 @@ function launchUiMode() {
       'Run "npm run make" to build the app first, or run "npm run build" for a faster development build.',
     );
   }
-  const electronArgs = [ROOT_DIR, '--enable-managed-client-mcp-ws', '--managed-client-mode=managed-client-mcp-ws'];
+  const electronArgs = [ROOT_DIR, '--enable-managed-client-mcp-ws', '--managed-client-mode=managed-client-mcp-ws', ...getForwardedRuntimeArgs()];
   if (process.argv.includes('--demo')) {
-    electronArgs.push('--demo');
     console.log('[demo] Starting in demo mode — all security checks are disabled.');
   }
   const result = spawnSync(

@@ -17,6 +17,34 @@ _task_queue: list[dict] = []
 TASK_TTL = 3600  # 1 hour
 
 
+def _extract_tool_result_text(result: dict) -> str:
+    if not isinstance(result, dict):
+        return ""
+
+    text = (((result.get("payload") or {}).get("data") or {}).get("text"))
+    if isinstance(text, str):
+        return text
+
+    stdout = result.get("stdout") or result.get("output")
+    return stdout if isinstance(stdout, str) else ""
+
+
+def _extract_audit_entries(result: dict) -> list[dict]:
+    text = _extract_tool_result_text(result)
+    if not text:
+        return []
+
+    try:
+        parsed = json.loads(text)
+    except Exception:
+        return []
+
+    if isinstance(parsed, dict) and isinstance(parsed.get("entries"), list):
+        return [entry for entry in parsed["entries"] if isinstance(entry, dict)]
+
+    return []
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
@@ -311,16 +339,8 @@ async def audit(request: web.Request) -> web.Response:
 
     async def fetch_audit(t: dict) -> dict:
         try:
-            cmd = f'tail -n {limit} $(dirname $(node -e "console.log(require.resolve(\'landgod/package.json\'))" 2>/dev/null || echo "/tmp"))/.landgod-data/audit.jsonl 2>/dev/null || echo "[]"'
-            result = await gw.ws_handler.send_tool_call(t["connId"], "shell_execute", {"command": cmd}, timeout)
-            stdout = (result.get("payload", {}) if isinstance(result, dict) else {}).get("data", {}).get("stdout", "")
-            lines = [l for l in stdout.strip().split("\n") if l.startswith("{")]
-            entries = []
-            for l in lines:
-                try:
-                    entries.append(json.loads(l))
-                except Exception:
-                    pass
+            result = await gw.ws_handler.send_tool_call(t["connId"], "audit_read", {"limit": limit}, timeout)
+            entries = _extract_audit_entries(result)
             return {"clientName": t["clientName"], "entries": entries, "error": None}
         except Exception as e:
             return {"clientName": t["clientName"], "entries": [], "error": str(e)}

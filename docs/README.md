@@ -33,6 +33,13 @@ Read in order — each document builds on the previous one.
 | # | Document | Description | Prerequisites |
 |---|----------|-------------|---------------|
 | — | [Architecture](architecture.md) | Architecture analysis and comparison | — |
+| — | [Domain Glossary](08-domain-glossary.md) | Product and architecture vocabulary | — |
+| — | [Semantic Alignment Audit](09-semantic-alignment-audit.md) | Current wording vs mission framing | — |
+| — | [Worker MCP Discovery Sequence](10-worker-mcp-discovery-sequence.md) | Worker startup to MCP tool publication | — |
+| — | [MCP Directory Autodiscovery](11-mcp-directory-autodiscovery-design.md) | Manifest-based bundled MCP discovery | — |
+| — | [Gateway Architecture](12-gateway-architecture.md) | Gateway / MCPHub control plane architecture | — |
+| — | [Gateway Technical Guide](13-gateway-technical-guide.md) | Gateway implementation, APIs, and artifacts | — |
+| — | [LandGod / MCPHub Positioning](14-landgod-mcphub-positioning.md) | Product pitch, sales narrative, and messaging | — |
 | — | [GUI vs Headless](gui-vs-headless.md) | Worker run mode comparison | 06 |
 
 ## Additional Resources

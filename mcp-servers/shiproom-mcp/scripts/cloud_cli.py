@@ -41,7 +41,7 @@ from cloud_io import ShiproomCloud, get_identity, short_name  # noqa: E402
 #   1. --config <path>   (explicit CLI arg)
 #   2. <workspace>/shiproom-config.yaml          -- team override
 #   3. <skill>/shiproom-config.yaml              -- bundled default
-SKILL_ROOT = THIS.parent.parent           # shiproom-mcp/
+SKILL_ROOT = THIS.parent.parent           # mcp-servers/shiproom-mcp/
 WORKSPACE_ROOT = THIS.parents[3]          # repo root (parent of src/)
 WORKSPACE_CONFIG = WORKSPACE_ROOT / "shiproom-config.yaml"
 BUNDLED_CONFIG = SKILL_ROOT / "shiproom-config.yaml"

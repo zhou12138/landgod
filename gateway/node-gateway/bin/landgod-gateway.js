@@ -91,9 +91,12 @@ function startGateway(args) {
 
     ensureDir(dataDir);
 
-    // Parse --token argument
+    // Parse --token argument in both `--token value` and `--token=value` forms.
+    const inlineTokenArg = args.find(arg => arg.startsWith('--token='));
     const tokenIdx = args.indexOf('--token');
-    const tokenArg = tokenIdx >= 0 && args[tokenIdx + 1] ? args[tokenIdx + 1] : null;
+    const tokenArg = inlineTokenArg
+        ? inlineTokenArg.slice('--token='.length)
+        : (tokenIdx >= 0 && args[tokenIdx + 1] ? args[tokenIdx + 1] : null);
     
     const env = {
         ...process.env,

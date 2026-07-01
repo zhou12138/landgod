@@ -8,6 +8,7 @@ import { z } from 'zod';
 import type { Express, Request, Response } from 'express';
 import * as os from 'node:os';
 import type { SessionManager } from '../session/manager';
+import { auditLogger } from '../audit/logger';
 import { emitServerEvent } from '../server';
 import { getBuiltInToolsSecurityConfig } from '../managed-client/config';
 import { upsertManagedMcpServer } from '../managed-client/admin-tools';
@@ -401,6 +402,28 @@ export function createMcpServer(sessionManager: SessionManager, clientIp: string
           max_bytes_applied: maxBytes,
           truncated: buffer.byteLength > limited.byteLength,
         });
+      } catch (err) {
+        return error(String(err));
+      }
+    },
+  );
+
+  server.tool(
+    'audit_read',
+    'Read local audit log entries captured on the desktop machine.',
+    {
+      offset: z.number().int().min(0).optional().describe('Optional offset into reverse-chronological audit entries (default: 0)'),
+      limit: z.number().int().positive().max(500).optional().describe('Optional maximum number of entries to return (default: 50)'),
+      search: z.string().optional().describe('Optional case-insensitive search string applied to command/stdout/stderr'),
+    },
+    async ({ offset, limit, search }) => {
+      try {
+        const result = auditLogger.getEntries({
+          offset: offset ?? 0,
+          limit: limit ?? 50,
+          search,
+        });
+        return json(result);
       } catch (err) {
         return error(String(err));
       }

@@ -71,8 +71,14 @@ class Gateway:
         pass  # Single-token mode: no file persistence
 
     async def is_valid_token(self, token: str) -> bool:
-        """Single-token mode: only the startup auth_token is valid."""
-        return bool(token) and token == self.auth_token
+        """Accept the startup token and any active token created via the token APIs."""
+        if not token:
+            return False
+        if token == self.auth_token:
+            return True
+
+        token_info = await self.store.get_token(token)
+        return bool(token_info and token_info.get("active", True))
 
     async def start(self) -> None:
         """Start the gateway (WS + HTTP servers)."""

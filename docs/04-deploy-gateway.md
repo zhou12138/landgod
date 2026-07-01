@@ -3,7 +3,9 @@
 ## 前置要求
 
 - Node.js 18+（推荐 22）
-- Agent 所在机器
+- 一台 Agent 和 Worker 都可访问的机器
+
+> 当前 MVP/POC 阶段，建议调试和测试时将 Gateway 部署在 Agent 同机器上。
 
 ## 一键安装
 
@@ -71,6 +73,8 @@ HTTP API: http://localhost:8081
 ```
 
 Agent 用自带的 HTTP 能力调用即可，不需要安装 SDK。
+
+当前 Gateway 暂不对 Agent 的 HTTP API 请求做鉴权；启动参数里的 `--token` 用于 Worker 连接 Gateway。
 
 ## 开机自启（可选）
 

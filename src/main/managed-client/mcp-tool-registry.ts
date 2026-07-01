@@ -27,6 +27,7 @@ const SESSION_DESKTOP_TOOL_NAMES = [
 const ADVERTISED_DESKTOP_TOOL_NAMES = new Set([
   'shell_execute',
   'file_read',
+  'audit_read',
   'remote_configure_mcp_server',
   ...SESSION_DESKTOP_TOOL_NAMES,
   ...(isShiproomPythonAvailable() ? SHIPROOM_TOOL_NAMES : []),
@@ -52,6 +53,10 @@ function getEnabledDesktopToolNames(): Set<string> {
 
   if (config.fileRead.enabled && isDesktopToolPublishedForPermissionProfile(config.permissionProfile, 'file_read')) {
     enabledTools.add('file_read');
+  }
+
+  if (isDesktopToolPublishedForPermissionProfile(config.permissionProfile, 'audit_read')) {
+    enabledTools.add('audit_read');
   }
 
   if (config.managedMcpServerAdmin.enabled && isDesktopToolPublishedForPermissionProfile(config.permissionProfile, 'remote_configure_mcp_server')) {

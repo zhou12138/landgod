@@ -47,3 +47,80 @@ def test_memory_store():
         assert len(tokens) == 1
 
     asyncio.run(_run())
+
+
+def test_gateway_accepts_active_store_token():
+    from landgod_gateway_server.gateway import Gateway
+
+    async def _run():
+        gw = Gateway(auth_token="root-token")
+        await gw.store.set_token("worker-token", {"device_name": "worker-1", "active": True})
+
+        assert await gw.is_valid_token("root-token") is True
+        assert await gw.is_valid_token("worker-token") is True
+        assert await gw.is_valid_token("missing-token") is False
+
+        await gw.store.close()
+
+    asyncio.run(_run())
+
+
+@pytest.mark.asyncio
+async def test_cluster_route_tool_call_times_out_without_response():
+    from landgod_gateway_server.cluster import ClusterCoordinator
+
+    class FakePubSub:
+        async def subscribe(self, *_args):
+            return None
+
+        async def unsubscribe(self, *_args):
+            return None
+
+        async def aclose(self):
+            return None
+
+        async def listen(self):
+            while True:
+                await asyncio.sleep(1)
+                yield {"type": "subscribe"}
+
+    class FakeRedis:
+        def pubsub(self):
+            return FakePubSub()
+
+        async def publish(self, *_args):
+            return None
+
+    async def local_handler(*_args, **_kwargs):
+        return None
+
+    cluster = ClusterCoordinator("redis://unused")
+    cluster._redis = FakeRedis()
+    cluster._local_handler = local_handler
+
+    result = await cluster.route_tool_call("conn-1", "shell_execute", {}, timeout=50)
+    assert result is None
+
+
+def test_extract_audit_entries_from_tool_result_text():
+    from landgod_gateway_server.http_handler import _extract_audit_entries
+
+    audit_entries = [{"id": "1", "command": "hostname"}, {"id": "2", "command": "whoami"}]
+    tool_result = {
+        "type": "event",
+        "event": "tool_result_chunk",
+        "payload": {
+            "data": {
+                "text": json.dumps({"entries": audit_entries, "total": 2})
+            }
+        }
+    }
+
+    assert _extract_audit_entries(tool_result) == audit_entries
+
+
+def test_extract_audit_entries_returns_empty_on_invalid_payload():
+    from landgod_gateway_server.http_handler import _extract_audit_entries
+
+    assert _extract_audit_entries({"payload": {"data": {"text": "not-json"}}}) == []
+    assert _extract_audit_entries({"stdout": "plain text"}) == []

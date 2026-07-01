@@ -1,7 +1,7 @@
 {
   "id": "landgod",
   "name": "LandGod",
-  "description": "Remote device management — execute commands, browse files, take screenshots, and manage workers across distributed machines via LandGod Gateway",
+  "description": "Enterprise execution network — call tools, inspect workers, dispatch tasks, and audit execution through LandGod Gateway / MCPHub",
   "configSchema": {
     "type": "object",
     "properties": {

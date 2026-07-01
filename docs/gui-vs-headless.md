@@ -23,7 +23,7 @@
 | **内存占用** | ~200MB | ~50MB |
 | **跨平台** | 主要 Linux | ✅ Linux / macOS / Windows |
 | **Docker 友好** | ❌ 镜像 ~500MB | ✅ 镜像 ~80MB |
-| **功能差异** | 有状态面板、托盘图标 | 功能完全相同（无 UI） |
+| **功能差异** | 有状态面板、托盘图标，更适合本地交互/审批/登录态准备 | 核心 Worker 协议能力相同（无 UI） |
 | **远程管理能力** | 相同 | 相同 |
 | **MCP 插件支持** | 相同 | 相同 |
 | **适合场景** | 桌面开发机、需要可视化 | 服务器、容器、批量部署 |
@@ -46,7 +46,7 @@
 | 审计日志 | ✅ | ✅ |
 | 命令白名单 | ✅ | ✅ |
 
-**唯一区别是 GUI 模式多了一个 Electron 桌面窗口**，可以在本地查看状态、审计日志、活动日志等。这些信息在 Headless 模式下通过 CLI 命令同样可以查看：
+核心 Gateway/Worker 协议能力保持一致。GUI 模式多了一个 Electron 桌面窗口，可以在本地查看状态、审计日志、活动日志等。这些信息在 Headless 模式下通过 CLI 命令同样可以查看：
 
 ```bash
 landgod status          # 对应 GUI 的 Dashboard
@@ -69,7 +69,60 @@ Q: 你需要可视化状态面板吗？
   → 不需要 → Headless ✅（更轻量）
 ```
 
-**绝大多数场景选 Headless**。GUI 仅在需要本地可视化时使用。
+**绝大多数服务器场景选 Headless**。GUI 仅在需要本地可视化、交互式审批、登录态准备或真实桌面能力演示时使用。
+
+---
+
+## 企业机器 Demo 选择建议
+
+如果 Worker 要演示或执行依赖真实桌面会话的能力，建议使用有真实桌面 session 的模式：
+
+- PPT / Office 自动化：建议使用 GUI 或 Electron daemon，确保 Windows、Office、COM 和用户桌面会话可用。
+- `computer-use` 截图、点击、输入：建议使用 GUI 或带显示环境的 Electron daemon；Linux 服务器需要准备 `DISPLAY` / Xvfb。
+- 首次 Shiproom / Loop / Graph 登录：建议先在 GUI 或可见浏览器环境中完成登录态准备，再切换长期运行模式。
+
+如果 Worker 只是长期在线执行服务器型任务，优先使用：
+
+```bash
+landgod start --headless
+```
+
+典型服务器型任务包括：
+
+- shell 执行
+- 文件读取
+- 数据分析
+- 网络探测
+- 后台 MCP 工具
+- 不依赖可见桌面 session 的自动化
+
+一句话：**真实桌面能力 demo 用 GUI / Electron daemon；长期服务器 Worker 用 `landgod start --headless`。**
+
+### Tool Call Approval In Headless
+
+Tool call approval is controlled by `toolCallApprovalMode`, `LANDGOD_TOOL_CALL_APPROVAL_MODE`, or the startup override:
+
+```bash
+landgod start --headless --approval-mode auto
+landgod start --ui --approval-mode manual
+```
+
+`--demo` no longer controls approval. Use `--demo --approval-mode auto` when you want demo security behavior and automatic execution.
+
+`--tool-call-approval-mode` is still accepted as a compatibility alias, but `--approval-mode` is preferred.
+
+`toolCallApprovalMode=manual` 在不同 headless 形态下表现不同：
+
+- 前台 headless 且有交互式 TTY：会在启动控制台提示 `Approve? [y] once / [a] all / [n] reject`。
+- 后台 daemon / 没有 TTY：无法人工确认，工具调用会被明确拒绝，并提示改用 `toolCallApprovalMode auto` 或 GUI/Electron 模式。
+
+长期服务器 Worker 建议：
+
+```bash
+landgod config set toolCallApprovalMode auto
+```
+
+需要人工审批演示时，使用 GUI/Electron 模式，或者在交互式控制台中运行 headless。
 
 ---
 

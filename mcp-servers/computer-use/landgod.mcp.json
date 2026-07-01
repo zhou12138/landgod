@@ -1,0 +1,35 @@
+{
+  "name": "computer-use",
+  "kind": "bundled-mcp",
+  "transport": "stdio",
+  "commandStrategy": {
+    "type": "python-module",
+    "module": "landgod_computer_use",
+    "pythonPath": "${ROOT}"
+  },
+  "availability": {
+    "platforms": ["win32", "linux", "darwin"],
+    "python": true,
+    "import": "landgod_computer_use",
+    "exists": [
+      "landgod_computer_use/__init__.py"
+    ]
+  },
+  "publication": {
+    "enabled": true,
+    "publishedRemotely": true,
+    "trustLevel": "trusted",
+    "requiredPermissionProfile": "command-only"
+  },
+  "tools": [
+    "computer_screenshot",
+    "computer_click",
+    "computer_type",
+    "computer_scroll"
+  ],
+  "disable": {
+    "arg": "--disable-computer-use",
+    "env": "DISABLE_COMPUTER_USE",
+    "fileConfigFlagFalseDisables": "enableComputerUse"
+  }
+}

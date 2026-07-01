@@ -1,7 +1,7 @@
 /**
  * openclaw-plugin-landgod
  *
- * LandGod remote device management plugin for OpenClaw.
+ * LandGod execution network plugin for OpenClaw.
  * Registers tools that call the LandGod Gateway HTTP API.
  */
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
@@ -26,7 +26,7 @@ export default definePluginEntry({
   id: "landgod",
   name: "LandGod",
   description:
-    "Remote device management — execute commands across distributed machines",
+    "Enterprise execution network — dispatch tools through LandGod Gateway / MCPHub",
 
   register(api) {
     const gw = () =>
@@ -64,7 +64,7 @@ export default definePluginEntry({
     api.registerTool({
       name: "landgod_execute",
       description:
-        "Execute a shell command on a remote worker. Specify target by clientName or labels. Returns stdout, stderr, and exit code.",
+        "Execute a shell command on a worker execution node. Specify target by clientName or labels. Returns stdout, stderr, and exit code.",
       parameters: Type.Object({
         command: Type.String({ description: "Shell command to execute" }),
         clientName: Type.Optional(
@@ -212,7 +212,7 @@ export default definePluginEntry({
         }),
         async execute(_id, params) {
           const body: Record<string, unknown> = {
-            tool_name: "computer-use.computer_screenshot",
+            tool_name: "computer_screenshot",
             arguments: { max_width: params.maxWidth || 1024 },
           };
           if (params.clientName) body.clientName = params.clientName;
@@ -249,7 +249,7 @@ export default definePluginEntry({
         }),
         async execute(_id, params) {
           const body: Record<string, unknown> = {
-            tool_name: "computer-use.computer_click",
+            tool_name: "computer_click",
             arguments: { x: params.x, y: params.y, button: params.button, clicks: params.clicks },
           };
           if (params.clientName) body.clientName = params.clientName;
@@ -291,7 +291,7 @@ export default definePluginEntry({
           if (params.hotkey) args.hotkey = params.hotkey;
 
           const body: Record<string, unknown> = {
-            tool_name: "computer-use.computer_type",
+            tool_name: "computer_type",
             arguments: args,
           };
           if (params.clientName) body.clientName = params.clientName;
@@ -321,7 +321,7 @@ export default definePluginEntry({
         }),
         async execute(_id, params) {
           const body: Record<string, unknown> = {
-            tool_name: "computer-use.computer_scroll",
+            tool_name: "computer_scroll",
             arguments: { amount: params.amount, x: params.x, y: params.y },
           };
           if (params.clientName) body.clientName = params.clientName;
@@ -343,14 +343,14 @@ export default definePluginEntry({
     api.registerTool({
       name: "landgod_tool_call",
       description:
-        "Call ANY tool on a remote worker — shell_execute, file_read, browser_*, computer-use.*, or any custom MCP server tool. Use landgod_tools to discover available tools first.",
+        "Call ANY tool on a worker execution node — shell_execute, file_read, browser_*, computer_*, pptx_*, shiproom_*, or any custom MCP server tool. Use landgod_tools to discover available tools first.",
       parameters: Type.Object({
         clientName: Type.Optional(Type.String({ description: "Target worker name" })),
         labels: Type.Optional(
           Type.Record(Type.String(), Type.Union([Type.String(), Type.Boolean(), Type.Number()]))
         ),
         tool_name: Type.String({
-          description: "Tool name (e.g. shell_execute, file_read, computer-use.computer_screenshot)",
+          description: "Tool name (e.g. shell_execute, file_read, computer_screenshot, pptx_open, shiproom_fetch_loop)",
         }),
         arguments: Type.Optional(
           Type.Record(Type.String(), Type.Unknown(), {

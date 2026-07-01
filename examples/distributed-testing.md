@@ -2,6 +2,12 @@
 
 > Run the same tests across multiple OS, regions, and networks simultaneously. Compare results in one view.
 
+Mission fit:
+
+- execution happens where the environment really exists
+- network truth comes from the right region
+- the Agent does not need direct access to every test environment
+
 ## Scenario Setup
 
 ```
@@ -258,6 +264,8 @@ curl -X POST http://localhost:8081/batch_tool_call \
 
 **Use cases:**
 - Visual regression testing across regions
+- customer portal or supplier portal verification from the right geography
+- browser-backend validation where login state must stay on the worker node
 - Check if content differs by geo-location
 - Verify CDN is serving correct assets
 - Detect geo-blocking or censorship

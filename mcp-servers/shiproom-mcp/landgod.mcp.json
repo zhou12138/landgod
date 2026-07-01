@@ -1,0 +1,54 @@
+{
+  "name": "shiproom",
+  "kind": "bundled-mcp",
+  "transport": "stdio",
+  "commandStrategy": {
+    "type": "python-script",
+    "script": "server.py"
+  },
+  "availability": {
+    "platforms": ["win32", "linux", "darwin"],
+    "python": true,
+    "exists": [
+      "server.py",
+      "scripts/cloud_cli.py"
+    ]
+  },
+  "publication": {
+    "enabled": true,
+    "publishedRemotely": true,
+    "trustLevel": "trusted",
+    "requiredPermissionProfile": "full-local-admin"
+  },
+  "tools": [
+    "shiproom_login",
+    "shiproom_whoami",
+    "shiproom_status",
+    "shiproom_read",
+    "shiproom_list_history",
+    "shiproom_url",
+    "shiproom_update",
+    "shiproom_notes",
+    "shiproom_prep",
+    "shiproom_fetch_loop",
+    "shiproom_fetch_ocv",
+    "shiproom_fetch_notes",
+    "shiproom_split_loop",
+    "shiproom_upload_md",
+    "shiproom_archive",
+    "shiproom_render_view"
+  ],
+  "env": {
+    "SHIPROOM_SKILL_SCRIPTS": "${ROOT}/scripts",
+    "SHIPROOM_CONFIG": "${ROOT}/shiproom-config.yaml",
+    "PYTHONUTF8": "1"
+  },
+  "forwardProcessEnv": [
+    "SHIPROOM_SKILL_SCRIPTS",
+    "SHIPROOM_CONFIG"
+  ],
+  "disable": {
+    "arg": "--disable-shiproom",
+    "env": "DISABLE_SHIPROOM"
+  }
+}

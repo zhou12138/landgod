@@ -442,6 +442,37 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000) {
     });
 }
 
+function extractToolResultText(result) {
+    if (!result || typeof result !== 'object') {
+        return '';
+    }
+
+    const text = result?.payload?.data?.text;
+    if (typeof text === 'string') {
+        return text;
+    }
+
+    if (typeof result.stdout === 'string') return result.stdout;
+    if (typeof result.output === 'string') return result.output;
+    return '';
+}
+
+function extractAuditEntries(result) {
+    const text = extractToolResultText(result);
+    if (!text) {
+        return [];
+    }
+
+    try {
+        const parsed = JSON.parse(text);
+        if (parsed && Array.isArray(parsed.entries)) {
+            return parsed.entries.filter((entry) => entry && typeof entry === 'object');
+        }
+    } catch {}
+
+    return [];
+}
+
 // ========================
 // HTTP API (供主 Agent 调用)
 // ========================
@@ -689,11 +720,8 @@ const httpServer = http.createServer(async (req, res) => {
 
         const auditPromises = targets.map(async (t) => {
             try {
-                const result = await sendToolCall(t.connId, 'shell_execute', {
-                    command: `tail -n ${limit} $(dirname $(node -e "console.log(require.resolve('landgod/package.json'))" 2>/dev/null || echo "/tmp"))/.landgod-data/audit.jsonl 2>/dev/null || echo '[]'`
-                }, timeout);
-                const lines = (result.stdout || result.output || '').trim().split('\n').filter(l => l.startsWith('{'));
-                const entries = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+                const result = await sendToolCall(t.connId, 'audit_read', { limit }, timeout);
+                const entries = extractAuditEntries(result);
                 return { clientName: t.clientName, entries, error: null };
             } catch (err) {
                 return { clientName: t.clientName, entries: [], error: err.message };

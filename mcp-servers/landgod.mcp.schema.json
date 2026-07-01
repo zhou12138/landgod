@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://landgod.local/schemas/landgod.mcp.schema.json",
+  "title": "LandGod Bundled MCP Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "kind", "transport", "commandStrategy", "tools"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable MCP server name used as the managed-client config key."
+    },
+    "kind": {
+      "const": "bundled-mcp"
+    },
+    "transport": {
+      "const": "stdio"
+    },
+    "commandStrategy": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "module"],
+          "properties": {
+            "type": { "const": "python-module" },
+            "module": { "type": "string", "minLength": 1 },
+            "pythonPath": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "script"],
+          "properties": {
+            "type": { "const": "python-script" },
+            "script": { "type": "string", "minLength": 1 },
+            "pythonPath": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "items": { "enum": ["win32", "linux", "darwin", "freebsd", "openbsd", "aix", "sunos"] },
+          "uniqueItems": true
+        },
+        "python": { "type": "boolean" },
+        "import": { "type": "string", "minLength": 1 },
+        "exists": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "publishedRemotely": { "type": "boolean" },
+        "trustLevel": { "enum": ["trusted", "internal-reviewed", "experimental", "blocked"] },
+        "requiredPermissionProfile": { "enum": ["command-only", "interactive-trusted", "full-local-admin", "demo"] },
+        "toolPrefix": { "type": "string", "minLength": 1 }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "forwardProcessEnv": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "disable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arg": { "type": "string", "minLength": 1 },
+        "env": { "type": "string", "minLength": 1 },
+        "fileConfigFlagFalseDisables": { "type": "string", "minLength": 1 }
+      }
+    },
+    "postDetectLog": {
+      "enum": ["pptx-csharp-status"]
+    }
+  }
+}

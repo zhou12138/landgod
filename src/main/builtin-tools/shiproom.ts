@@ -12,12 +12,12 @@ function getShiproomMcpRoot(): string {
   try {
     const { app } = require('electron');
     if (app.isPackaged) {
-      return path.join(process.resourcesPath, 'shiproom-mcp');
+      return path.join(process.resourcesPath, 'mcp-servers', 'shiproom-mcp');
     }
   } catch {
     // Not running in Electron (e.g. headless-entry.js with plain Node)
   }
-  return path.resolve(__dirname, '../../src/shiproom-mcp');
+  return path.join(process.cwd(), 'mcp-servers', 'shiproom-mcp');
 }
 
 // ── Detection ──────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ function getShiproomMcpRoot(): string {
 let cachedShiproomPython: string | false | undefined;
 
 /**
- * Check if server.py exists in the shiproom-mcp directory.
+ * Check if server.py exists in the bundled shiproom-mcp directory.
  */
 export function isShiproomAvailable(): boolean {
   const root = getShiproomMcpRoot();

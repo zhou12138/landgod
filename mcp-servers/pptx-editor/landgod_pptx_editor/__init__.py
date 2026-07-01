@@ -6,7 +6,7 @@ pptx_exec_actions, pptx_exec_code, pptx_save, and pptx_close tools
 for Windows desktop PowerPoint automation.
 
 Supports three backends:
-  - pywin32 (default): Direct COM automation via win32com — zero config, flexible
+    - pywin32 (default): Direct COM automation via win32com — zero config, flexible
   - vba: VBA macro bridge via Application.Run — 10-20x faster for inspect/batch ops
   - csharp: C# Interop host with CodeAct — LLM generates C# scripts, 1 round-trip
 
@@ -41,8 +41,8 @@ _com_initialized = False
 # ============================================
 
 def _get_default_backend() -> str:
-    """Get default backend from env or fall back to 'vba'."""
-    return os.environ.get("PPTX_EDITOR_BACKEND", "vba").lower()
+    """Get default backend from env or fall back to 'pywin32'."""
+    return os.environ.get("PPTX_EDITOR_BACKEND", "pywin32").lower()
 
 
 def tool_pptx_open(arguments: dict) -> dict:

@@ -2,7 +2,7 @@
 
 ## 定位
 
-LandGod-Link 是 Agent 的 **Sidecar Gateway**，部署在 Agent 同机器上，提供两个端口：
+LandGod-Link 是 Agent 的 **Sidecar Gateway**。它可以部署在 Agent 同机器上，也可以部署在任何 Agent 和 Worker 都可访问的机器上，提供两个端口：
 
 | 端口 | 协议 | 服务对象 | 用途 |
 |------|------|---------|------|
@@ -13,7 +13,11 @@ LandGod-Link 是 Agent 的 **Sidecar Gateway**，部署在 Agent 同机器上，
 AI Agent ──HTTP:8081──► LandGod-Link ◄──WS:8080── LandGod Worker
 ```
 
-**Agent 只需要知道 `http://localhost:8081`，Worker 只需要知道 `ws://GATEWAY:8080`。**
+**Agent 只需要知道可访问的 Gateway HTTP 地址（例如 `http://localhost:8081`），Worker 只需要知道 `ws://GATEWAY:8080`。**
+
+> 当前 MVP/POC 阶段，建议调试和测试时将 Gateway 与 Agent 部署在同一台机器上，以简化网络排查。
+
+> 当前 Gateway 暂不对 Agent 的 HTTP API 请求做鉴权；`Authorization: Bearer <token>` 仅用于 Worker 连接 Gateway。
 
 ---
 

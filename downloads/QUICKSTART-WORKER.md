@@ -68,6 +68,14 @@ landgod daemon start
 | Cross-platform | Linux/Mac/Windows | Mainly Linux |
 | UI | No | Yes |
 
+For enterprise-machine demos that depend on a real desktop session, use GUI/Electron mode when needed:
+
+- PPT / Office automation on Windows
+- `computer-use` screenshot/click/type demos
+- first-time browser sign-in or local login-state preparation
+
+For long-running server Workers, containers, shell/data/network tasks, prefer headless mode.
+
 ## Verify
 
 On the Gateway machine:

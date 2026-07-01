@@ -1,7 +1,7 @@
 {
   "name": "landgod",
   "productName": "LandGod",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "description": "AI-driven remote device management — LandGod Worker Node",
   "author": "LandGod",
   "bin": {
@@ -12,13 +12,14 @@
     ".vite/build/",
     ".vite/renderer/",
     "mcp-servers/",
-    "src/shiproom-mcp/",
-    "!src/shiproom-mcp/shiproom-config.yaml",
-    "!src/shiproom-mcp/scripts/__pycache__/"
+    "!mcp-servers/shiproom-mcp/shiproom-config.yaml",
+    "!mcp-servers/**/__pycache__/",
+    "!mcp-servers/**/*.pyc",
+    "!mcp-servers/**/*.log"
   ],
   "main": ".vite/build/index.js",
   "scripts": {
-    "start": "electron-forge start -- --enable-managed-client-mcp-ws --managed-client-mode=managed-client-mcp-ws --demo",
+    "start": "electron-forge start -- --enable-managed-client-mcp-ws --managed-client-mode=managed-client-mcp-ws --demo --approval-mode auto",
     "start:no-demo": "electron-forge start",
     "start:managed-client": "electron-forge start -- --managed-client-only --enable-managed-client-runtime",
     "start:managed-client-ui": "electron-forge start -- --enable-managed-client-runtime",
@@ -30,7 +31,8 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "prepack": "npm run build",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:bundled-mcp-discovery": "node --test tests/bundled-mcp-discovery.test.cjs"
   },
   "optionalDependencies": {
     "electron": "^33.2.0"

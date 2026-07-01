@@ -2,6 +2,12 @@
 
 > Agent stays lightweight. Workers do the heavy lifting. Only results travel back.
 
+Mission fit:
+
+- data stays near the right machine
+- compute stays near the right machine
+- the Agent only orchestrates and interprets
+
 ## The Problem
 
 Your AI agent runs on a small machine (8GB RAM, 50GB disk). You need to analyze a large dataset (weather data, logs, CSV files) that won't fit on the agent's machine.
@@ -163,4 +169,4 @@ Gateway automatically routes to the worker with matching labels.
 | GPU training | ❌ No GPU | ✅ Route to GPU Worker |
 | Data in China | ❌ Can't download | ✅ China-region Worker downloads |
 
-**The agent never touches the data. It only thinks and commands.**
+**The agent never needs to become the data plane. It only thinks, routes, and interprets.**

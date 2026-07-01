@@ -1,6 +1,7 @@
 # 🚀 Quick Start: Install Gateway
 
-> Gateway is an agent sidecar service. Deploy it on the same machine as your AI agent.
+> Gateway is an agent sidecar service. It can run on the same machine as your AI agent or on any reachable host.
+> For the current MVP/POC stage, deploying Gateway on the same machine as the agent is recommended for debugging and testing.
 
 ## Install
 
@@ -38,6 +39,7 @@ landgod-gateway-py start --token YOUR_SECRET_TOKEN
 ```
 
 > ⚠️ `--token` is **required**. Gateway will not start without it.
+> In the current MVP/POC stage, this token is used for Worker-to-Gateway access. Gateway does not authenticate Agent HTTP API requests yet.
 
 ## Verify
 

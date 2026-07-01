@@ -2,10 +2,10 @@ import * as os from 'node:os';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { execSync } from 'node:child_process';
 import type { ManagedClientMode, ManagedClientRuntimeConfig } from './types';
 import { getDefaultManagedClientWorkspaceRoot } from './workspace';
 import { parseManagedClientMcpServers, type ManagedClientFileMcpServerConfig } from './mcp-server-config';
+import { discoverBundledMcpServers } from './bundled-mcp-discovery';
 import {
   applyPermissionProfileGuards,
   DEFAULT_BUILT_IN_TOOLS_SECURITY_CONFIG,
@@ -14,20 +14,6 @@ import {
   type BuiltInToolsSecurityConfig,
   type BuiltInToolsPermissionProfile,
 } from '../builtin-tools/types';
-import {
-  isShiproomPythonAvailable,
-  getShiproomPythonCommand,
-  getShiproomServerPath,
-  getShiproomEnv,
-  SHIPROOM_TOOL_NAMES,
-} from '../builtin-tools/shiproom';
-import {
-  isPptxEditorPythonAvailable,
-  getPptxEditorPythonCommand,
-  getPptxEditorPythonPath,
-  PPTX_EDITOR_TOOL_NAMES,
-  logCSharpBackendStatus,
-} from '../builtin-tools/pptx-editor';
 
 export type ToolCallApprovalMode = 'auto' | 'manual';
 
@@ -344,8 +330,19 @@ export function saveBuiltInToolsSecurityConfig(config: BuiltInToolsSecurityConfi
   });
 }
 
-export function getToolCallApprovalMode(): ToolCallApprovalMode {
-  return loadManagedClientFileConfig().toolCallApprovalMode ?? 'manual';
+function normalizeToolCallApprovalMode(value: string | null | undefined): ToolCallApprovalMode | null {
+  if (value === 'auto' || value === 'manual') {
+    return value;
+  }
+  return null;
+}
+
+export function getToolCallApprovalMode(args: string[] = process.argv): ToolCallApprovalMode {
+  return normalizeToolCallApprovalMode(getArgValue(args, '--approval-mode'))
+    ?? normalizeToolCallApprovalMode(getArgValue(args, '--tool-call-approval-mode'))
+    ?? normalizeToolCallApprovalMode(process.env.LANDGOD_TOOL_CALL_APPROVAL_MODE)
+    ?? loadManagedClientFileConfig().toolCallApprovalMode
+    ?? 'manual';
 }
 
 export function setToolCallApprovalMode(mode: ToolCallApprovalMode): void {
@@ -396,57 +393,11 @@ export function getManagedClientMcpServersConfig(): Record<string, ManagedClient
 export function getEffectiveMcpServersForDisplay(): Record<string, ManagedClientFileMcpServerConfig> {
   const userMcpConfig = loadManagedClientMcpFileConfig();
   const fileConfig = loadManagedClientFileConfig();
-  const disableComputerUse =
-    parseBooleanFlag(process.env.DISABLE_COMPUTER_USE)
-    || fileConfig.enableComputerUse === false;
-  const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
-
-  const disablePptxEditor =
-    parseBooleanFlag(process.env.DISABLE_PPTX_EDITOR);
-  const shouldInjectPptxEditor = !disablePptxEditor && !userMcpConfig['pptx-editor'] && isPptxEditorPythonAvailable();
-
-  const disableShiproom =
-    parseBooleanFlag(process.env.DISABLE_SHIPROOM);
-  const shouldInjectShiproom = !disableShiproom && !userMcpConfig['shiproom'] && isShiproomPythonAvailable();
-
-  const injected: Record<string, ManagedClientFileMcpServerConfig> = {};
-
-  if (shouldInjectComputerUse) {
-    injected['computer-use'] = {
-      command: getPythonCommand(),
-      args: ['-m', 'landgod_computer_use'],
-      env: { PYTHONPATH: getComputerUsePythonPath() },
-      tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
-      trustLevel: 'trusted' as const,
-      publishedRemotely: true,
-      enabled: true,
-    };
-  }
-
-  if (shouldInjectPptxEditor) {
-    injected['pptx-editor'] = {
-      command: getPptxEditorPythonCommand(),
-      args: ['-m', 'landgod_pptx_editor'],
-      env: { PYTHONPATH: getPptxEditorPythonPath() },
-      tools: [...PPTX_EDITOR_TOOL_NAMES],
-      trustLevel: 'trusted' as const,
-      publishedRemotely: true,
-      enabled: true,
-    };
-  }
-
-  if (shouldInjectShiproom) {
-    injected['shiproom'] = {
-      command: getShiproomPythonCommand(),
-      args: [getShiproomServerPath()],
-      env: getShiproomEnv(),
-      tools: [...SHIPROOM_TOOL_NAMES],
-      trustLevel: 'trusted' as const,
-      publishedRemotely: true,
-      enabled: true,
-      requiredPermissionProfile: 'full-local-admin' as const,
-    };
-  }
+  const injected = discoverBundledMcpServers({
+    args: process.argv,
+    fileConfig: fileConfig as Record<string, unknown>,
+    userMcpConfig,
+  });
 
   if (Object.keys(injected).length === 0) return userMcpConfig;
   return {
@@ -543,85 +494,6 @@ export function getManagedClientWorkspaceRoot(args = process.argv): string {
   return path.resolve(workspaceRoot);
 }
 
-// --- Built-in computer-use Python detection ---
-
-/**
- * Resolve the path to the bundled mcp-servers directory.
- * In development: <project-root>/mcp-servers
- * In packaged app: <resources>/mcp-servers (extraResource)
- */
-function getMcpServersPath(): string {
-  // When packaged with electron-forge, app.isPackaged is true and
-  // process.resourcesPath points to the resources dir where extraResource files live.
-  // In dev mode, we use process.cwd() (project root).
-  try {
-    const { app } = require('electron');
-    if (app.isPackaged) {
-      return path.join(process.resourcesPath, 'mcp-servers');
-    }
-  } catch {
-    // Not running in Electron (e.g. headless-entry.js with plain Node)
-  }
-  return path.join(process.cwd(), 'mcp-servers');
-}
-
-/**
- * Get the path to the computer-use Python package directory.
- */
-function getComputerUsePythonPath(): string {
-  return path.join(getMcpServersPath(), 'computer-use');
-}
-
-let cachedPythonCommand: string | false | undefined;
-
-/**
- * Detect which python command is available (python3 or python).
- * Also verifies that landgod_computer_use module is importable.
- * Result is cached for the process lifetime.
- */
-function getPythonCommand(): string {
-  if (cachedPythonCommand !== undefined) {
-    return cachedPythonCommand as string;
-  }
-  // This should only be called after isPythonAvailable() returns true
-  detectPython();
-  return cachedPythonCommand as unknown as string;
-}
-
-function isPythonAvailable(): boolean {
-  if (cachedPythonCommand !== undefined) {
-    return cachedPythonCommand !== false;
-  }
-  return detectPython();
-}
-
-function detectPython(): boolean {
-  const computerUsePath = getComputerUsePythonPath();
-  const candidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
-  console.log('[config] detectPython: computerUsePath =', computerUsePath);
-  for (const cmd of candidates) {
-    try {
-      // Use sys.executable to capture the real .exe path (avoids .bat shim issues on Windows)
-      const out = execSync(
-        `${cmd} -c "import landgod_computer_use; import sys; print(sys.executable)"`,
-        {
-          timeout: 5000,
-          stdio: 'pipe',
-          env: { ...process.env, PYTHONPATH: computerUsePath },
-        },
-      );
-      cachedPythonCommand = out.toString().trim();
-      console.log('[config] detectPython: found', cachedPythonCommand);
-      return true;
-    } catch (err: any) {
-      const msg = (err?.stderr?.toString() || err?.message || '').slice(0, 200);
-      console.log('[config] detectPython: failed for', cmd, '-', msg);
-    }
-  }
-  cachedPythonCommand = false;
-  return false;
-}
-
 export function getManagedClientRuntimeConfig(version: string, args = process.argv): ManagedClientRuntimeConfig {
   const fileConfig = loadManagedClientFileConfig();
   const explicitMode =
@@ -672,81 +544,11 @@ export function getManagedClientRuntimeConfig(version: string, args = process.ar
     3000,
   );
   const userMcpConfig = loadManagedClientMcpFileConfig();
-
-  // Built-in computer-use MCP server: enabled by default if Python is available.
-  // Can be disabled via --disable-computer-use flag, DISABLE_COMPUTER_USE env var,
-  // or enableComputerUse: false in managed-client.config.json.
-  // User-defined 'computer-use' in mcp-servers.json always takes precedence.
-  const disableComputerUse =
-    hasArg(args, '--disable-computer-use')
-    || parseBooleanFlag(process.env.DISABLE_COMPUTER_USE)
-    || fileConfig.enableComputerUse === false;
-
-  const shouldInjectComputerUse = !disableComputerUse && !userMcpConfig['computer-use'] && isPythonAvailable();
-  console.log('[config] getManagedClientRuntimeConfig computer-use:', { disableComputerUse, hasUserComputerUse: Boolean(userMcpConfig['computer-use']), pythonAvailable: isPythonAvailable(), shouldInject: shouldInjectComputerUse });
-
-  // Built-in shiproom MCP server: auto-injected when server.py + Python are available.
-  // Can be disabled via --disable-shiproom flag or DISABLE_SHIPROOM env var.
-  // User-defined 'shiproom' in mcp-servers.json always takes precedence.
-  const disableShiproom =
-    hasArg(args, '--disable-shiproom')
-    || parseBooleanFlag(process.env.DISABLE_SHIPROOM);
-
-  const shouldInjectShiproom = !disableShiproom && !userMcpConfig['shiproom'] && isShiproomPythonAvailable();
-  console.log('[config] getManagedClientRuntimeConfig shiproom:', { disableShiproom, hasUserShiproom: Boolean(userMcpConfig['shiproom']), pythonAvailable: isShiproomPythonAvailable(), shouldInject: shouldInjectShiproom });
-
-  const injectedConfigs: Record<string, ManagedClientFileMcpServerConfig> = {};
-  if (shouldInjectComputerUse) {
-    injectedConfigs['computer-use'] = {
-      command: getPythonCommand(),
-      args: ['-m', 'landgod_computer_use'],
-      env: { PYTHONPATH: getComputerUsePythonPath() },
-      tools: ['computer_screenshot', 'computer_click', 'computer_type', 'computer_scroll'],
-      trustLevel: 'trusted' as const,
-      publishedRemotely: true,
-      enabled: true,
-      requiredPermissionProfile: 'command-only' as const,
-    };
-  }
-  if (shouldInjectShiproom) {
-    injectedConfigs['shiproom'] = {
-      command: getShiproomPythonCommand(),
-      args: [getShiproomServerPath()],
-      env: getShiproomEnv(),
-      tools: [...SHIPROOM_TOOL_NAMES],
-      trustLevel: 'trusted' as const,
-      publishedRemotely: true,
-      enabled: true,
-      requiredPermissionProfile: 'full-local-admin' as const,
-    };
-  }
-
-  // Built-in pptx-editor MCP server: auto-injected on Windows when Python + pywin32 available.
-  const disablePptxEditor =
-    hasArg(args, '--disable-pptx-editor')
-    || parseBooleanFlag(process.env.DISABLE_PPTX_EDITOR);
-
-  const shouldInjectPptxEditor = !disablePptxEditor && !userMcpConfig['pptx-editor'] && isPptxEditorPythonAvailable();
-  console.log('[config] getManagedClientRuntimeConfig pptx-editor:', { disablePptxEditor, hasUserPptxEditor: Boolean(userMcpConfig['pptx-editor']), pythonAvailable: isPptxEditorPythonAvailable(), shouldInject: shouldInjectPptxEditor });
-
-  if (shouldInjectPptxEditor) {
-    injectedConfigs['pptx-editor'] = {
-      command: getPptxEditorPythonCommand(),
-      args: ['-m', 'landgod_pptx_editor'],
-      env: {
-        PYTHONPATH: getPptxEditorPythonPath(),
-        PYTHONUTF8: '1',
-        PYTHONIOENCODING: 'utf-8',
-        ...(process.env.PPTX_EDITOR_BACKEND ? { PPTX_EDITOR_BACKEND: process.env.PPTX_EDITOR_BACKEND } : {}),
-      },
-      tools: [...PPTX_EDITOR_TOOL_NAMES],
-      trustLevel: 'trusted' as const,
-      publishedRemotely: true,
-      enabled: true,
-      requiredPermissionProfile: 'command-only' as const,
-    };
-    logCSharpBackendStatus();
-  }
+  const injectedConfigs = discoverBundledMcpServers({
+    args,
+    fileConfig: fileConfig as Record<string, unknown>,
+    userMcpConfig,
+  });
 
   const effectiveMcpConfig: Record<string, ManagedClientFileMcpServerConfig> = {
     ...injectedConfigs,

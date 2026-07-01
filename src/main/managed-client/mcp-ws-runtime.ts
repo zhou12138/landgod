@@ -1,4 +1,5 @@
 import { createHash, createPublicKey, randomUUID, verify } from 'node:crypto';
+import * as readline from 'node:readline';
 import tls from 'node:tls';
 import type { ClientOptions as WebSocketClientOptions } from 'ws';
 import { WebSocket } from 'ws';
@@ -23,6 +24,47 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function canPromptForApprovalInTerminal(): boolean {
+  return Boolean(process.stdin.isTTY && process.stdout.isTTY);
+}
+
+async function promptForToolCallApproval(params: {
+  requestId: string;
+  toolName: string;
+  sourceName: string;
+  argumentsPayload: unknown;
+}): Promise<'approve-once' | 'approve-all' | 'reject'> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const argsPreview = stringifyForAudit(params.argumentsPayload).slice(0, 1200);
+  try {
+    process.stdout.write('\n[tool-approval] Tool call approval required\n');
+    process.stdout.write(`  requestId: ${params.requestId}\n`);
+    process.stdout.write(`  tool: ${params.toolName}\n`);
+    process.stdout.write(`  source: ${params.sourceName}\n`);
+    if (argsPreview) {
+      process.stdout.write(`  arguments: ${argsPreview}\n`);
+    }
+
+    while (true) {
+      const answer = await new Promise<string>((resolve) => {
+        rl.question('Approve? [y] once / [a] all this session / [n] reject: ', resolve);
+      });
+      const normalized = answer.trim().toLowerCase();
+      if (['y', 'yes', 'once', 'approve'].includes(normalized)) {
+        return 'approve-once';
+      }
+      if (['a', 'all', 'approve-all'].includes(normalized)) {
+        return 'approve-all';
+      }
+      if (['n', 'no', 'r', 'reject'].includes(normalized)) {
+        return 'reject';
+      }
+    }
+  } finally {
+    rl.close();
+  }
 }
 
 function stringifyForAudit(value: unknown): string {
@@ -1348,7 +1390,7 @@ export class ManagedClientMcpWsRuntime {
     const metaForApproval = isJsonObject(payload.meta) ? payload.meta : null;
     const toolCallSessionId = typeof metaForApproval?.session_id === 'string' ? metaForApproval.session_id : '';
 
-    if (!this.config.demo && getToolCallApprovalMode() === 'manual' && !this.approvedSessions.has(toolCallSessionId)) {
+    if (getToolCallApprovalMode() === 'manual' && !this.approvedSessions.has(toolCallSessionId)) {
       emitServerEvent('tool-call:approval-required', {
         requestId,
         toolName,
@@ -1358,9 +1400,29 @@ export class ManagedClientMcpWsRuntime {
         sessionId: toolCallSessionId,
       });
 
-      const decision = await new Promise<'approve-once' | 'approve-all' | 'reject'>((resolve) => {
-        this.pendingApprovals.set(requestId, resolve);
-      });
+      let decision: 'approve-once' | 'approve-all' | 'reject';
+      if (this.config.headless) {
+        if (!canPromptForApprovalInTerminal()) {
+          decision = 'reject';
+          this.appendAuditEntry(`[managed-client-mcp-ws] tool_call rejected: ${toolName}`, {
+            requestId,
+            toolName,
+            rawPayload: payload,
+            reason: 'Headless manual approval requires an interactive TTY. Set toolCallApprovalMode=auto or run GUI/Electron mode for manual approval.',
+          }, 1, 'Headless manual approval unavailable without an interactive TTY');
+        } else {
+          decision = await promptForToolCallApproval({
+            requestId,
+            toolName,
+            sourceName: binding.sourceName,
+            argumentsPayload: effectiveArgumentsPayload,
+          });
+        }
+      } else {
+        decision = await new Promise<'approve-once' | 'approve-all' | 'reject'>((resolve) => {
+          this.pendingApprovals.set(requestId, resolve);
+        });
+      }
 
       if (decision === 'reject') {
         this.pullStatus = 'task-failed';
@@ -1376,7 +1438,9 @@ export class ManagedClientMcpWsRuntime {
           toolName,
           code: 'user_rejected',
         });
-        await this.sendToolError(socket, requestId, 'user_rejected', 'Tool call was rejected by the user');
+        await this.sendToolError(socket, requestId, 'user_rejected', this.config.headless && !canPromptForApprovalInTerminal()
+          ? 'Tool call requires manual approval, but headless mode has no interactive TTY. Set toolCallApprovalMode=auto or run GUI/Electron mode.'
+          : 'Tool call was rejected by the user');
         return;
       }
 

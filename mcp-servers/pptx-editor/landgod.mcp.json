@@ -1,0 +1,47 @@
+{
+  "name": "pptx-editor",
+  "kind": "bundled-mcp",
+  "transport": "stdio",
+  "commandStrategy": {
+    "type": "python-module",
+    "module": "landgod_pptx_editor",
+    "pythonPath": "${ROOT}"
+  },
+  "availability": {
+    "platforms": ["win32"],
+    "python": true,
+    "import": "landgod_pptx_editor",
+    "exists": [
+      "landgod_pptx_editor/__init__.py"
+    ]
+  },
+  "publication": {
+    "enabled": true,
+    "publishedRemotely": true,
+    "trustLevel": "trusted",
+    "requiredPermissionProfile": "command-only"
+  },
+  "tools": [
+    "pptx_open",
+    "pptx_inspect",
+    "pptx_exec_actions",
+    "pptx_exec_code",
+    "pptx_save",
+    "pptx_switch",
+    "pptx_slide_image",
+    "pptx_close",
+    "pptx_help"
+  ],
+  "env": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "forwardProcessEnv": [
+    "PPTX_EDITOR_BACKEND"
+  ],
+  "disable": {
+    "arg": "--disable-pptx-editor",
+    "env": "DISABLE_PPTX_EDITOR"
+  },
+  "postDetectLog": "pptx-csharp-status"
+}

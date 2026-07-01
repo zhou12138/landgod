@@ -1,7 +1,7 @@
 {
   "name": "openclaw-plugin-landgod",
   "version": "0.1.0",
-  "description": "LandGod remote device management plugin for OpenClaw — execute commands, manage workers, take screenshots across distributed machines",
+  "description": "LandGod execution network plugin for OpenClaw — call Gateway tools, dispatch tasks, inspect workers, and audit execution",
   "type": "module",
   "openclaw": {
     "extensions": [
@@ -12,9 +12,9 @@
     "openclaw",
     "plugin",
     "landgod",
-    "remote",
-    "device",
-    "management"
+    "execution",
+    "tools",
+    "mcphub"
   ],
   "license": "MIT",
   "dependencies": {

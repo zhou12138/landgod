@@ -85,17 +85,9 @@ class ClusterCoordinator:
 
         # Wait for response
         try:
-            deadline = asyncio.get_event_loop().time() + (timeout / 1000)
-            async for msg in sub.listen():
-                if msg["type"] != "message":
-                    if asyncio.get_event_loop().time() > deadline:
-                        break
-                    continue
-                await sub.unsubscribe(resp_channel)
-                await sub.aclose()
-                return json.loads(msg["data"])
+            return await asyncio.wait_for(self._wait_for_response(sub), timeout=timeout / 1000)
         except asyncio.TimeoutError:
-            pass
+            return None
         finally:
             try:
                 await sub.unsubscribe(resp_channel)
@@ -103,6 +95,11 @@ class ClusterCoordinator:
             except Exception:
                 pass
         return None
+
+    async def _wait_for_response(self, sub) -> dict:
+        async for msg in sub.listen():
+            if msg["type"] == "message":
+                return json.loads(msg["data"])
 
     async def stop(self) -> None:
         if self._listener_task:

@@ -1,6 +1,12 @@
 # Example: Small Team Ops — 6 Capability Matrix
 
-> One Gateway, multiple Workers with different roles. Agent routes tasks by labels automatically.
+> One Gateway, multiple execution nodes with different roles. Agent routes by capability labels instead of machine-by-machine coordination.
+
+This example shows the platform pattern behind the deck's message:
+
+- one Agent acts as the brain
+- Gateway is the control plane
+- multiple workers become specialized enterprise hands
 
 ## Architecture
 
@@ -36,7 +42,7 @@ landgod config set labels '{"role":"build","docker":true}'
 landgod config set labels '{"role":"network","region":"cn"}'
 ```
 
-> One machine can have multiple roles. A small team might run 2-3 machines covering all 6 capabilities.
+> One machine can have multiple roles. A small team might run 2-3 machines covering all 6 capabilities and still present them as one controlled execution network.
 
 ---
 
@@ -312,4 +318,4 @@ curl -X POST http://localhost:8081/tool_call \
 | 🔧 Build | `role:build` | docker, git, npm | ✅ Build tasks | ✅ Multi-deploy |
 | 📡 Network | `region:cn/us` | curl, dig, traceroute | ❌ Quick | ✅ Multi-region |
 
-**The agent doesn't need to know which machine does what — it routes by capability labels.**
+**The agent doesn't need to know which machine does what — it routes by capability labels and treats the fleet as one execution layer.**

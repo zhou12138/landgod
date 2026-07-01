@@ -85,6 +85,8 @@ npm install -g https://github.com/zhou12138/cli-server/raw/master/downloads/land
 
 **服务器部署首选 Headless 模式。**
 
+如果是企业机器 demo，尤其是 PPT / Office / `computer-use` / 首次浏览器登录态准备，建议使用有真实桌面 session 的 GUI 或 Electron daemon。长期服务器 Worker、容器、后台任务优先使用 `landgod daemon start --headless`。
+
 ---
 
 ## 验证安装
