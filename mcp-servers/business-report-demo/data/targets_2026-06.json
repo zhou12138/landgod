@@ -1,0 +1,8 @@
+{
+  "month": "2026-06",
+  "revenue_target": 760000,
+  "gross_margin_target": 0.70,
+  "expense_budget": 165000,
+  "watchlist_suppliers": ["ConsultCo", "AdMarket"],
+  "executive_theme": "Revenue beat target, but services and marketing spend need approval discipline."
+}

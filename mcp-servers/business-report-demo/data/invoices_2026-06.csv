@@ -1,0 +1,13 @@
+invoice_id,date,supplier,category,amount,due_date,status
+INV-8001,2026-06-02,Azure Cloud,Cloud Infra,18400,2026-06-20,paid
+INV-8002,2026-06-04,OfficePro Services,Office Automation,7200,2026-06-18,paid
+INV-8003,2026-06-05,DataPipe ETL,Data Services,11800,2026-06-25,paid
+INV-8004,2026-06-07,North DC,Hosting,9500,2026-06-30,paid
+INV-8005,2026-06-09,ConsultCo,Professional Services,28500,2026-07-05,pending
+INV-8006,2026-06-11,SecureSign,Certificates,6400,2026-06-28,paid
+INV-8007,2026-06-12,LogiTrans,Logistics,13200,2026-06-29,paid
+INV-8008,2026-06-14,AdMarket,Marketing,23800,2026-07-03,pending
+INV-8009,2026-06-17,DataPipe ETL,Data Services,16400,2026-07-08,pending
+INV-8010,2026-06-20,SupportCrew,Customer Support,9100,2026-07-10,pending
+INV-8011,2026-06-24,North DC,Hosting,9600,2026-07-12,pending
+INV-8012,2026-06-28,OfficePro Services,Office Automation,7800,2026-07-15,pending

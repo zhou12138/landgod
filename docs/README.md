@@ -40,6 +40,9 @@ Read in order — each document builds on the previous one.
 | — | [Gateway Architecture](12-gateway-architecture.md) | Gateway / MCPHub control plane architecture | — |
 | — | [Gateway Technical Guide](13-gateway-technical-guide.md) | Gateway implementation, APIs, and artifacts | — |
 | — | [LandGod / MCPHub Positioning](14-landgod-mcphub-positioning.md) | Product pitch, sales narrative, and messaging | — |
+| — | [Credential Broker MVP](15-credential-broker-mvp.md) | Gateway-managed credentials with task-scoped grants | 02, 03, 12 |
+| — | [Enterprise Pitch Script](16-enterprise-pitch-script.md) | Enterprise sales pitch: story, pain points, architecture, security, ROI, demo, objections | 12, 14, 15 |
+| — | [Product / Business / Enterprise Review](17-product-business-enterprise-review.md) | Product verdict, business model, ICP, enterprise user views, maturity, risks, roadmap | 14, 15, 16 |
 | — | [GUI vs Headless](gui-vs-headless.md) | Worker run mode comparison | 06 |
 
 ## Additional Resources

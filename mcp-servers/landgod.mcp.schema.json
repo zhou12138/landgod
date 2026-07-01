@@ -70,6 +70,24 @@
         "toolPrefix": { "type": "string", "minLength": 1 }
       }
     },
+    "credentials": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Explicit credential access declaration. Default is disabled; only trusted first-party connectors should enable this.",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "acceptedTypes": {
+          "type": "array",
+          "items": { "enum": ["api_token", "username_password"] },
+          "uniqueItems": true
+        },
+        "allowedScopes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
     "tools": {
       "type": "array",
       "minItems": 1,

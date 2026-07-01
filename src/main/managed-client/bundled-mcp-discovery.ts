@@ -33,6 +33,11 @@ interface BundledMcpManifest {
     requiredPermissionProfile?: BuiltInToolsPermissionProfile;
     toolPrefix?: string;
   };
+  credentials?: {
+    enabled?: boolean;
+    acceptedTypes?: Array<'api_token' | 'username_password'>;
+    allowedScopes?: string[];
+  };
   tools: string[];
   env?: Record<string, string>;
   forwardProcessEnv?: string[];
@@ -242,6 +247,7 @@ function manifestToConfig(
       requiredPermissionProfile: manifest.publication?.requiredPermissionProfile ?? 'command-only',
       trustLevel: manifest.publication?.trustLevel ?? 'trusted',
       publishedRemotely: manifest.publication?.publishedRemotely ?? true,
+      credentials: manifest.credentials,
       transport: 'stdio',
     };
   }
@@ -260,6 +266,7 @@ function manifestToConfig(
       requiredPermissionProfile: manifest.publication?.requiredPermissionProfile ?? 'command-only',
       trustLevel: manifest.publication?.trustLevel ?? 'trusted',
       publishedRemotely: manifest.publication?.publishedRemotely ?? true,
+      credentials: manifest.credentials,
       transport: 'stdio',
     };
   }

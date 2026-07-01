@@ -1,7 +1,14 @@
 const WebSocket = require('ws');
 const uuid = require('uuid');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { generateKeyPairSync, createHash, sign, randomUUID } = require('node:crypto');
+const {
+    createCredentialBroker,
+    canonicalizeJson: canonicalizeCredentialJson,
+    buildGrantSigningPayload,
+} = require('./credential-broker');
 
 // ========================
 // 配置
@@ -16,7 +23,8 @@ if (!AUTH_TOKEN) {
 }
 const WS_PORT = parseInt(process.env.LANDGOD_WS_PORT || "8080");
 const HTTP_PORT = parseInt(process.env.LANDGOD_HTTP_PORT || "8081");
-const DATA_DIR = process.env.LANDGOD_DATA_DIR || require('path').join(require('os').homedir(), '.landgod-gateway');
+const DATA_DIR = process.env.LANDGOD_DATA_DIR || path.join(require('os').homedir(), '.landgod-gateway');
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 // ========================
 // 生成 Ed25519 密钥对
@@ -108,6 +116,20 @@ function signToolCall(requestId, toolName, argumentsPayload, binding) {
     return meta;
 }
 
+function signCredentialGrant(grantPayload) {
+    const signatureBuffer = sign(
+        null,
+        Buffer.from(canonicalizeCredentialJson(buildGrantSigningPayload(grantPayload)), 'utf-8'),
+        SERVER_PRIVATE_KEY_PEM
+    );
+    return toBase64Url(signatureBuffer);
+}
+
+const credentialBroker = createCredentialBroker({
+    dataDir: DATA_DIR,
+    signGrant: signCredentialGrant,
+});
+
 // ========================
 // Token 注册表
 // ========================
@@ -178,6 +200,83 @@ function failTask(taskId, error) {
     }
 }
 
+// ========================
+// Gateway central audit (remote backup)
+// ========================
+const GATEWAY_AUDIT_PATH = path.join(DATA_DIR, 'gateway-audit.jsonl');
+const GATEWAY_AUDIT_SECRET_KEYS = new Set([
+    'secret', 'password', 'passwd', 'token', 'api_key', 'apikey', 'authorization',
+    '_landgod_credential', 'credential_grant', 'signature',
+]);
+
+function redactGatewayAuditValue(value) {
+    if (Array.isArray(value)) return value.map((item) => redactGatewayAuditValue(item));
+    if (!value || typeof value !== 'object') return value;
+    const result = {};
+    for (const [key, entry] of Object.entries(value)) {
+        if (GATEWAY_AUDIT_SECRET_KEYS.has(key.toLowerCase())) {
+            if (key === 'credential_grant' && entry && typeof entry === 'object') {
+                result[key] = {
+                    grant_id: entry.grant_id,
+                    credential_ref: entry.credential_ref,
+                    tool_name: entry.tool_name,
+                    worker_id: entry.worker_id,
+                    connection_id: entry.connection_id,
+                    task_id: entry.task_id,
+                    request_id: entry.request_id,
+                    exp: entry.exp,
+                };
+            } else {
+                result[key] = '***REDACTED***';
+            }
+            continue;
+        }
+        result[key] = redactGatewayAuditValue(entry);
+    }
+    return result;
+}
+
+function summarizeGatewayToolMessage(message) {
+    if (!message || typeof message !== 'object') return message;
+    const payload = message.payload && typeof message.payload === 'object' ? message.payload : {};
+    const text = payload.data && typeof payload.data === 'object' && typeof payload.data.text === 'string'
+        ? payload.data.text
+        : undefined;
+    return {
+        type: message.type,
+        event: message.event,
+        request_id: payload.request_id,
+        is_final: payload.is_final,
+        error: payload.error ? redactGatewayAuditValue(payload.error) : undefined,
+        dataTextBytes: typeof text === 'string' ? Buffer.byteLength(text, 'utf-8') : undefined,
+    };
+}
+
+function appendGatewayAudit(event, payload = {}) {
+    try {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+        const entry = {
+            ...redactGatewayAuditValue(payload),
+            event,
+            eventId: `gw-audit-${randomUUID()}`,
+            timestamp: new Date().toISOString(),
+        };
+        fs.appendFileSync(GATEWAY_AUDIT_PATH, `${JSON.stringify(entry)}\n`, { mode: 0o600 });
+        return entry;
+    } catch (error) {
+        console.error('[gateway-audit] append failed:', error.message);
+        return null;
+    }
+}
+
+function readGatewayAudit(limit = 200) {
+    if (!fs.existsSync(GATEWAY_AUDIT_PATH)) return [];
+    const lines = fs.readFileSync(GATEWAY_AUDIT_PATH, 'utf-8').trim().split(/\r?\n/).filter(Boolean);
+    return lines.slice(-limit).map((line) => {
+        try { return JSON.parse(line); } catch { return { event: 'parse_error', raw: line }; }
+    });
+}
+
 // Drain queued tasks for a newly-registered worker
 async function drainQueue(connectionId, clientName, workerLabels) {
     const toRemove = [];
@@ -194,7 +293,11 @@ async function drainQueue(connectionId, clientName, workerLabels) {
             // Execute in background
             (async () => {
                 try {
-                    const result = await sendToolCall(connectionId, queued.tool_name, queued.arguments || {}, queued.timeout || 30000);
+                    const result = await sendToolCall(connectionId, queued.tool_name, queued.arguments || {}, queued.timeout || 30000, {
+                        credentialRef: queued.credential_ref || null,
+                        agentId: queued.agent_id || 'default-agent',
+                        taskId: queued.taskId,
+                    });
                     completeTask(queued.taskId, result);
                     console.log(`[queue] Drained task ${queued.taskId} → ${clientName}`);
                 } catch (err) {
@@ -246,14 +349,13 @@ server.on("connection", (client, req) => {
     const tokenInfo = tokenRegistry.get(token) || { device_name: "legacy" };
     console.log(`Client connected with valid token! (${token.substring(0, 12)}... device: ${tokenInfo.device_name})`);
 
-
-
-
-
-
-
-
     const connectionId = `conn-${uuid.v4()}`;
+    appendGatewayAudit('worker_connection_opened', {
+        connectionId,
+        workerTokenId: tokenInfo.id || tokenInfo.device_name || 'legacy',
+        deviceName: tokenInfo.device_name || 'legacy',
+        remoteAddress: req.socket?.remoteAddress,
+    });
 
     // 发送 session_opened 事件
     client.send(JSON.stringify({
@@ -327,6 +429,14 @@ server.on("connection", (client, req) => {
                     }
                 };
                 client.send(JSON.stringify(response));
+                appendGatewayAudit('worker_registered', {
+                    connectionId,
+                    clientId: binding.clientId,
+                    clientName: binding.clientName,
+                    sessionId,
+                    labels: binding.labels,
+                    resources: binding.resources,
+                });
                 console.log(`[register] Client registered: ${message.params.client_name}. session_id: ${sessionId}, connectionId: ${connectionId}`);
 
                 // Drain queued tasks for this worker
@@ -341,6 +451,13 @@ server.on("connection", (client, req) => {
                 // Store tools in connection info
                 const ci = connectedClients.get(connectionId);
                 if (ci) ci.tools = message.params?.tools || {};
+                appendGatewayAudit('worker_tools_updated', {
+                    connectionId,
+                    clientId: ci?.binding?.clientId,
+                    clientName: ci?.binding?.clientName,
+                    toolCount: tools.length,
+                    tools,
+                });
                 console.log(`[update_tools] Tools updated: ${tools.join(', ')}`);
 
             } else if (message.method === "resource_heartbeat") {
@@ -358,8 +475,14 @@ server.on("connection", (client, req) => {
                 // 处理来自客户端的 tool_call 响应
                 const clientInfo = connectedClients.get(connectionId);
                 if (clientInfo && clientInfo.pendingRequests.has(message.id)) {
-                    const callback = clientInfo.pendingRequests.get(message.id);
+                    const pending = clientInfo.pendingRequests.get(message.id);
                     clientInfo.pendingRequests.delete(message.id);
+                    const callback = typeof pending === 'function' ? pending : pending.callback;
+                    appendGatewayAudit('tool_call_response_received', {
+                        ...(typeof pending === 'object' ? pending.auditContext : {}),
+                        requestId: message.id,
+                        response: summarizeGatewayToolMessage(message),
+                    });
                     callback(message);
                 }
 
@@ -368,8 +491,15 @@ server.on("connection", (client, req) => {
                 const clientInfo = connectedClients.get(connectionId);
                 const reqId = message.payload?.request_id;
                 if (clientInfo && reqId && clientInfo.pendingRequests.has(reqId)) {
-                    const callback = clientInfo.pendingRequests.get(reqId);
+                    const pending = clientInfo.pendingRequests.get(reqId);
                     clientInfo.pendingRequests.delete(reqId);
+                    const callback = typeof pending === 'function' ? pending : pending.callback;
+                    appendGatewayAudit(message.event === 'tool_error' ? 'tool_call_error_received' : 'tool_call_result_received', {
+                        ...(typeof pending === 'object' ? pending.auditContext : {}),
+                        requestId: reqId,
+                        responseEvent: message.event,
+                        response: summarizeGatewayToolMessage(message),
+                    });
                     callback(message);
                 } else {
                     console.log(`[event] ${message.event}:`, JSON.stringify(message.payload || {}).substring(0, 300));
@@ -393,6 +523,14 @@ server.on("connection", (client, req) => {
 
     client.on("close", (code, reason) => {
         clearInterval(interval);
+        const clientInfo = connectedClients.get(connectionId);
+        appendGatewayAudit('worker_connection_closed', {
+            connectionId,
+            clientId: clientInfo?.binding?.clientId,
+            clientName: clientInfo?.binding?.clientName,
+            code,
+            reason: reason ? reason.toString() : '',
+        });
         connectedClients.delete(connectionId);
         console.log(`Client disconnected: ${connectionId}, Code: ${code}`);
     });
@@ -401,7 +539,7 @@ server.on("connection", (client, req) => {
 // ========================
 // 发送 tool_call 到客户端
 // ========================
-function sendToolCall(connectionId, toolName, args, timeout = 30000) {
+function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {}) {
     return new Promise((resolve, reject) => {
         const clientInfo = connectedClients.get(connectionId);
         if (!clientInfo) {
@@ -414,31 +552,79 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000) {
         }
 
         const requestId = `tool_call-${randomUUID()}`;
+        const taskId = options.taskId || `task-${randomUUID()}`;
         const meta = signToolCall(requestId, toolName, args, binding);
+        let credentialGrant = null;
+        if (options.credentialRef) {
+            credentialGrant = credentialBroker.issueGrant({
+                credentialRef: options.credentialRef,
+                agentId: options.agentId || 'default-agent',
+                binding,
+                toolName,
+                argumentsPayload: args || {},
+                taskId,
+                requestId,
+            });
+        }
+
+        const params = {
+            tool_name: toolName,
+            arguments: args,
+            meta: meta,
+        };
+        if (credentialGrant) {
+            params.credential_grant = credentialGrant;
+        }
 
         const message = {
             type: "req",
             id: requestId,
             method: "tool_call",
-            params: {
-                tool_name: toolName,
-                arguments: args,
-                meta: meta
-            }
+            params,
         };
+
+        const auditContext = {
+            requestId,
+            taskId,
+            agentId: options.agentId || 'default-agent',
+            connectionId,
+            clientId: binding.clientId,
+            clientName: binding.clientName,
+            sessionId: binding.sessionId,
+            workerLabels: binding.labels || {},
+            toolName,
+            arguments: args || {},
+            timeout,
+            credentialRef: options.credentialRef || null,
+            credentialGrant: credentialGrant ? {
+                grant_id: credentialGrant.grant_id,
+                credential_ref: credentialGrant.credential_ref,
+                task_id: credentialGrant.task_id,
+                request_id: credentialGrant.request_id,
+                worker_id: credentialGrant.worker_id,
+                connection_id: credentialGrant.connection_id,
+                tool_name: credentialGrant.tool_name,
+                exp: credentialGrant.exp,
+            } : null,
+        };
+        appendGatewayAudit('tool_call_dispatched', auditContext);
 
         const timer = setTimeout(() => {
             pendingRequests.delete(requestId);
+            appendGatewayAudit('tool_call_timeout', auditContext);
             reject(new Error(`tool_call ${toolName} timed out after ${timeout}ms`));
         }, timeout);
 
-        pendingRequests.set(requestId, (response) => {
-            clearTimeout(timer);
-            resolve(response);
+        pendingRequests.set(requestId, {
+            auditContext,
+            callback: (response) => {
+                clearTimeout(timer);
+                resolve(response);
+            },
         });
 
         client.send(JSON.stringify(message));
-        console.log(`[tool_call] Sent ${toolName} to ${connectionId}, requestId: ${requestId}`);
+        console.log(`[tool_call] Sent ${toolName} to ${connectionId}, requestId: ${requestId}${credentialGrant ? `, credentialGrant: ${credentialGrant.grant_id}` : ''}`);
     });
 }
 
@@ -473,10 +659,75 @@ function extractAuditEntries(result) {
     return [];
 }
 
+function getTokenFingerprint(token) {
+    if (!token) return null;
+    return createHash('sha256').update(String(token), 'utf-8').digest('hex');
+}
+
+function findActiveWorkerBindingByToken(token) {
+    if (!token) return null;
+    const matches = [];
+    for (const [connectionId, info] of connectedClients) {
+        if (info.token !== token || !info.binding) continue;
+        if (info.client.readyState !== WebSocket.OPEN) continue;
+        matches.push({
+            connectionId,
+            binding: info.binding,
+        });
+    }
+    if (matches.length !== 1) {
+        return { ambiguous: true, matches };
+    }
+    return { ambiguous: false, ...matches[0] };
+}
+
+// ========================
+// Gateway WebUI static assets
+// ========================
+const STATIC_CONTENT_TYPES = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'application/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.svg': 'image/svg+xml; charset=utf-8',
+    '.ico': 'image/x-icon',
+};
+
+function serveStaticAsset(req, res) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return false;
+    const urlObj = new URL(req.url, `http://${req.headers.host}`);
+    let pathname = decodeURIComponent(urlObj.pathname);
+    if (pathname === '/') pathname = '/index.html';
+    if (!pathname.startsWith('/ui/') && pathname !== '/index.html') return false;
+
+    const relativePath = pathname === '/index.html' ? 'index.html' : pathname.slice('/ui/'.length);
+    const resolved = path.resolve(PUBLIC_DIR, relativePath);
+    if (!resolved.startsWith(path.resolve(PUBLIC_DIR))) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        if (req.method !== 'HEAD') res.end(JSON.stringify({ error: 'Forbidden' }));
+        return true;
+    }
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+        return false;
+    }
+    const ext = path.extname(resolved).toLowerCase();
+    res.writeHead(200, {
+        'Content-Type': STATIC_CONTENT_TYPES[ext] || 'application/octet-stream',
+        'Cache-Control': 'no-store',
+    });
+    if (req.method === 'HEAD') {
+        res.end();
+        return true;
+    }
+    fs.createReadStream(resolved).pipe(res);
+    return true;
+}
+
 // ========================
 // HTTP API (供主 Agent 调用)
 // ========================
 const httpServer = http.createServer(async (req, res) => {
+    if (serveStaticAsset(req, res)) return;
     res.setHeader('Content-Type', 'application/json');
 
     // GET /clients - 列出所有已连接的客户端（自动清理死连接）
@@ -506,6 +757,111 @@ const httpServer = http.createServer(async (req, res) => {
         return;
     }
 
+    // Credential Center MVP — metadata/admin APIs never return secret values.
+    if (req.method === 'GET' && req.url.startsWith('/credentials/audit')) {
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        const limit = parseInt(urlObj.searchParams.get('limit') || '100', 10);
+        res.writeHead(200);
+        res.end(JSON.stringify({ entries: credentialBroker.readAudit(limit) }));
+        return;
+    }
+
+    if (req.method === 'GET' && req.url === '/credentials') {
+        res.writeHead(200);
+        res.end(JSON.stringify({ credentials: credentialBroker.listCredentials() }));
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/credentials') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                const credential = credentialBroker.createCredential(parsed, 'http-admin');
+                res.writeHead(201);
+                res.end(JSON.stringify({ credential }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && req.url.startsWith('/credentials/') && req.url.endsWith('/revoke')) {
+        const credentialId = decodeURIComponent(req.url.split('/credentials/')[1].split('/revoke')[0]);
+        try {
+            const credential = credentialBroker.revokeCredential(credentialId, 'http-admin');
+            res.writeHead(200);
+            res.end(JSON.stringify({ credential }));
+        } catch (err) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+
+    // POST /credential/exchange - Worker-only exchange from task-scoped grant to short-lived credential.
+    if (req.method === 'POST' && req.url === '/credential/exchange') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const authHeader = req.headers['authorization'];
+                const token = authHeader && String(authHeader).split(' ')[1];
+                if (!isValidToken(token)) {
+                    res.writeHead(401);
+                    res.end(JSON.stringify({ error: 'invalid_worker_token' }));
+                    return;
+                }
+                const parsed = JSON.parse(body || '{}');
+                const grantId = parsed.grant_id;
+                if (!grantId || typeof grantId !== 'string') {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'missing_grant_id' }));
+                    return;
+                }
+                const grant = credentialBroker.peekGrant ? credentialBroker.peekGrant(grantId) : null;
+                const boundWorker = findActiveWorkerBindingByToken(token);
+                if (!boundWorker) {
+                    res.writeHead(403);
+                    res.end(JSON.stringify({ error: 'worker_token_not_bound_to_active_worker' }));
+                    return;
+                }
+                if (boundWorker.ambiguous) {
+                    res.writeHead(409);
+                    res.end(JSON.stringify({ error: 'worker_token_binding_ambiguous' }));
+                    return;
+                }
+                if (grant && grant.worker_id && grant.worker_id !== boundWorker.binding.clientId) {
+                    res.writeHead(403);
+                    res.end(JSON.stringify({ error: 'worker_token_not_bound_to_grant' }));
+                    return;
+                }
+                if (grant && grant.connection_id && grant.connection_id !== boundWorker.connectionId) {
+                    res.writeHead(403);
+                    res.end(JSON.stringify({ error: 'worker_connection_not_bound_to_grant' }));
+                    return;
+                }
+                const exchanged = credentialBroker.exchangeGrant({
+                    grant_id: grantId,
+                    task_id: parsed.task_id,
+                    tool_name: parsed.tool_name,
+                    workerId: boundWorker.binding.clientId,
+                    workerConnectionId: boundWorker.connectionId,
+                    workerTokenId: getTokenFingerprint(token),
+                });
+                res.writeHead(200);
+                res.end(JSON.stringify(exchanged));
+            } catch (err) {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: err.code || 'credential_exchange_denied', message: err.message }));
+            }
+        });
+        return;
+    }
+
     // POST /tool_call - 向客户端发送工具调用
     if (req.method === 'POST' && req.url.startsWith('/tool_call')) {
         const toolCallUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -517,6 +873,8 @@ const httpServer = http.createServer(async (req, res) => {
             try {
                 const parsed = JSON.parse(body);
                 const { connection_id, tool_name, arguments: args, timeout, labels } = parsed;
+                const credentialRef = typeof parsed.credential_ref === 'string' ? parsed.credential_ref : (typeof parsed.credentialRef === 'string' ? parsed.credentialRef : null);
+                const agentId = typeof parsed.agent_id === 'string' ? parsed.agent_id : (typeof parsed.agentId === 'string' ? parsed.agentId : 'default-agent');
                 const clientName = parsed.clientName || parsed.client_name || (parsed.target && parsed.target.clientName);
 
                 if (!tool_name) {
@@ -535,8 +893,8 @@ const httpServer = http.createServer(async (req, res) => {
                     }
                     if (!targetConnId) {
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, createdAt: new Date().toISOString() });
+                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
+                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, agent_id: agentId, createdAt: new Date().toISOString() });
                             console.log(`[queue] Task ${taskId} queued for ${clientName}`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -560,8 +918,8 @@ const httpServer = http.createServer(async (req, res) => {
                     }
                     if (!targetConnId) {
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, createdAt: new Date().toISOString() });
+                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
+                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, agent_id: agentId, createdAt: new Date().toISOString() });
                             console.log(`[queue] Task ${taskId} queued for labels ${JSON.stringify(labels)}`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -583,8 +941,8 @@ const httpServer = http.createServer(async (req, res) => {
                     if (!firstEntry) {
                         // Queue mode: store task for later execution
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, createdAt: new Date().toISOString() });
+                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
+                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, agent_id: agentId, createdAt: new Date().toISOString() });
                             console.log(`[queue] Task ${taskId} queued (no clients online)`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -599,17 +957,17 @@ const httpServer = http.createServer(async (req, res) => {
 
                 // Async mode: return task_id immediately, execute in background
                 if (isAsync) {
-                    const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout });
+                    const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
                     res.writeHead(202);
                     res.end(JSON.stringify({ taskId, status: 'pending' }));
                     // Execute in background
-                    sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000)
+                    sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, agentId, taskId })
                         .then(result => completeTask(taskId, result))
                         .catch(err => failTask(taskId, err.message));
                     return;
                 }
 
-                const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000);
+                const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, agentId });
                 res.writeHead(200);
                 res.end(JSON.stringify(result));
             } catch (err) {
@@ -640,6 +998,8 @@ const httpServer = http.createServer(async (req, res) => {
                 const promises = calls.map(async (call, index) => {
                     try {
                         const { tool_name, arguments: args, timeout } = call;
+                        const credentialRef = typeof call.credential_ref === 'string' ? call.credential_ref : (typeof call.credentialRef === 'string' ? call.credentialRef : null);
+                        const agentId = typeof call.agent_id === 'string' ? call.agent_id : (typeof call.agentId === 'string' ? call.agentId : 'default-agent');
                         const clientName = call.clientName || call.client_name;
                         let targetConnId = call.connection_id;
 
@@ -678,8 +1038,9 @@ const httpServer = http.createServer(async (req, res) => {
                             return { index, clientName, error: "No target specified (provide clientName, labels, or connection_id)" };
                         }
 
-                        const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || globalTimeout || 30000);
-                        return { index, clientName, tool_name, result };
+                        const taskId = typeof call.task_id === 'string' ? call.task_id : (typeof call.taskId === 'string' ? call.taskId : undefined);
+                        const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || globalTimeout || 30000, { credentialRef, agentId, taskId });
+                        return { index, clientName, tool_name, credential_ref: credentialRef, result };
                     } catch (err) {
                         return { index, clientName: call.clientName || call.client_name, error: err.message };
                     }
@@ -694,6 +1055,14 @@ const httpServer = http.createServer(async (req, res) => {
                 res.end(JSON.stringify({ error: err.message }));
             }
         });
+        return;
+    }
+
+    // GET /gateway/audit - Gateway 中央审计日志（远程备份）
+    if (req.method === 'GET' && req.url.startsWith('/gateway/audit')) {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const limit = Math.min(Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200, 1000);
+        res.end(JSON.stringify({ entries: readGatewayAudit(limit) }));
         return;
     }
 
@@ -887,7 +1256,8 @@ httpServer.listen(HTTP_PORT, () => {
     console.log('POST /batch_tool_call - 并行批量工具调用');
     console.log('GET  /tasks       - 列出异步任务');
     console.log('GET  /tasks/:id   - 查看任务状态');
-    console.log('GET  /audit       - 集中查看审计日志');
+    console.log('GET  /gateway/audit - Gateway 中央审计日志');
+    console.log('GET  /audit       - 集中查看 Worker 审计日志');
     console.log('  Body: { "tool_name": "shell_execute", "arguments": { "command": "ls" } }');
     console.log('');
 });

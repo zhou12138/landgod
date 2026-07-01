@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LandGod Gateway Console</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">LG</div>
+        <div>
+          <div class="brand-title">LandGod Gateway</div>
+          <div class="brand-subtitle">Enterprise Execution Console</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Gateway Console Navigation">
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="workers">Workers</button>
+        <button class="nav-item" data-view="tools">Tools</button>
+        <button class="nav-item" data-view="credentials">Credentials</button>
+        <button class="nav-item" data-view="tasks">Tasks</button>
+        <button class="nav-item" data-view="audit">Audit</button>
+        <button class="nav-item" data-view="access">Effective Access</button>
+      </nav>
+      <div class="side-note">
+        <strong>MVP safety model</strong>
+        <span>Gateway authorizes. Worker enforces. Tool declares credential capability.</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Overview</h1>
+          <p id="pageSubtitle">Central status for workers, tools, credentials, tasks, and audit.</p>
+        </div>
+        <div class="topbar-actions">
+          <span id="apiBase" class="pill">API: current host</span>
+          <button id="refreshBtn" class="primary-button">Refresh</button>
+        </div>
+      </header>
+
+      <section id="toast" class="toast hidden" role="status"></section>
+
+      <section id="view-overview" class="view active">
+        <div class="metric-grid">
+          <article class="metric-card">
+            <span class="metric-label">Gateway</span>
+            <strong id="metricStatus">—</strong>
+            <small id="metricPorts">—</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Online Workers</span>
+            <strong id="metricWorkers">—</strong>
+            <small>registered WebSocket clients</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Published Tools</span>
+            <strong id="metricTools">—</strong>
+            <small>remote callable capabilities</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Credentials</span>
+            <strong id="metricCredentials">—</strong>
+            <small>metadata only; secrets hidden</small>
+          </article>
+        </div>
+
+        <div class="two-column">
+          <article class="panel">
+            <div class="panel-header">
+              <h2>Worker security posture</h2>
+              <span class="muted">from current registrations</span>
+            </div>
+            <div id="overviewWorkers" class="stack"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header">
+              <h2>Recent credential audit</h2>
+              <button class="ghost-button" data-view-jump="audit">Open audit</button>
+            </div>
+            <div id="overviewAudit" class="stack"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="view-workers" class="view">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Workers</h2>
+              <p class="panel-desc">Connected Worker nodes. Future policy profiles will be assigned here.</p>
+            </div>
+          </div>
+          <div class="table-wrap"><table id="workersTable"></table></div>
+        </article>
+      </section>
+
+      <section id="view-tools" class="view">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Published tools</h2>
+              <p class="panel-desc">Tools currently published by connected Workers.</p>
+            </div>
+          </div>
+          <div id="toolsList" class="stack"></div>
+        </article>
+      </section>
+
+      <section id="view-credentials" class="view">
+        <div class="two-column wide-left">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Credential Center</h2>
+                <p class="panel-desc">Gateway stores secrets, but only returns metadata here.</p>
+              </div>
+            </div>
+            <div class="table-wrap"><table id="credentialsTable"></table></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Create credential</h2>
+                <p class="panel-desc">MVP supports <code>api_token</code> and <code>username_password</code>.</p>
+              </div>
+            </div>
+            <form id="credentialForm" class="form-grid">
+              <label>ID <input name="id" placeholder="cred_finance_readonly" required /></label>
+              <label>Type
+                <select name="type">
+                  <option value="api_token">api_token</option>
+                  <option value="username_password">username_password</option>
+                </select>
+              </label>
+              <label>Description <input name="description" placeholder="Finance read-only connector" /></label>
+              <label>Allowed agents <input name="allowedAgents" placeholder="agent-a,*" /></label>
+              <label>Allowed worker IDs <input name="allowedWorkerIds" placeholder="worker-1,*" /></label>
+              <label>Allowed worker groups <input name="allowedWorkerGroups" placeholder="finance,ops" /></label>
+              <label>Allowed tools <input name="allowedTools" placeholder="finance.invoice.read" required /></label>
+              <label>Denied tools <input name="deniedTools" placeholder="shell_execute,external_http_post" /></label>
+              <label>Allowed scopes <input name="allowedScopes" placeholder="read" /></label>
+              <label>Secret JSON
+                <textarea name="secret" rows="5" placeholder='{"token":"..."}' required></textarea>
+              </label>
+              <button class="primary-button" type="submit">Create credential</button>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section id="view-tasks" class="view">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Tasks</h2>
+              <p class="panel-desc">Recent async tasks and queued work.</p>
+            </div>
+          </div>
+          <div class="table-wrap"><table id="tasksTable"></table></div>
+        </article>
+      </section>
+
+      <section id="view-audit" class="view">
+        <article class="panel audit-central-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Gateway central audit</h2>
+              <p class="panel-desc">Remote backup of Gateway-side worker registration, tool dispatch, result, timeout, and error events.</p>
+            </div>
+          </div>
+          <div id="gatewayAudit" class="stack audit-list"></div>
+        </article>
+
+        <div class="two-column">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Credential audit</h2>
+                <p class="panel-desc">Credential Broker grant/exchange events. Secrets are redacted server-side.</p>
+              </div>
+            </div>
+            <div id="credentialAudit" class="stack audit-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Worker audit</h2>
+                <p class="panel-desc">Reads <code>audit_read</code> from online Workers when available.</p>
+              </div>
+            </div>
+            <div id="workerAudit" class="stack audit-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="view-access" class="view">
+        <div class="two-column wide-left">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Effective Access Inspector</h2>
+                <p class="panel-desc">Client-side MVP evaluation: Gateway credential policy + Worker/tool visibility. Worker remains final enforcement.</p>
+              </div>
+            </div>
+            <form id="accessForm" class="form-row">
+              <input name="agentId" placeholder="agent-a" />
+              <input name="workerId" placeholder="worker clientId or connectionId" />
+              <input name="workerGroup" placeholder="worker group label" />
+              <input name="toolName" placeholder="tool name" />
+              <input name="credentialRef" placeholder="cred_ref" />
+              <button class="primary-button" type="submit">Evaluate</button>
+            </form>
+            <div id="accessResult" class="decision-box empty">Fill the fields and evaluate.</div>
+          </article>
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Tool call smoke test</h2>
+                <p class="panel-desc">Sends <code>/tool_call</code>. Use with safe read-only tools first.</p>
+              </div>
+            </div>
+            <form id="toolCallForm" class="form-grid">
+              <label>Agent ID <input name="agent_id" placeholder="agent-a" /></label>
+              <label>Client name <input name="clientName" placeholder="finance-win-01" /></label>
+              <label>Tool name <input name="tool_name" placeholder="finance.invoice.read" required /></label>
+              <label>Credential ref <input name="credential_ref" placeholder="cred_finance_readonly" /></label>
+              <label>Arguments JSON <textarea name="arguments" rows="5" placeholder='{"id":1}'>{}</textarea></label>
+              <button class="primary-button" type="submit">Send tool call</button>
+            </form>
+            <pre id="toolCallResult" class="code-block">No call yet.</pre>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/ui/app.js"></script>
+</body>
+</html>

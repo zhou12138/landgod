@@ -1,0 +1,44 @@
+{
+  "name": "business-report-demo",
+  "kind": "bundled-mcp",
+  "transport": "stdio",
+  "commandStrategy": {
+    "type": "python-script",
+    "script": "server.py"
+  },
+  "availability": {
+    "python": true,
+    "import": "mcp",
+    "exists": [
+      "server.py",
+      "data/orders_2026-06.csv",
+      "data/invoices_2026-06.csv",
+      "data/targets_2026-06.json"
+    ]
+  },
+  "publication": {
+    "enabled": true,
+    "publishedRemotely": true,
+    "trustLevel": "trusted",
+    "requiredPermissionProfile": "command-only"
+  },
+  "credentials": {
+    "enabled": true,
+    "acceptedTypes": ["api_token"],
+    "allowedScopes": ["read", "report"]
+  },
+  "tools": [
+    "load_erp_orders",
+    "load_finance_invoices",
+    "generate_monthly_report",
+    "run_monthly_close_demo"
+  ],
+  "env": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "disable": {
+    "arg": "--disable-business-report-demo",
+    "env": "DISABLE_BUSINESS_REPORT_DEMO"
+  }
+}

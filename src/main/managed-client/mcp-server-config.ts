@@ -23,6 +23,11 @@ export interface ManagedClientFileMcpServerConfig {
   requiredPermissionProfile?: BuiltInToolsPermissionProfile;
   trustLevel?: ManagedClientExternalMcpTrustLevel;
   publishedRemotely?: boolean;
+  credentials?: {
+    enabled?: boolean;
+    acceptedTypes?: Array<'api_token' | 'username_password'>;
+    allowedScopes?: string[];
+  };
 }
 
 export type ManagedClientExternalMcpPublicationBlockedReason = 'not-published-remotely' | 'trust-level-blocked' | 'tool-list-required' | 'wildcard-tools-blocked';
@@ -98,6 +103,17 @@ export function parseManagedClientMcpServers(
       : undefined;
     const trustLevel = normalizeManagedClientExternalMcpTrustLevel(server.trustLevel);
     const publishedRemotely = server.publishedRemotely !== false; // 默认 true
+    const credentials = server.credentials && typeof server.credentials === 'object'
+      ? {
+        enabled: server.credentials.enabled === true,
+        acceptedTypes: Array.isArray(server.credentials.acceptedTypes)
+          ? server.credentials.acceptedTypes.filter((value): value is 'api_token' | 'username_password' => value === 'api_token' || value === 'username_password')
+          : undefined,
+        allowedScopes: Array.isArray(server.credentials.allowedScopes)
+          ? server.credentials.allowedScopes.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          : undefined,
+      }
+      : undefined;
 
     if (server.transport === 'http') {
       if (typeof server.url !== 'string' || !server.url.trim()) {
@@ -114,6 +130,7 @@ export function parseManagedClientMcpServers(
         requiredPermissionProfile: normalizeExternalMcpPermissionProfile(server.requiredPermissionProfile, 'http'),
         trustLevel,
         publishedRemotely,
+        credentials,
       } satisfies ManagedClientExternalMcpHttpServerConfig);
       continue;
     }
@@ -136,6 +153,7 @@ export function parseManagedClientMcpServers(
       requiredPermissionProfile: normalizeExternalMcpPermissionProfile(server.requiredPermissionProfile, 'stdio'),
       trustLevel,
       publishedRemotely,
+      credentials,
     } satisfies ManagedClientExternalMcpStdioServerConfig);
   }
 

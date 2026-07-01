@@ -1,0 +1,21 @@
+order_id,date,customer,region,product,amount,status
+ORD-1001,2026-06-01,Acme Manufacturing,East,Industrial Sensor,42000,closed
+ORD-1002,2026-06-02,Northwind Retail,North,SaaS Renewal,18500,closed
+ORD-1003,2026-06-03,Globex Logistics,South,Gateway Appliance,76000,closed
+ORD-1004,2026-06-05,Initech Finance,East,Support Package,12800,closed
+ORD-1005,2026-06-06,Umbrella Health,West,Compliance Module,54000,closed
+ORD-1006,2026-06-08,Stark Energy,North,Industrial Sensor,33500,closed
+ORD-1007,2026-06-10,Wayne Retail,East,SaaS Renewal,22600,closed
+ORD-1008,2026-06-11,Wonka Foods,South,Gateway Appliance,41000,closed
+ORD-1009,2026-06-14,Soylent Ops,West,Support Package,15800,closed
+ORD-1010,2026-06-15,Tyrell Labs,East,Compliance Module,63500,closed
+ORD-1011,2026-06-17,Massive Dynamic,North,Gateway Appliance,88000,closed
+ORD-1012,2026-06-18,Oceanic Air,South,SaaS Renewal,19700,closed
+ORD-1013,2026-06-20,Hooli Cloud,West,Industrial Sensor,47000,closed
+ORD-1014,2026-06-22,Vehement Capital,East,Compliance Module,39200,closed
+ORD-1015,2026-06-23,Initrode Systems,North,Support Package,9800,closed
+ORD-1016,2026-06-24,Acme Manufacturing,East,SaaS Renewal,26500,closed
+ORD-1017,2026-06-26,Globex Logistics,South,Compliance Module,58100,closed
+ORD-1018,2026-06-27,Northwind Retail,North,Gateway Appliance,32500,closed
+ORD-1019,2026-06-29,Tyrell Labs,East,Industrial Sensor,51000,closed
+ORD-1020,2026-06-30,Hooli Cloud,West,SaaS Renewal,24400,closed

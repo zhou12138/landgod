@@ -15,6 +15,13 @@ import { ManagedClientMcpToolRegistry } from './mcp-tool-registry';
 import { createManagedClientDefenseLayer } from './tool-defense';
 import { prepareManagedClientWorkspace } from './workspace';
 import { getManagedClientToolResultMode } from '../builtin-tools/types';
+import {
+  exchangeCredentialGrant,
+  isCredentialForbiddenTool,
+  parseCredentialGrant,
+  validateCredentialGrant,
+  type ExchangedCredential,
+} from './credential-runtime';
 
 type DesktopWsMessage = Record<string, unknown>;
 const HANDSHAKE_TIMEOUT_MS = 10_000;
@@ -67,13 +74,53 @@ async function promptForToolCallApproval(params: {
   }
 }
 
+function redactCredentialForAudit(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => redactCredentialForAudit(item));
+  }
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+  const input = value as Record<string, unknown>;
+  const output: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(input)) {
+    if (key === 'credential_grant' && item && typeof item === 'object') {
+      const grantInput = item as Record<string, unknown>;
+      output[key] = {
+        grant_id: grantInput.grant_id ?? null,
+        credential_ref: grantInput.credential_ref ?? null,
+        tool_name: grantInput.tool_name ?? null,
+        task_id: grantInput.task_id ?? null,
+        request_id: grantInput.request_id ?? null,
+      };
+      continue;
+    }
+    if (key === '_landgod_credential' && item && typeof item === 'object') {
+      const credential = item as Record<string, unknown>;
+      output[key] = {
+        credential_ref: credential.credential_ref ?? null,
+        credential_type: credential.credential_type ?? null,
+        expires_in: credential.expires_in ?? null,
+        secret: '***REDACTED***',
+      };
+      continue;
+    }
+    if (key === 'secret' || /password|token|secret|api[_-]?key/i.test(key)) {
+      output[key] = '***REDACTED***';
+    } else {
+      output[key] = redactCredentialForAudit(item);
+    }
+  }
+  return output;
+}
+
 function stringifyForAudit(value: unknown): string {
   if (value === undefined || value === null) {
     return '';
   }
 
   try {
-    const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    const text = typeof value === 'string' ? value : JSON.stringify(redactCredentialForAudit(value), null, 2);
     return text.length > 10_000 ? `${text.slice(0, 10_000)}...` : text;
   } catch {
     return String(value);
@@ -1321,6 +1368,7 @@ export class ManagedClientMcpWsRuntime {
     if (!this.config.demo) {
       const securityValidation = this.validateToolCallSecurity(requestId, toolName, argumentsPayload, payload);
       if (!securityValidation.valid) {
+        const failedValidation = securityValidation as { valid: false; code: string; message: string; details: Record<string, unknown> };
         this.pullStatus = 'task-failed';
         this.lastTaskCommand = toolName;
         this.lastPolledAt = new Date().toISOString();
@@ -1328,14 +1376,14 @@ export class ManagedClientMcpWsRuntime {
           requestId,
           toolName,
           rawPayload: payload,
-          validation: securityValidation.details,
-        }, 1, `${securityValidation.code}: ${securityValidation.message}`);
+          validation: failedValidation.details,
+        }, 1, `${failedValidation.code}: ${failedValidation.message}`);
         emitServerEvent('managed-client-mcp-ws:task:rejected', {
           requestId,
           toolName,
-          code: securityValidation.code,
+          code: failedValidation.code,
         });
-        await this.sendToolError(socket, requestId, securityValidation.code, securityValidation.message);
+        await this.sendToolError(socket, requestId, failedValidation.code, failedValidation.message);
         return;
       }
     }
@@ -1384,7 +1432,82 @@ export class ManagedClientMcpWsRuntime {
       return;
     }
 
-    const effectiveArgumentsPayload = requestInspection.argumentsPayload;
+    let effectiveArgumentsPayload = requestInspection.argumentsPayload;
+    const credentialGrant = parseCredentialGrant(payload.credential_grant);
+    let exchangedCredential: ExchangedCredential | null = null;
+    if (payload.credential_grant !== undefined && !credentialGrant) {
+      await this.sendToolError(socket, requestId, 'invalid_credential_grant', 'credential_grant payload is malformed');
+      return;
+    }
+    if (credentialGrant) {
+      if (isCredentialForbiddenTool(toolName)) {
+        await this.sendToolError(socket, requestId, 'credential_tool_forbidden', `Credential grants are forbidden for tool: ${toolName}`);
+        return;
+      }
+      if (!binding.credentialAccess?.enabled) {
+        this.appendAuditEntry(`[managed-client-mcp-ws] credential grant denied: ${toolName}`, {
+          requestId,
+          toolName,
+          credentialRef: credentialGrant.credential_ref,
+          reason: 'Tool is not declared credential-capable',
+        }, 1);
+        await this.sendToolError(socket, requestId, 'credential_tool_not_capable', `Tool is not declared credential-capable: ${toolName}`);
+        return;
+      }
+      const grantValidation = validateCredentialGrant({
+        grant: credentialGrant,
+        toolName,
+        argumentsPayload: effectiveArgumentsPayload,
+        requestId,
+        clientId: this.config.clientId,
+        connectionId: this.connectionId,
+        serverPublicKeyPem: this.expectedServerPublicKeyPem,
+      });
+      if (!grantValidation.valid) {
+        this.appendAuditEntry(`[managed-client-mcp-ws] credential grant rejected: ${toolName}`, {
+          requestId,
+          toolName,
+          credentialRef: credentialGrant.credential_ref,
+          code: grantValidation.code,
+        }, 1, grantValidation.message);
+        await this.sendToolError(socket, requestId, grantValidation.code ?? 'invalid_credential_grant', grantValidation.message ?? 'credential grant is invalid');
+        return;
+      }
+      exchangedCredential = await exchangeCredentialGrant({
+        config: this.config,
+        grant: credentialGrant,
+        toolName,
+      });
+      if (!binding.credentialAccess.acceptedTypes.includes(exchangedCredential.credential_type)) {
+        this.appendAuditEntry(`[managed-client-mcp-ws] credential grant denied: ${toolName}`, {
+          requestId,
+          toolName,
+          credentialRef: credentialGrant.credential_ref,
+          credentialType: exchangedCredential.credential_type,
+          reason: 'Tool does not accept exchanged credential type',
+        }, 1);
+        await this.sendToolError(socket, requestId, 'credential_type_not_accepted', `Tool does not accept credential type: ${exchangedCredential.credential_type}`);
+        return;
+      }
+      const grantScopes = Array.isArray(credentialGrant.allowed_scopes) ? credentialGrant.allowed_scopes : [];
+      const allowedScopes = binding.credentialAccess.allowedScopes;
+      if (grantScopes.length > 0 && allowedScopes.length > 0 && grantScopes.some((scope) => !allowedScopes.includes(scope))) {
+        this.appendAuditEntry(`[managed-client-mcp-ws] credential grant denied: ${toolName}`, {
+          requestId,
+          toolName,
+          credentialRef: credentialGrant.credential_ref,
+          grantScopes,
+          allowedScopes,
+          reason: 'Grant scopes exceed tool allowed scopes',
+        }, 1);
+        await this.sendToolError(socket, requestId, 'credential_scope_not_accepted', 'Credential grant scopes are not accepted by this tool');
+        return;
+      }
+      effectiveArgumentsPayload = {
+        ...effectiveArgumentsPayload,
+        _landgod_credential: exchangedCredential,
+      };
+    }
 
     // Tool call approval gate
     const metaForApproval = isJsonObject(payload.meta) ? payload.meta : null;
@@ -1394,7 +1517,7 @@ export class ManagedClientMcpWsRuntime {
       emitServerEvent('tool-call:approval-required', {
         requestId,
         toolName,
-        arguments: effectiveArgumentsPayload,
+        arguments: redactCredentialForAudit(effectiveArgumentsPayload),
         source: binding.source,
         sourceName: binding.sourceName,
         sessionId: toolCallSessionId,
@@ -1457,7 +1580,7 @@ export class ManagedClientMcpWsRuntime {
       requestId,
       toolName,
       rawPayload: payload,
-      arguments: effectiveArgumentsPayload,
+      arguments: redactCredentialForAudit(effectiveArgumentsPayload),
       defenseFindings: requestInspection.findings,
     }, 0);
     emitServerEvent('managed-client-mcp-ws:task:started', { requestId, toolName });
@@ -1499,7 +1622,7 @@ export class ManagedClientMcpWsRuntime {
           rawPayload: payload,
           source: binding.source,
           sourceName: binding.sourceName,
-          result,
+          result: redactCredentialForAudit(result),
           defenseFindings: responseInspection.findings,
         }, 1, message);
         emitServerEvent('managed-client-mcp-ws:task:completed', {
@@ -1545,7 +1668,7 @@ export class ManagedClientMcpWsRuntime {
           rawPayload: payload,
           source: binding.source,
           sourceName: binding.sourceName,
-          result,
+          result: redactCredentialForAudit(result),
           defenseFindings: responseInspection.findings,
         }, 1, message);
         emitServerEvent('managed-client-mcp-ws:task:completed', {
@@ -1579,7 +1702,7 @@ export class ManagedClientMcpWsRuntime {
         rawPayload: payload,
         source: binding.source,
         sourceName: binding.sourceName,
-        result,
+        result: redactCredentialForAudit(result),
         defenseFindings: responseInspection.findings,
       }, 0);
       emitServerEvent('managed-client-mcp-ws:task:completed', {

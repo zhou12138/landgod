@@ -116,6 +116,12 @@ function getExternalServerAccessDecision(
   );
 }
 
+export interface ToolCredentialAccess {
+  enabled: boolean;
+  acceptedTypes: Array<'api_token' | 'username_password'>;
+  allowedScopes: string[];
+}
+
 export interface ToolBinding {
   advertisedName: string;
   upstreamName: string;
@@ -124,6 +130,7 @@ export interface ToolBinding {
   client: Client;
   source: 'local' | 'external';
   sourceName: string;
+  credentialAccess?: ToolCredentialAccess;
 }
 
 export interface ManagedClientMcpServerConnectionTestResult {
@@ -487,6 +494,13 @@ export class ManagedClientMcpToolRegistry {
             client: builtInServer.client,
             source: 'local',
             sourceName: serverName,
+            credentialAccess: builtInServer.config.credentials?.enabled === true && builtInServer.config.trustLevel === 'trusted'
+              ? {
+                enabled: true,
+                acceptedTypes: builtInServer.config.credentials.acceptedTypes ?? ['api_token', 'username_password'],
+                allowedScopes: builtInServer.config.credentials.allowedScopes ?? [],
+              }
+              : undefined,
           });
         }
       } catch (error) {
@@ -520,6 +534,13 @@ export class ManagedClientMcpToolRegistry {
             client: externalServer.client,
             source: 'external',
             sourceName: externalServer.config.name,
+            credentialAccess: externalServer.config.credentials?.enabled === true && externalServer.config.trustLevel === 'trusted'
+              ? {
+                enabled: true,
+                acceptedTypes: externalServer.config.credentials.acceptedTypes ?? ['api_token', 'username_password'],
+                allowedScopes: externalServer.config.credentials.allowedScopes ?? [],
+              }
+              : undefined,
           });
         }
       } catch (error) {

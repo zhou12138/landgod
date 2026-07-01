@@ -16,6 +16,9 @@ The examples are organized around the mission:
 - [finance-office-reporting.md](finance-office-reporting.md)
   Finance UKey + Office automation + multi-node reporting workflow.
 
+- [business-report-demo.md](business-report-demo.md)
+  Runnable mock monthly business report demo with ERP/Finance data, credential-aware MCP tool, HTML/PPTX artifacts, and audit story.
+
 ### Platform Capability Scenarios
 
 - [small-team-ops.md](small-team-ops.md)
