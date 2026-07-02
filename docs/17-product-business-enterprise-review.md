@@ -218,7 +218,7 @@ Windows/Linux]
 
 #### System Architecture Diagram
 
-![LandGod / MCPHub System Overall Architecture](./assets/landgod-system-overall-architecture.png)
+![LandGod / MCPHub System Overall Architecture](./assets/landgod-system-overall-architecture-v2.png)
 
 Printable HTML version: [landgod-enterprise-architecture-diagrams.html](./landgod-enterprise-architecture-diagrams.html)
 
