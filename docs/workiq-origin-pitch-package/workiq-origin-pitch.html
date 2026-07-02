@@ -371,17 +371,14 @@
           <circle cx="102" cy="288" r="8" fill="rgba(245,158,11,.22)" stroke="rgba(245,158,11,.52)"/>
           <text x="128" y="293" class="cap">Others</text>
 
-          <!-- MCPHub service boundary -->
-          <rect x="230" y="118" width="160" height="242" rx="26" fill="rgba(245,224,119,.14)" stroke="rgba(245,224,119,.60)" stroke-width="2" filter="url(#s2)"/>
-          <text x="310" y="145" class="cap">MCPHub</text>
-          <text x="310" y="166" class="node-sub">Gateway Control Plane</text>
-          <rect x="252" y="184" width="116" height="32" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.4"/>
-          <text x="310" y="204" class="node-sub">Agent API</text>
-          <rect x="252" y="225" width="116" height="32" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(245,158,11,.42)" stroke-width="1.4"/>
-          <text x="310" y="245" class="node-sub">Policy + Routing</text>
-          <rect x="252" y="266" width="116" height="32" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(34,197,94,.42)" stroke-width="1.4"/>
-          <text x="310" y="286" class="node-sub">Capability Registry</text>
-          <rect x="252" y="307" width="116" height="32" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(148,163,184,.42)" stroke-width="1.4"/>
+          <!-- MCPHub cloud service boundary -->
+          <path d="M244 168 C235 148 249 128 273 128 C285 107 316 106 331 124 C355 118 378 135 378 158 C397 164 407 181 399 201 L399 310 C399 337 379 356 354 356 L264 356 C239 356 219 337 219 312 L219 202 C204 188 212 166 244 168Z" fill="rgba(245,224,119,.14)" stroke="rgba(245,224,119,.62)" stroke-width="2.2" filter="url(#s2)"/>
+          <text x="310" y="148" class="cap">MCPHub</text>
+          <text x="310" y="169" class="node-sub">Service Cloud</text>
+          <text x="310" y="203" class="node-sub">Agent / MCP API</text>
+          <text x="310" y="234" class="node-sub">Auth + Policy</text>
+          <text x="310" y="265" class="node-sub">Router + Registry</text>
+          <text x="310" y="296" class="node-sub">Credential Broker</text>
           <text x="310" y="327" class="node-sub">Activity History</text>
 
           <!-- service <-> execution plane flows -->
