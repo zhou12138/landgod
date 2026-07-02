@@ -461,125 +461,123 @@
     <div class="two-grid">
       <article class="card">
         <h2>A. Worker Connects + Publishes Tools</h2>
-        <p class="lead">The local Worker connects outbound, proves device identity, and publishes user-scoped local capabilities to MCPHub.</p>
+        <p class="lead">Worker-initiated outbound connection keeps personal devices private while publishing a user-scoped capability catalog.</p>
         <div class="diagram" style="padding: 12px 14px;">
-          <svg viewBox="0 0 800 460" style="height:360px" role="img" aria-label="Worker registration and capability publication workflow">
+          <svg viewBox="0 0 800 440" style="height:340px" role="img" aria-label="Worker outbound registration and tool publication workflow">
             <defs>
               <marker id="regA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
               <marker id="regG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
               <filter id="regS" x="-18%" y="-18%" width="136%" height="136%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter>
             </defs>
 
-            <text x="102" y="34" class="proto">Agent Layer</text>
-            <text x="398" y="34" class="proto">MCPHub Service</text>
-            <text x="664" y="34" class="proto">User Computer</text>
-            <line x1="250" y1="52" x2="250" y2="424" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
-            <line x1="552" y1="52" x2="552" y2="424" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
+            <text x="120" y="32" class="proto">Agent Catalog</text>
+            <text x="398" y="32" class="proto">Gateway / MCPHub Service</text>
+            <text x="664" y="32" class="proto">User Computer</text>
+            <line x1="258" y1="54" x2="258" y2="392" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
+            <line x1="548" y1="54" x2="548" y2="392" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
 
-            <rect x="54" y="104" width="150" height="82" rx="20" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#regS)"/>
-            <circle cx="82" cy="145" r="18" fill="rgba(15,23,42,.72)" stroke="rgba(251,113,133,.50)" stroke-width="2"/>
-            <image href="assets/openclaw-logo-icon.png" x="63" y="126" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>
-            <text x="142" y="140" class="cap">Cloud</text>
-            <text x="142" y="158" class="node-sub">Agents</text>
-            <text x="130" y="218" class="proto">Catalog appears as</text>
-            <text x="130" y="236" class="proto">available MCP tools</text>
+            <rect x="66" y="130" width="150" height="76" rx="20" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#regS)"/>
+            <circle cx="95" cy="168" r="18" fill="rgba(15,23,42,.72)" stroke="rgba(251,113,133,.50)" stroke-width="2"/>
+            <image href="assets/openclaw-logo-icon.png" x="76" y="149" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>
+            <text x="150" y="160" class="cap">Cloud Agent</text>
+            <text x="150" y="180" class="node-sub">available tools</text>
 
-            <path d="M304 142 C304 116 330 108 350 122 C368 96 409 106 416 134 C448 132 466 163 443 188 C452 218 405 230 382 210 C358 236 314 222 321 192 C302 187 294 161 304 142Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#regS)"/>
-            <text x="384" y="154" class="node-title">MCPHub</text>
-            <text x="384" y="178" class="node-sub">Gateway</text>
-            <rect x="312" y="248" width="146" height="60" rx="16" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.46)" stroke-width="1.5" filter="url(#regS)"/>
-            <text x="385" y="272" class="cap">Capability</text>
-            <text x="385" y="292" class="node-sub">Registry</text>
+            <path d="M310 118 C310 92 336 84 356 98 C374 72 415 82 422 110 C454 108 472 139 449 164 C458 194 411 206 388 186 C364 212 320 198 327 168 C308 163 300 137 310 118Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#regS)"/>
+            <text x="390" y="131" class="node-title">Gateway</text>
+            <text x="390" y="154" class="node-sub">WS endpoint · session</text>
+            <text x="390" y="174" class="node-sub">token / binding</text>
+            <rect x="318" y="250" width="150" height="68" rx="17" fill="rgba(15,23,42,.84)" stroke="rgba(34,197,94,.46)" stroke-width="1.5" filter="url(#regS)"/>
+            <text x="393" y="276" class="cap">Capability Registry</text>
+            <text x="393" y="298" class="node-sub">user-scoped catalog</text>
 
-            <rect x="592" y="88" width="146" height="48" rx="15" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#regS)"/>
-            <text x="665" y="118" class="cap">Laptop / VM</text>
-            <rect x="574" y="178" width="184" height="188" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#regS)"/>
-            <text x="666" y="206" class="cap">Workshop</text>
-            <rect x="604" y="226" width="124" height="36" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
-            <text x="666" y="249" class="node-sub">LandGod Worker</text>
-            <rect x="604" y="278" width="124" height="34" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
-            <text x="666" y="300" class="node-sub">Tool Registry</text>
-            <path d="M666 262 L666 278" stroke="#64748b" stroke-width="2" marker-end="url(#regG)"/>
-            <rect x="586" y="328" width="48" height="28" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.2"/>
-            <text x="610" y="346" class="node-sub">WorkIQ</text>
-            <rect x="640" y="328" width="44" height="28" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.2"/>
-            <text x="662" y="346" class="node-sub">Files</text>
-            <rect x="690" y="328" width="54" height="28" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.2"/>
-            <text x="717" y="346" class="node-sub">Browser</text>
+            <rect x="602" y="86" width="132" height="44" rx="14" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#regS)"/>
+            <text x="668" y="114" class="cap">Laptop / VM</text>
+            <rect x="586" y="166" width="168" height="170" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#regS)"/>
+            <text x="670" y="192" class="cap">Workshop</text>
+            <rect x="610" y="210" width="120" height="34" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
+            <text x="670" y="232" class="node-sub">LandGod Worker</text>
+            <rect x="610" y="260" width="120" height="32" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
+            <text x="670" y="281" class="node-sub">Local Tool Registry</text>
+            <path d="M670 244 L670 260" stroke="#64748b" stroke-width="2" marker-end="url(#regG)"/>
+            <rect x="598" y="306" width="46" height="26" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.1"/>
+            <text x="621" y="323" class="node-sub">WorkIQ</text>
+            <rect x="650" y="306" width="42" height="26" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.1"/>
+            <text x="671" y="323" class="node-sub">Files</text>
+            <rect x="698" y="306" width="48" height="26" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.1"/>
+            <text x="722" y="323" class="node-sub">Browser</text>
 
-            <path d="M606 244 C548 232 498 206 443 176" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
-            <text x="470" y="218" class="cap">1. outbound WS(S)</text>
-            <text x="474" y="238" class="proto">worker token + binding</text>
-            <path d="M604 294 C542 304 500 298 458 280" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
-            <text x="470" y="320" class="cap">2. register / update_tools</text>
-            <path d="M312 280 C255 282 210 258 164 222" stroke="#38bdf8" stroke-width="3.2" fill="none" marker-end="url(#regA)"/>
-            <text x="196" y="300" class="cap">3. user-scoped catalog</text>
+            <path d="M610 226 C548 212 500 178 449 150" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
+            <text x="470" y="206" class="cap">1. outbound WS(S)</text>
+            <text x="474" y="226" class="proto">token + device binding</text>
+            <path d="M610 276 C548 292 510 292 468 284" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
+            <text x="484" y="312" class="cap">2. register + update_tools</text>
+            <path d="M318 284 C264 276 224 236 178 206" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#regA)"/>
+            <text x="190" y="260" class="cap">3. publish catalog</text>
           </svg>
         </div>
-        <div class="workflow-note"><b>Register:</b> WS(S) connect → token / worker binding → <code>register</code> + <code>update_tools</code> → capability catalog.</div>
+        <div class="workflow-note"><b>Protect:</b> no inbound port on personal devices. Gateway stores device presence and a user-scoped capability catalog.</div>
       </article>
 
       <article class="card">
         <h2>B. Agent Calls + Worker Executes Locally</h2>
-        <p class="lead">Agent invokes one governed endpoint. Gateway routes and signs the request; Worker verifies and calls the local tool runtime.</p>
+        <p class="lead">Agent calls Gateway over HTTP. Gateway selects the Worker, signs the request, and the Worker executes on the local tool runtime.</p>
         <div class="diagram" style="padding: 12px 14px;">
-          <svg viewBox="0 0 800 460" style="height:360px" role="img" aria-label="Agent invokes tool and Worker executes locally workflow">
+          <svg viewBox="0 0 800 440" style="height:340px" role="img" aria-label="Agent invocation routed through Gateway to local Worker execution">
             <defs>
               <marker id="callA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
               <marker id="callG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
               <filter id="callS" x="-18%" y="-18%" width="136%" height="136%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter>
             </defs>
 
-            <text x="102" y="34" class="proto">Agent</text>
-            <text x="398" y="34" class="proto">MCPHub Service</text>
-            <text x="664" y="34" class="proto">User Computer</text>
-            <line x1="250" y1="52" x2="250" y2="424" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
-            <line x1="552" y1="52" x2="552" y2="424" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
+            <text x="116" y="32" class="proto">Agent</text>
+            <text x="398" y="32" class="proto">Gateway / MCPHub Service</text>
+            <text x="664" y="32" class="proto">User Computer</text>
+            <line x1="258" y1="54" x2="258" y2="392" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
+            <line x1="548" y1="54" x2="548" y2="392" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
 
-            <rect x="54" y="118" width="150" height="82" rx="20" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#callS)"/>
-            <circle cx="82" cy="159" r="18" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
-            <image href="assets/societas-logo-icon.png" x="65" y="140" width="34" height="36" preserveAspectRatio="xMidYMid meet"/>
-            <text x="142" y="154" class="cap">Agent</text>
-            <text x="142" y="172" class="node-sub">tool intent</text>
-            <rect x="80" y="294" width="148" height="52" rx="15" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.4" filter="url(#callS)"/>
-            <text x="154" y="317" class="cap">Tool Result</text>
-            <text x="154" y="335" class="node-sub">stdout / JSON / file</text>
+            <rect x="62" y="114" width="148" height="70" rx="20" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#callS)"/>
+            <circle cx="88" cy="150" r="16" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
+            <image href="assets/societas-logo-icon.png" x="73" y="133" width="31" height="33" preserveAspectRatio="xMidYMid meet"/>
+            <text x="146" y="144" class="cap">Agent</text>
+            <text x="146" y="162" class="node-sub">tool intent</text>
+            <rect x="76" y="304" width="148" height="50" rx="15" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.4" filter="url(#callS)"/>
+            <text x="150" y="326" class="cap">Tool Result</text>
+            <text x="150" y="343" class="node-sub">JSON · file · stdout</text>
 
-            <path d="M304 142 C304 116 330 108 350 122 C368 96 409 106 416 134 C448 132 466 163 443 188 C452 218 405 230 382 210 C358 236 314 222 321 192 C302 187 294 161 304 142Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#callS)"/>
-            <text x="384" y="154" class="node-title">MCPHub</text>
-            <text x="384" y="178" class="node-sub">route · sign · audit</text>
-            <rect x="304" y="252" width="164" height="74" rx="16" fill="rgba(15,23,42,.84)" stroke="rgba(251,113,133,.44)" stroke-width="1.5" filter="url(#callS)"/>
-            <text x="386" y="276" class="cap">Signed tool_call</text>
-            <text x="386" y="296" class="node-sub">Ed25519 · nonce</text>
-            <text x="386" y="314" class="node-sub">body hash · expiry</text>
+            <path d="M306 114 C306 88 334 80 354 96 C372 70 416 80 422 110 C456 106 476 140 450 166 C458 198 412 210 388 188 C364 216 320 200 328 170 C307 164 298 136 306 114Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#callS)"/>
+            <text x="390" y="130" class="node-title">Gateway</text>
+            <text x="390" y="154" class="node-sub">route · sign · audit</text>
+            <rect x="304" y="240" width="168" height="76" rx="17" fill="rgba(15,23,42,.84)" stroke="rgba(251,113,133,.44)" stroke-width="1.5" filter="url(#callS)"/>
+            <text x="388" y="264" class="cap">signed tool_call</text>
+            <text x="388" y="286" class="node-sub">Ed25519 · nonce</text>
+            <text x="388" y="305" class="node-sub">body hash · exp</text>
 
-            <rect x="574" y="104" width="184" height="248" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#callS)"/>
-            <text x="666" y="132" class="cap">Workshop</text>
-            <rect x="604" y="154" width="124" height="36" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
-            <text x="666" y="177" class="node-sub">LandGod Worker</text>
-            <rect x="604" y="210" width="124" height="34" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
-            <text x="666" y="232" class="node-sub">Tool Registry</text>
-            <path d="M666 190 L666 210" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
-            <rect x="590" y="276" width="52" height="30" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.2"/>
-            <text x="616" y="295" class="node-sub">WorkIQ</text>
-            <rect x="648" y="276" width="48" height="30" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.2"/>
-            <text x="672" y="295" class="node-sub">Files</text>
-            <rect x="702" y="276" width="56" height="30" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.2"/>
-            <text x="730" y="295" class="node-sub">Browser</text>
-            <path d="M666 244 L666 264" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
-            <text x="666" y="263" class="proto">local capability</text>
+            <rect x="584" y="96" width="172" height="226" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#callS)"/>
+            <text x="670" y="122" class="cap">Worker</text>
+            <rect x="610" y="146" width="120" height="34" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
+            <text x="670" y="168" class="node-sub">verify request</text>
+            <rect x="610" y="202" width="120" height="34" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
+            <text x="670" y="224" class="node-sub">Tool Registry</text>
+            <path d="M670 180 L670 202" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
+            <rect x="596" y="268" width="50" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.1"/>
+            <text x="621" y="286" class="node-sub">WorkIQ</text>
+            <rect x="652" y="268" width="44" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.1"/>
+            <text x="674" y="286" class="node-sub">Files</text>
+            <rect x="702" y="268" width="48" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.1"/>
+            <text x="726" y="286" class="node-sub">CLI</text>
+            <text x="670" y="256" class="proto">local device</text>
 
-            <path d="M204 158 C248 160 280 164 318 168" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
-            <text x="224" y="140" class="cap">1. /tool_call</text>
-            <path d="M444 184 C500 184 546 180 604 174" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
-            <text x="486" y="162" class="cap">2. locate Worker</text>
-            <path d="M468 288 C516 268 556 240 604 226" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
-            <text x="486" y="286" class="cap">3. signed WS call</text>
-            <path d="M640 306 C558 356 406 370 228 324" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#callA)" opacity=".9"/>
-            <text x="400" y="378" class="cap">4. result + Activity trace</text>
+            <path d="M210 148 C250 148 282 148 320 148" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
+            <text x="224" y="122" class="cap">1. HTTP /tool_call</text>
+            <path d="M450 148 C500 148 552 154 610 164" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
+            <text x="482" y="118" class="cap">2. route by worker</text>
+            <path d="M472 278 C520 258 562 228 610 218" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
+            <text x="492" y="292" class="cap">3. signed WS call</text>
+            <path d="M620 294 C540 354 382 370 224 330" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#callA)" opacity=".9"/>
+            <text x="374" y="376" class="cap">4. result + Activity trace</text>
           </svg>
         </div>
-        <div class="workflow-note"><b>Execute:</b> Agent <code>/tool_call</code> → Gateway route/sign/audit → Worker verify → <code>toolRegistry.callTool</code> → Activity trace.</div>
+        <div class="workflow-note"><b>Route / Execute:</b> Gateway selects Worker by connectionId, clientName, or labels; Worker verifies and invokes <code>toolRegistry.callTool</code>.</div>
       </article>
     </div>
 
