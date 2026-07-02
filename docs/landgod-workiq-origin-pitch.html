@@ -218,28 +218,30 @@
           <div class="bullet"><span class="dot"></span><span>WorkIQ 当时没有标准 API，只有本地 <b>workiq CLI</b></span></div>
           <div class="bullet"><span class="dot"></span><span>CLI 安装在用户工作电脑上，依赖本地登录态、配置和公司网络</span></div>
           <div class="bullet"><span class="dot"></span><span>Societas Agent 在云上，天然访问不到这台机器上的工具</span></div>
+          <div class="bullet"><span class="dot"></span><span><b>个人设备不能外露端口</b>：NAT、防火墙、公司网络和安全风险都不允许云上直接打进来</span></div>
           <div class="bullet"><span class="dot"></span><span>不能把用户凭据、token、公司环境直接搬到云上</span></div>
         </div>
-        <div class="quote">瓶颈不是 Agent 不够聪明，而是它碰不到用户本地工具箱。</div>
+        <div class="quote">瓶颈不是 Agent 不够聪明，而是它碰不到用户本地工具箱，也不能要求用户电脑变成公网服务器。</div>
       </article>
 
       <article class="panel">
-        <h2>当时的方案：先搭一座桥</h2>
-        <p>让用户工作电脑主动连接云上，云上的 Societas 只发送任务，本地 Worker 调用 WorkIQ CLI，再把结果回传。</p>
-        <div class="diagram">
-          <svg viewBox="0 0 640 260" role="img" aria-label="Societas 到 WorkIQ 本地 CLI 的桥">
-            <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
-            <path d="M165 92 L255 92" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M380 92 L470 92" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
-            <rect x="24" y="42" width="146" height="100" rx="20" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="97" y="82" class="node-title">Societas</text><text x="97" y="111" class="node-sub">云上 Agent</text>
-            <rect x="250" y="42" width="140" height="100" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="320" y="82" class="node-title">工作电脑</text><text x="320" y="111" class="node-sub">本地 Worker</text>
-            <rect x="470" y="42" width="146" height="100" rx="20" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s)"/><text x="543" y="82" class="node-title">workiq</text><text x="543" y="111" class="node-sub">本地 CLI</text>
-            <text x="320" y="198" class="node-sub">Agent 只发任务；凭据和执行环境留在用户电脑</text>
-            <text x="320" y="224" class="cap">这就是 LandGod 的最初形态：Cloud Agent ↔ Local Tool Bridge</text>
-          </svg>
-        </div>
+        <h2>当时的方案：后端桥，而不是前端直连</h2>
+        <p>核心判断：用户设备主动向云端建立出站连接；云上 Societas 通过后端 Gateway 调度 Worker，而不是让浏览器前端直接连本地 Worker。</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span>跑通 WorkIQ 无 API 集成</span></div>
-          <div class="bullet"><span class="dot green"></span><span>保留本地凭据和环境，不把公司登录态搬到云上</span></div>
+          <div class="bullet"><span class="dot amber"></span><span><b>前端直连 Worker</b>：交互简单、延迟低，但依赖浏览器在线；跨域/本地网络复杂；token 暴露面大；任务难以后台运行和统一管理。</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>后端连接 Worker</b>：Worker 主动连 Gateway，无需个人设备外露端口；Agent、队列、权限、日志、重试都能在后端统一处理。</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>为什么放弃前端</b>：Societas 是云上 Agent，不应该依赖用户打开某个网页；一关页面任务就断，安全和可运维性都不够。</span></div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 640 220" role="img" aria-label="后端 Gateway 到本地 Worker 的桥">
+            <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+            <path d="M150 84 L240 84" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M380 84 L470 84" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
+            <rect x="20" y="36" width="132" height="96" rx="20" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="86" y="75" class="node-title">Societas</text><text x="86" y="103" class="node-sub">云上 Agent</text>
+            <rect x="236" y="36" width="150" height="96" rx="20" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s)"/><text x="311" y="75" class="node-title">Gateway</text><text x="311" y="103" class="node-sub">后端桥 / 调度</text>
+            <rect x="470" y="36" width="150" height="96" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="545" y="75" class="node-title">本地 Worker</text><text x="545" y="103" class="node-sub">主动出站连接</text>
+            <text x="320" y="174" class="node-sub">Worker 调用 workiq CLI；凭据、登录态和执行环境留在用户电脑</text>
+            <text x="320" y="200" class="cap">这就是 LandGod 的最初形态：Cloud Agent → Gateway → Local Worker</text>
+          </svg>
         </div>
       </article>
     </div>
