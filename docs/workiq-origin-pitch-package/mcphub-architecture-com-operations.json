@@ -1,0 +1,121 @@
+{
+  "schema": "office-com-operations.v1",
+  "target": "PowerPoint.Application",
+  "units": "points",
+  "pageSetup": {
+    "slideWidth": 960,
+    "slideHeight": 540,
+    "orientation": "landscape",
+    "aspect": "16:9"
+  },
+  "notes": [
+    "Standalone Win32 PowerPoint COM operation plan for the latest MCPHub / LandGod architecture diagram.",
+    "Coordinates are PowerPoint points. Colors are hex RGB.",
+    "Expected executor mapping: addShape(shapeType='cloud') => msoShapeCloud; addShape(shapeType='roundRect') => msoShapeRoundedRectangle; addConnector(connectorType='elbow'|'straight') => MsoConnectorType; addPicture uses Shapes.AddPicture with absolute or package-relative asset path.",
+    "Module names are intentionally aligned to current LandGod/MCPHub responsibilities: Agent/MCP API, Auth+Policy, Router+Registry, Credential Broker, Activity History. Do not replace them with generic boxes unless source responsibilities change."
+  ],
+  "theme": {
+    "font": "Aptos",
+    "colors": {
+      "bg": "0B1220",
+      "panel": "111827",
+      "panel2": "0F172A",
+      "text": "F8FAFC",
+      "soft": "CBD5E1",
+      "muted": "94A3B8",
+      "line": "64748B",
+      "blue": "38BDF8",
+      "purple": "A78BFA",
+      "green": "22C55E",
+      "amber": "F59E0B",
+      "pink": "FB7185",
+      "cloud": "F5E077"
+    }
+  },
+  "slides": [
+    {
+      "slideIndex": 1,
+      "layout": "blank",
+      "operations": [
+        {"op":"setBackground","fill":{"color":"0B1220"}},
+        {"op":"addTextBox","name":"topic","text":"LOCAL COMPUTER ACCESS","x":40,"y":22,"w":260,"h":18,"font":{"name":"Aptos","size":9,"color":"38BDF8","bold":true},"align":"left","valign":"top","margin":2},
+        {"op":"addTextBox","name":"eyebrow","text":"MCPHub Gateway Architecture","x":40,"y":48,"w":520,"h":28,"font":{"name":"Aptos","size":16,"color":"F8FAFC","bold":true},"align":"left","valign":"top","margin":2},
+
+        {"op":"addTextBox","name":"zone.agent.title","text":"Agent Producers","x":92,"y":94,"w":150,"h":18,"font":{"name":"Aptos","size":10,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":2},
+        {"op":"addTextBox","name":"zone.service.title","text":"MCPHub Service","x":395,"y":94,"w":170,"h":18,"font":{"name":"Aptos","size":10,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":2},
+        {"op":"addTextBox","name":"zone.exec.title","text":"User Execution Plane","x":708,"y":94,"w":170,"h":18,"font":{"name":"Aptos","size":10,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":2},
+        {"op":"addShape","name":"zone.sep.left","shapeType":"line","x":300,"y":120,"w":0,"h":340,"line":{"color":"64748B","transparency":45,"weight":1.3,"dash":"dash"}},
+        {"op":"addShape","name":"zone.sep.right","shapeType":"line","x":660,"y":120,"w":0,"h":340,"line":{"color":"64748B","transparency":45,"weight":1.3,"dash":"dash"}},
+
+        {"op":"addShape","name":"agent.openclaw.box","shapeType":"roundRect","x":72,"y":138,"w":170,"h":48,"fill":{"color":"FB7185","transparency":86},"line":{"color":"FB7185","transparency":35,"weight":1.4}},
+        {"op":"addShape","name":"agent.openclaw.icon.bg","shapeType":"oval","x":86,"y":149,"w":26,"h":26,"fill":{"color":"0F172A","transparency":0},"line":{"color":"FB7185","transparency":35,"weight":1}},
+        {"op":"addPicture","name":"agent.openclaw.logo","path":"assets/openclaw-logo-icon.png","x":82,"y":144,"w":36,"h":36,"lockAspectRatio":true},
+        {"op":"addTextBox","name":"agent.openclaw.label","text":"OpenClaw","x":122,"y":154,"w":108,"h":18,"font":{"name":"Aptos","size":12,"color":"F8FAFC","bold":true},"align":"left","valign":"middle","margin":2},
+
+        {"op":"addShape","name":"agent.societas.box","shapeType":"roundRect","x":72,"y":198,"w":170,"h":48,"fill":{"color":"38BDF8","transparency":86},"line":{"color":"38BDF8","transparency":35,"weight":1.4}},
+        {"op":"addShape","name":"agent.societas.icon.bg","shapeType":"oval","x":86,"y":209,"w":26,"h":26,"fill":{"color":"0F172A","transparency":0},"line":{"color":"38BDF8","transparency":35,"weight":1}},
+        {"op":"addPicture","name":"agent.societas.logo","path":"assets/societas-logo-icon.png","x":91,"y":207,"w":23,"h":24,"lockAspectRatio":true},
+        {"op":"addTextBox","name":"agent.societas.label","text":"Societas","x":122,"y":214,"w":108,"h":18,"font":{"name":"Aptos","size":12,"color":"F8FAFC","bold":true},"align":"left","valign":"middle","margin":2},
+
+        {"op":"addShape","name":"agent.copilot.box","shapeType":"roundRect","x":72,"y":258,"w":170,"h":54,"fill":{"color":"A78BFA","transparency":86},"line":{"color":"A78BFA","transparency":35,"weight":1.4}},
+        {"op":"addShape","name":"agent.copilot.icon.tile","shapeType":"roundRect","x":88,"y":271,"w":28,"h":28,"fill":{"color":"F8FAFC","transparency":0},"line":{"color":"F8FAFC","transparency":100,"weight":0}},
+        {"op":"addTextBox","name":"agent.copilot.githubmark","text":"●","x":90,"y":267,"w":24,"h":26,"font":{"name":"Aptos","size":22,"color":"111827","bold":true},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"agent.copilot.label1","text":"GitHub","x":122,"y":270,"w":108,"h":16,"font":{"name":"Aptos","size":12,"color":"F8FAFC","bold":true},"align":"left","valign":"top","margin":2},
+        {"op":"addTextBox","name":"agent.copilot.label2","text":"Copilot","x":122,"y":288,"w":108,"h":16,"font":{"name":"Aptos","size":10,"color":"CBD5E1","bold":false},"align":"left","valign":"top","margin":2},
+
+        {"op":"addShape","name":"agent.others.box","shapeType":"roundRect","x":72,"y":330,"w":170,"h":48,"fill":{"color":"22C55E","transparency":86},"line":{"color":"22C55E","transparency":35,"weight":1.4}},
+        {"op":"addShape","name":"agent.others.dot1","shapeType":"oval","x":90,"y":347,"w":12,"h":12,"fill":{"color":"38BDF8","transparency":72},"line":{"color":"38BDF8","transparency":35,"weight":1}},
+        {"op":"addShape","name":"agent.others.dot2","shapeType":"oval","x":113,"y":347,"w":12,"h":12,"fill":{"color":"A78BFA","transparency":72},"line":{"color":"A78BFA","transparency":35,"weight":1}},
+        {"op":"addShape","name":"agent.others.dot3","shapeType":"oval","x":136,"y":347,"w":12,"h":12,"fill":{"color":"F59E0B","transparency":72},"line":{"color":"F59E0B","transparency":35,"weight":1}},
+        {"op":"addTextBox","name":"agent.others.label","text":"Others","x":158,"y":345,"w":76,"h":18,"font":{"name":"Aptos","size":12,"color":"F8FAFC","bold":true},"align":"left","valign":"middle","margin":2},
+
+        {"op":"addConnector","name":"agent.bus.openclaw","connectorType":"elbow","begin":{"x":242,"y":162},"points":[{"x":282,"y":162},{"x":282,"y":260}],"end":{"x":333,"y":260},"line":{"color":"64748B","transparency":12,"weight":1.8,"arrowEnd":true}},
+        {"op":"addConnector","name":"agent.bus.societas","connectorType":"elbow","begin":{"x":242,"y":222},"points":[{"x":282,"y":222}],"end":{"x":282,"y":260},"line":{"color":"64748B","transparency":12,"weight":1.8,"arrowEnd":false}},
+        {"op":"addConnector","name":"agent.bus.copilot","connectorType":"elbow","begin":{"x":242,"y":285},"points":[{"x":282,"y":285}],"end":{"x":282,"y":260},"line":{"color":"64748B","transparency":12,"weight":1.8,"arrowEnd":false}},
+        {"op":"addConnector","name":"agent.bus.others","connectorType":"elbow","begin":{"x":242,"y":354},"points":[{"x":282,"y":354},{"x":282,"y":260}],"end":{"x":333,"y":260},"line":{"color":"64748B","transparency":12,"weight":1.8,"arrowEnd":false}},
+        {"op":"addTextBox","name":"agent.bus.label","text":"HTTP(S)\nMCP calls","x":288,"y":236,"w":56,"h":38,"font":{"name":"Aptos","size":9,"color":"38BDF8","bold":true},"align":"center","valign":"middle","margin":0},
+
+        {"op":"addShape","name":"mcphub.cloud","shapeType":"cloud","x":345,"y":135,"w":260,"h":245,"fill":{"color":"F5E077","transparency":86},"line":{"color":"F5E077","transparency":28,"weight":1.8}},
+        {"op":"addTextBox","name":"mcphub.title","text":"MCPHub","x":398,"y":160,"w":154,"h":20,"font":{"name":"Aptos","size":13,"color":"F8FAFC","bold":true},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"mcphub.subtitle","text":"Service Cloud","x":398,"y":181,"w":154,"h":18,"font":{"name":"Aptos","size":10,"color":"CBD5E1","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"mcphub.module.api","text":"Agent / MCP API","x":395,"y":222,"w":160,"h":18,"font":{"name":"Aptos","size":10,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"mcphub.module.auth","text":"Auth + Policy","x":395,"y":252,"w":160,"h":18,"font":{"name":"Aptos","size":10,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"mcphub.module.router","text":"Router + Registry","x":395,"y":282,"w":160,"h":18,"font":{"name":"Aptos","size":10,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"mcphub.module.credential","text":"Credential Broker","x":395,"y":312,"w":160,"h":18,"font":{"name":"Aptos","size":10,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"mcphub.module.history","text":"Activity History","x":395,"y":342,"w":160,"h":18,"font":{"name":"Aptos","size":10,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+
+        {"op":"addConnector","name":"flow.route","connectorType":"elbow","begin":{"x":605,"y":245},"points":[{"x":640,"y":245},{"x":640,"y":188}],"end":{"x":706,"y":188},"line":{"color":"38BDF8","transparency":0,"weight":2.2,"arrowEnd":true}},
+        {"op":"addTextBox","name":"flow.route.label","text":"route","x":620,"y":219,"w":52,"h":14,"font":{"name":"Aptos","size":9,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":0},
+        {"op":"addConnector","name":"flow.register","connectorType":"elbow","begin":{"x":706,"y":326},"points":[{"x":640,"y":326},{"x":640,"y":295}],"end":{"x":605,"y":295},"line":{"color":"64748B","transparency":0,"weight":2,"arrowEnd":true}},
+        {"op":"addTextBox","name":"flow.register.label","text":"register","x":618,"y":342,"w":68,"h":14,"font":{"name":"Aptos","size":9,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":0},
+        {"op":"addConnector","name":"flow.toolcall","connectorType":"elbow","begin":{"x":605,"y":320},"points":[{"x":640,"y":320},{"x":640,"y":360}],"end":{"x":706,"y":360},"line":{"color":"38BDF8","transparency":0,"weight":2.2,"arrowEnd":true}},
+        {"op":"addTextBox","name":"flow.toolcall.label","text":"tool_call","x":618,"y":302,"w":72,"h":14,"font":{"name":"Aptos","size":9,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":0},
+
+        {"op":"addShape","name":"device.laptop","shapeType":"roundRect","x":710,"y":137,"w":160,"h":34,"fill":{"color":"A78BFA","transparency":84},"line":{"color":"A78BFA","transparency":28,"weight":1.5}},
+        {"op":"addTextBox","name":"device.laptop.label","text":"Laptop","x":720,"y":145,"w":140,"h":18,"font":{"name":"Aptos","size":11,"color":"F8FAFC","bold":true},"align":"center","valign":"middle","margin":0},
+        {"op":"addShape","name":"device.vm","shapeType":"roundRect","x":710,"y":181,"w":160,"h":34,"fill":{"color":"A78BFA","transparency":84},"line":{"color":"A78BFA","transparency":28,"weight":1.5}},
+        {"op":"addTextBox","name":"device.vm.label","text":"VM","x":720,"y":189,"w":140,"h":18,"font":{"name":"Aptos","size":11,"color":"F8FAFC","bold":true},"align":"center","valign":"middle","margin":0},
+        {"op":"addShape","name":"device.devbox","shapeType":"roundRect","x":710,"y":225,"w":160,"h":34,"fill":{"color":"A78BFA","transparency":84},"line":{"color":"A78BFA","transparency":28,"weight":1.5}},
+        {"op":"addTextBox","name":"device.devbox.label","text":"DevBox","x":720,"y":233,"w":140,"h":18,"font":{"name":"Aptos","size":11,"color":"F8FAFC","bold":true},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"device.ws.label","text":"outbound WS(S)","x":716,"y":272,"w":148,"h":16,"font":{"name":"Aptos","size":9,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":0},
+
+        {"op":"addShape","name":"workshop.boundary","shapeType":"roundRect","x":690,"y":325,"w":205,"h":145,"fill":{"color":"A78BFA","transparency":86},"line":{"color":"A78BFA","transparency":32,"weight":1.6}},
+        {"op":"addTextBox","name":"workshop.title","text":"Workshop","x":710,"y":338,"w":165,"h":18,"font":{"name":"Aptos","size":12,"color":"F8FAFC","bold":true},"align":"center","valign":"middle","margin":0},
+        {"op":"addShape","name":"worker.runtime","shapeType":"roundRect","x":718,"y":366,"w":150,"h":30,"fill":{"color":"0F172A","transparency":10},"line":{"color":"38BDF8","transparency":35,"weight":1.1}},
+        {"op":"addTextBox","name":"worker.runtime.label","text":"LandGod Worker","x":724,"y":373,"w":138,"h":16,"font":{"name":"Aptos","size":9,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addConnector","name":"worker.to.registry","connectorType":"straight","begin":{"x":793,"y":396},"end":{"x":793,"y":410},"line":{"color":"64748B","transparency":0,"weight":1.5,"arrowEnd":true}},
+        {"op":"addShape","name":"worker.registry","shapeType":"roundRect","x":718,"y":410,"w":150,"h":28,"fill":{"color":"0F172A","transparency":14},"line":{"color":"A78BFA","transparency":35,"weight":1.1}},
+        {"op":"addTextBox","name":"worker.registry.label","text":"Tool Registry","x":724,"y":416,"w":138,"h":16,"font":{"name":"Aptos","size":9,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addTextBox","name":"worker.adapters.label","text":"local adapters","x":724,"y":443,"w":138,"h":12,"font":{"name":"Aptos","size":8,"color":"38BDF8","bold":true},"align":"center","valign":"top","margin":0},
+        {"op":"addShape","name":"adapter.workiq","shapeType":"roundRect","x":704,"y":456,"w":55,"h":24,"fill":{"color":"0F172A","transparency":10},"line":{"color":"F59E0B","transparency":35,"weight":1}},
+        {"op":"addTextBox","name":"adapter.workiq.label","text":"WorkIQ","x":705,"y":461,"w":53,"h":12,"font":{"name":"Aptos","size":8,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addShape","name":"adapter.files","shapeType":"roundRect","x":766,"y":456,"w":50,"h":24,"fill":{"color":"0F172A","transparency":10},"line":{"color":"22C55E","transparency":35,"weight":1}},
+        {"op":"addTextBox","name":"adapter.files.label","text":"Files","x":767,"y":461,"w":48,"h":12,"font":{"name":"Aptos","size":8,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+        {"op":"addShape","name":"adapter.browser","shapeType":"roundRect","x":823,"y":456,"w":58,"h":24,"fill":{"color":"0F172A","transparency":10},"line":{"color":"38BDF8","transparency":35,"weight":1}},
+        {"op":"addTextBox","name":"adapter.browser.label","text":"Browser","x":824,"y":461,"w":56,"h":12,"font":{"name":"Aptos","size":8,"color":"F8FAFC","bold":false},"align":"center","valign":"middle","margin":0},
+
+        {"op":"addTextBox","name":"footer","text":"Cloud agents call one governed service; user devices register capabilities and execute locally.","x":40,"y":505,"w":880,"h":18,"font":{"name":"Aptos","size":9,"color":"94A3B8","bold":false},"align":"left","valign":"top","margin":2}
+      ]
+    }
+  ]
+}
