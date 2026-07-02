@@ -187,6 +187,7 @@
     .node-title { fill:#f8fafc; font-size: 21px; font-weight: 850; text-anchor: middle; }
     .node-sub { fill:#cbd5e1; font-size: 14px; font-weight: 520; text-anchor: middle; }
     .cap { fill:#e2e8f0; font-size: 14px; font-weight: 720; text-anchor: middle; }
+    .proto { fill:#38bdf8; font-size: 13px; font-weight: 850; text-anchor: middle; letter-spacing: .04em; }
 
     .productivity {
       position: relative;
@@ -440,77 +441,77 @@
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 4 · 真实工作流：注册能力与调用能力</div>
-        <h1>Agent 如何一步一步调用 Worker 的本地能力？</h1>
-        <div class="subtitle">LandGod 的真实链路分两段：Worker 先通过 WebSocket 注册身份和工具能力；Agent 后续通过 Gateway 的 <code>/tool_call</code> 触发一次受签名、可路由、可审计的本地执行。</div>
+        <div class="eyebrow">Page 4 · 真实工作流：Agent 如何知道并调用 LandGod</div>
+        <h1>以我作为 Agent 为例：一次 LandGod 调用是怎么跑完的？</h1>
+        <div class="subtitle">真实链路不是“凭空发现工具”：Agent 先通过 Skill / 本地配置知道 MCPHub Gateway 的地址和 API，再用 HTTP 调 Gateway；Gateway 通过 Worker 已建立的 WebSocket 连接，把 tool_call 路由到具体设备能力。</div>
       </div>
-      <div class="brand"><div class="name">Real Workflow</div><div class="tag">Register · Publish · Call</div></div>
+      <div class="brand"><div class="name">Real E2E Flow</div><div class="tag">Skill · HTTP API · WebSocket Worker</div></div>
     </header>
 
     <div class="two-grid">
       <article class="card">
-        <h2>A. Worker 先注册本地能力</h2>
-        <p class="lead">Worker 启动后先主动出站连接 Gateway，把设备身份、路由标签和本地工具定义发布出去。</p>
+        <h2>A. 我作为 Agent 如何知道 LandGod / MCPHub？</h2>
+        <p class="lead">这一步发生在调用前：我先根据 OpenClaw Skill 和本地工具笔记确定 Gateway 地址、API 规范和调用约定。</p>
         <div class="diagram" style="padding: 18px;">
-          <svg viewBox="0 0 800 430" style="height:430px" role="img" aria-label="LandGod worker registration workflow">
-            <defs><marker id="r4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="rs4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+          <svg viewBox="0 0 800 430" style="height:430px" role="img" aria-label="Agent discovers and calls LandGod Gateway workflow">
+            <defs><marker id="d4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="ds4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
 
-            <path d="M146 72 L230 72" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
-            <path d="M570 72 L654 72" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
-            <path d="M700 112 C700 154 564 150 564 188" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
-            <path d="M454 216 C330 216 270 184 270 128" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
-            <path d="M270 128 C270 172 326 188 454 188" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
-            <path d="M564 246 L564 290" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
-            <path d="M454 318 C330 318 250 278 250 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M92 108 L92 160" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
+            <path d="M214 202 L304 202" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
+            <path d="M538 202 L628 202" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
+            <path d="M688 244 C688 308 502 314 502 350" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
+            <path d="M304 366 C168 364 102 304 92 244" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
 
-            <rect x="28" y="30" width="120" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="88" y="62" class="node-title">Worker</text><text x="88" y="88" class="node-sub">outbound WS</text><text x="88" y="108" class="node-sub">Bearer token</text>
-            <rect x="230" y="30" width="138" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="299" y="58" class="node-title">Gateway</text><text x="299" y="84" class="node-sub">validate token</text><text x="299" y="106" class="node-sub">create connectionId</text>
-            <rect x="654" y="30" width="118" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#rs4)"/><text x="713" y="62" class="node-title">Worker</text><text x="713" y="88" class="node-sub">session_opened</text>
+            <rect x="24" y="28" width="136" height="80" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#ds4)"/><text x="92" y="58" class="node-title">OpenClaw Agent</text><text x="92" y="84" class="node-sub">悟空 / main</text>
+            <rect x="18" y="160" width="148" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#ds4)"/><text x="92" y="190" class="node-title">Skill + config</text><text x="92" y="216" class="node-sub">landgod/SKILL.md</text><text x="92" y="236" class="node-sub">TOOLS.md → :3000</text>
 
-            <rect x="448" y="184" width="230" height="62" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.45)" stroke-width="2" filter="url(#rs4)"/><text x="563" y="209" class="cap">register</text><text x="563" y="234" class="node-sub">client_id · client_name · labels · resources</text>
-            <rect x="92" y="168" width="262" height="72" rx="18" fill="rgba(245,158,11,.14)" stroke="rgba(245,158,11,.48)" stroke-width="2" filter="url(#rs4)"/><text x="223" y="196" class="cap">binding response</text><text x="223" y="220" class="node-sub">userId · sessionId · serverKeyId · public key</text>
+            <rect x="304" y="158" width="236" height="88" rx="18" fill="rgba(245,158,11,.15)" stroke="rgba(245,158,11,.56)" stroke-width="2" filter="url(#ds4)"/><text x="422" y="186" class="node-title">HTTP REST</text><text x="422" y="212" class="node-sub">POST /agents/heartbeat</text><text x="422" y="234" class="node-sub">agent_id + capabilities</text>
+            <text x="258" y="190" class="proto">local read</text>
+            <text x="582" y="190" class="proto">HTTP</text>
 
-            <rect x="448" y="290" width="230" height="62" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="563" y="315" class="cap">update_tools</text><text x="563" y="340" class="node-sub">toolRegistry.getToolDefinitions()</text>
-            <rect x="82" y="280" width="292" height="78" rx="18" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#rs4)"/><text x="228" y="306" class="cap">Gateway stores capabilities</text><text x="228" y="330" class="node-sub">connectedClients[connectionId].tools</text><text x="228" y="350" class="node-sub">routeable by clientName / labels</text>
+            <rect x="628" y="158" width="140" height="88" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#ds4)"/><text x="698" y="186" class="node-title">Gateway</text><text x="698" y="212" class="node-sub">records Agent</text><text x="698" y="234" class="node-sub">presence/proof</text>
+
+            <rect x="344" y="322" width="316" height="88" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#ds4)"/><text x="502" y="350" class="node-title">HTTP REST tool call</text><text x="502" y="376" class="node-sub">GET /clients → choose Worker</text><text x="502" y="398" class="node-sub">POST /tool_call: clientName / labels / tool_name / args</text>
+            <text x="602" y="300" class="proto">HTTP</text>
+            <text x="198" y="342" class="proto">HTTP response</text>
           </svg>
         </div>
-        <div class="quote">真实点：能力不是 Agent 临时猜出来的，而是 Worker 启动后通过 <code>update_tools</code> 发布给 Gateway。</div>
+        <div class="quote">具体到这台环境：我不是“自动神秘发现”，而是读到 LandGod Skill、TOOLS.md 里的 Gateway 地址，再按 HTTP API 发 heartbeat / clients / tool_call。</div>
       </article>
 
       <article class="card">
-        <h2>B. Agent 发起 tool_call 后的真实路径</h2>
-        <p class="lead">以我作为 Agent 调用某个 Worker 的能力为例，实际步骤是下面这条链。</p>
+        <h2>B. Gateway 如何路由到具体 Worker 能力？</h2>
+        <p class="lead">Worker 早已用 WebSocket 主动连上 Gateway；Agent 的 HTTP tool_call 会被转换成这条 WebSocket 上的 tool_call 请求。</p>
         <div class="diagram" style="padding: 18px;">
-          <svg viewBox="0 0 800 390" style="height:390px" role="img" aria-label="LandGod actual tool call workflow">
-            <defs><marker id="a4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+          <svg viewBox="0 0 800 430" style="height:430px" role="img" aria-label="Gateway routes Agent HTTP tool call to Worker WebSocket capability">
+            <defs><marker id="e4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="es4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
 
-            <path d="M115 70 L198 70" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M337 70 L430 70" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M565 70 L650 70" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M695 112 C695 158 492 148 492 190" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
-            <path d="M492 236 L492 282" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M410 318 C280 326 208 260 170 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
+            <path d="M126 72 L214 72" stroke="#64748b" stroke-width="3" marker-end="url(#e4)"/>
+            <path d="M398 72 L486 72" stroke="#64748b" stroke-width="3" marker-end="url(#e4)"/>
+            <path d="M622 114 C622 160 492 158 492 198" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#e4)"/>
+            <path d="M372 226 C260 224 202 178 202 124" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#e4)"/>
+            <path d="M492 256 L492 306" stroke="#64748b" stroke-width="3" marker-end="url(#e4)"/>
+            <path d="M392 342 C262 342 186 282 164 226" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#e4)"/>
 
-            <rect x="18" y="28" width="100" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s4)"/><text x="68" y="60" class="node-title">Agent</text><text x="68" y="86" class="node-sub">POST /tool_call</text>
-            <rect x="196" y="28" width="142" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s4)"/><text x="267" y="56" class="node-title">Gateway</text><text x="267" y="82" class="node-sub">policy + route</text><text x="267" y="104" class="node-sub">clientName / labels</text>
-            <rect x="430" y="28" width="138" height="84" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#s4)"/><text x="499" y="56" class="node-title">sendToolCall</text><text x="499" y="82" class="node-sub">sign meta</text><text x="499" y="104" class="node-sub">optional grant</text>
-            <rect x="650" y="28" width="122" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="711" y="60" class="node-title">Worker</text><text x="711" y="86" class="node-sub">handleToolCall</text>
+            <rect x="22" y="28" width="106" height="88" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#es4)"/><text x="75" y="58" class="node-title">Agent</text><text x="75" y="84" class="node-sub">HTTP</text><text x="75" y="106" class="node-sub">/tool_call</text>
+            <rect x="214" y="28" width="186" height="88" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#es4)"/><text x="307" y="56" class="node-title">Gateway HTTP API</text><text x="307" y="82" class="node-sub">policy + Activity</text><text x="307" y="104" class="node-sub">route by clientName / labels</text>
+            <rect x="486" y="28" width="176" height="88" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#es4)"/><text x="574" y="56" class="node-title">Worker WebSocket</text><text x="574" y="82" class="node-sub">outbound WS/WSS</text><text x="574" y="104" class="node-sub">Bearer token</text>
+            <text x="158" y="58" class="proto">HTTP(S)</text><text x="432" y="58" class="proto">WS(S)</text>
 
-            <rect x="388" y="188" width="208" height="54" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s4)"/><text x="492" y="211" class="cap">validate + bind + approve</text><text x="492" y="233" class="node-sub">signature · body hash · nonce · tool binding</text>
-            <rect x="400" y="282" width="184" height="58" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="492" y="306" class="cap">toolRegistry.callTool</text><text x="492" y="330" class="node-sub">workiq / az / copilot / MCP</text>
-            <rect x="70" y="176" width="202" height="66" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.42)" stroke-width="2" filter="url(#s4)"/><text x="171" y="202" class="cap">response to Agent</text><text x="171" y="226" class="node-sub">tool_result / tool_error + Activity</text>
+            <rect x="372" y="194" width="238" height="64" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#es4)"/><text x="491" y="218" class="cap">register + update_tools</text><text x="491" y="242" class="node-sub">session_opened · client labels · tool definitions</text>
+            <rect x="74" y="174" width="240" height="72" rx="18" fill="rgba(167,139,250,.12)" stroke="rgba(167,139,250,.48)" stroke-width="2" filter="url(#es4)"/><text x="194" y="202" class="cap">Gateway capability table</text><text x="194" y="226" class="node-sub">connectedClients[connectionId].tools</text>
+            <text x="316" y="184" class="proto">WS req/res JSON</text>
+
+            <rect x="384" y="306" width="216" height="72" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#es4)"/><text x="492" y="332" class="cap">handleToolCall</text><text x="492" y="356" class="node-sub">verify signature · approval · credential grant</text>
+            <rect x="54" y="288" width="252" height="78" rx="18" fill="rgba(34,197,94,.12)" stroke="rgba(34,197,94,.46)" stroke-width="2" filter="url(#es4)"/><text x="180" y="316" class="cap">toolRegistry.callTool</text><text x="180" y="340" class="node-sub">workiq / az / copilot / MCP</text><text x="180" y="360" class="node-sub">then WS result → HTTP response</text>
+            <text x="320" y="320" class="proto">WS tool_call</text>
           </svg>
         </div>
-        <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>请求</b>：Agent 发送 <code>agent_id</code>、<code>tool_name</code>、arguments、<code>clientName</code>/<code>labels</code>，可带 <code>credential_ref</code>。</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>路由</b>：Gateway 按 <code>connection_id</code>、<code>clientName</code>、labels 查找在线 Worker；找不到可 queue。</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>执行</b>：Worker 校验签名和 tool binding，通过 defense / approval / credential grant 后调用 <code>toolRegistry.callTool</code>。</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>返回</b>：Worker 发 <code>tool_result</code> 或 <code>tool_error</code>，Gateway 解析 pending request 并把结果回给 Agent。</span></div>
-        </div>
+        <div class="quote">真实 E2E：我用 HTTP 进入 Gateway；Worker 用 WebSocket 常驻；Gateway 把 HTTP 请求路由并签名成 WS tool_call，最后把 WS 结果转回 HTTP 响应。</div>
       </article>
     </div>
 
-    <div class="footer-line"><b>真实工作流：</b>Worker 先 register + update_tools 发布能力；Agent 后续通过 /tool_call 让 Gateway 路由、签名并触发本地 toolRegistry.callTool。</div>
+    <div class="footer-line"><b>真实端到端协议：</b>Agent 通过 Skill/配置知道 LandGod → HTTP(S) 调 Gateway；Worker 主动用 WS(S) 注册和发布工具；Gateway 将 HTTP /tool_call 转成 WS tool_call 并返回结果。</div>
     <div class="slide-number">04 / 04</div>
   </section>
 </body>
