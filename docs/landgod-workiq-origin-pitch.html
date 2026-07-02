@@ -507,15 +507,15 @@
             <text x="722" y="323" class="node-sub">Browser</text>
 
             <path d="M610 226 C548 212 500 178 449 150" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
-            <text x="470" y="206" class="cap">1. outbound WS(S)</text>
-            <text x="474" y="226" class="proto">token + device binding</text>
+            <text x="470" y="206" class="cap">1. WS connect</text>
+            <text x="474" y="226" class="proto">token auth + session_opened</text>
             <path d="M610 276 C548 292 510 292 468 284" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
-            <text x="484" y="312" class="cap">2. register + update_tools</text>
+            <text x="484" y="312" class="cap">2. register binding + update_tools</text>
             <path d="M318 284 C264 276 224 236 178 206" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#regA)"/>
             <text x="190" y="260" class="cap">3. publish catalog</text>
           </svg>
         </div>
-        <div class="workflow-note"><b>Protect:</b> no inbound port on personal devices. Gateway stores device presence and a user-scoped capability catalog.</div>
+        <div class="workflow-note"><b>Protect:</b> no inbound port on personal devices. Worker registers binding, then publishes a user-scoped capability catalog.</div>
       </article>
 
       <article class="card">
