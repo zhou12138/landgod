@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LandGod Personal Agent Pitch</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(15, 23, 42, 0.82);
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --soft: #cbd5e1;
+      --blue: #38bdf8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --pink: #fb7185;
+      --purple: #a78bfa;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #020617;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      display: grid;
+      gap: 28px;
+      place-items: center;
+      padding: 28px;
+    }
+
+    .slide {
+      width: 1600px;
+      height: 900px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0;
+      padding: 58px 72px 48px;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.18), transparent 30%),
+        radial-gradient(circle at 88% 14%, rgba(34, 197, 94, 0.13), transparent 32%),
+        linear-gradient(135deg, #0f172a 0%, #101827 54%, #07111f 100%);
+      box-shadow: 0 28px 90px rgba(0,0,0,.42);
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 28px;
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 28px;
+      pointer-events: none;
+    }
+
+    .slide-number {
+      position: absolute;
+      right: 72px;
+      bottom: 34px;
+      color: var(--muted);
+      font-size: 16px;
+      letter-spacing: .08em;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 36px;
+      margin-bottom: 40px;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      font-size: 21px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 68px;
+      line-height: 1.03;
+      letter-spacing: -0.052em;
+      font-weight: 880;
+    }
+
+    .subtitle {
+      margin-top: 18px;
+      color: var(--soft);
+      font-size: 28px;
+      line-height: 1.35;
+      max-width: 1000px;
+      font-weight: 520;
+    }
+
+    .brand {
+      width: 230px;
+      padding: 18px 20px;
+      border: 1px solid rgba(56,189,248,.32);
+      background: rgba(15,23,42,.62);
+      border-radius: 22px;
+      text-align: right;
+      flex: 0 0 auto;
+    }
+    .brand .name { font-size: 34px; font-weight: 860; letter-spacing: -0.03em; }
+    .brand .tag { margin-top: 7px; color: var(--muted); font-size: 17px; line-height: 1.34; }
+
+    .grid-2 {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .panel {
+      background: rgba(15,23,42,.74);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.20);
+      min-width: 0;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--soft);
+      font-size: 22px;
+      line-height: 1.5;
+    }
+
+    .bullets { display: grid; gap: 14px; margin-top: 18px; }
+    .bullet {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: var(--soft);
+      font-size: 22px;
+      line-height: 1.34;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 10px; background: var(--pink); flex: 0 0 auto; }
+    .dot.green { background: var(--green); }
+    .dot.blue { background: var(--blue); }
+    .dot.amber { background: var(--amber); }
+
+    .quote {
+      margin-top: 24px;
+      padding: 22px 24px;
+      border-radius: 22px;
+      border: 1px solid rgba(56,189,248,.28);
+      background: linear-gradient(135deg, rgba(56,189,248,.13), rgba(167,139,250,.10));
+      font-size: 26px;
+      line-height: 1.35;
+      color: #e0f2fe;
+      font-weight: 760;
+    }
+
+    .flow-wrap {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 390px 1fr 390px;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .flow-card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(15,23,42,.72);
+      padding: 26px;
+      display: grid;
+      align-content: start;
+      min-height: 520px;
+    }
+
+    .flow-card h2 { margin: 0 0 18px; font-size: 30px; letter-spacing: -0.03em; }
+    .flow-card .large { font-size: 40px; font-weight: 850; line-height: 1.06; letter-spacing: -0.04em; margin-bottom: 16px; }
+    .flow-card p { color: var(--soft); font-size: 21px; line-height: 1.45; margin: 0; }
+
+    .diagram {
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(2,6,23,.35);
+      padding: 28px;
+      display: grid;
+      align-items: center;
+      min-width: 0;
+    }
+
+    svg { width: 100%; height: 520px; display: block; }
+    .node-title { fill: #f8fafc; font-size: 25px; font-weight: 850; text-anchor: middle; }
+    .node-sub { fill: #cbd5e1; font-size: 16px; font-weight: 520; text-anchor: middle; }
+    .cap { fill: #e2e8f0; font-size: 16px; font-weight: 720; text-anchor: middle; }
+
+    .footer-line {
+      position: absolute;
+      left: 72px;
+      right: 72px;
+      bottom: 42px;
+      border-top: 1px solid rgba(148,163,184,.16);
+      padding-top: 17px;
+      color: var(--soft);
+      font-size: 25px;
+      line-height: 1.35;
+      font-weight: 640;
+    }
+    .footer-line b { color: white; }
+
+    .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+    .chip {
+      border: 1px solid rgba(148,163,184,.24);
+      background: rgba(2,6,23,.34);
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 16px;
+      color: #dbeafe;
+      font-weight: 700;
+    }
+
+    @media print {
+      body { padding: 0; display: block; background: white; }
+      .slide { page-break-after: always; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <header>
+      <div>
+        <div class="eyebrow">Personal Agent Scope</div>
+        <h1>Cloud Agent,<br/>Local Hands</h1>
+        <div class="subtitle">Cloud agents are powerful, but they cannot reach the files, portals, browser sessions, and devices where personal work actually happens.</div>
+      </div>
+      <div class="brand">
+        <div class="name">LandGod</div>
+        <div class="tag">Personal Execution Bridge</div>
+      </div>
+    </header>
+
+    <div class="grid-2">
+      <article class="panel">
+        <h2>The new bottleneck is not reasoning</h2>
+        <p>Power users already know how to use agents. The problem is that the agent is trapped outside the user’s real work environment.</p>
+        <div class="bullets">
+          <div class="bullet"><span class="dot"></span><span>Local laptop files, downloads, PDFs, Excel sheets</span></div>
+          <div class="bullet"><span class="dot"></span><span>Logged-in company portals and browser sessions</span></div>
+          <div class="bullet"><span class="dot"></span><span>VPN-only intranet pages and internal dashboards</span></div>
+          <div class="bullet"><span class="dot"></span><span>The one office device with the right app, certificate, or environment</span></div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>Today, the user becomes the bridge</h2>
+        <p>Even advanced users still copy, upload, screenshot, switch computers, and manually execute steps the agent already knows how to plan.</p>
+        <div class="quote">“My agent understands the task — it just can’t touch the computer where the task lives.”</div>
+        <div class="chips">
+          <span class="chip">copy files</span>
+          <span class="chip">upload screenshots</span>
+          <span class="chip">switch devices</span>
+          <span class="chip">manual portal work</span>
+        </div>
+      </article>
+    </div>
+
+    <div class="footer-line"><b>LandGod starts from the personal last mile:</b> letting a trusted agent work with the user’s own devices, not an abstract enterprise platform.</div>
+    <div class="slide-number">01 / 02</div>
+  </section>
+
+  <section class="slide">
+    <header>
+      <div>
+        <div class="eyebrow">Personal Execution Bridge</div>
+        <h1>Give your agent<br/>secure hands on your devices</h1>
+        <div class="subtitle">A lightweight Worker runs on each trusted device. Your cloud agent connects through LandGod and executes only what you authorize.</div>
+      </div>
+      <div class="brand">
+        <div class="name">LandGod</div>
+        <div class="tag">Cloud Agent → Local Device</div>
+      </div>
+    </header>
+
+    <div class="flow-wrap">
+      <article class="flow-card">
+        <h2>For personal power users</h2>
+        <div class="large">Agent fluency meets device reality.</div>
+        <p>The user may have multiple work devices, but only one is nearby. The needed file, login, VPN, certificate, or local tool may live somewhere else.</p>
+        <div class="bullets">
+          <div class="bullet"><span class="dot blue"></span><span>Home Mac</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Office Windows PC</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Linux dev box</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Work laptop behind VPN</span></div>
+        </div>
+      </article>
+
+      <section class="diagram">
+        <svg viewBox="0 0 720 520" role="img" aria-label="LandGod personal execution bridge">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L8,3 z" fill="#64748b" />
+            </marker>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.25" />
+            </filter>
+          </defs>
+
+          <path d="M360 85 L360 140" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+          <path d="M360 235 L360 285" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+          <path d="M360 365 C210 365 160 390 160 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+          <path d="M360 365 C360 390 360 400 360 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+          <path d="M360 365 C510 365 560 390 560 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+          <rect x="120" y="20" width="480" height="66" rx="20" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#shadow)" />
+          <text x="360" y="50" class="node-title">Cloud Agent</text>
+          <text x="360" y="73" class="node-sub">Societas · Claude · Cursor · Codex · OpenClaw · Any Agent</text>
+
+          <rect x="110" y="142" width="500" height="94" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#shadow)" />
+          <text x="360" y="178" class="node-title">LandGod Personal Gateway</text>
+          <text x="360" y="204" class="node-sub">authorization · routing · logs · device selection</text>
+          <text x="360" y="225" class="node-sub">the user stays in control</text>
+
+          <rect x="95" y="286" width="530" height="80" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
+          <text x="360" y="320" class="node-title">Trusted Device Workers</text>
+          <text x="360" y="347" class="node-sub">lightweight runtimes on the user’s own devices</text>
+
+          <g>
+            <rect x="42" y="430" width="236" height="62" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
+            <text x="160" y="455" class="cap">Files & Local Tools</text>
+            <text x="160" y="479" class="node-sub">PDF · Excel · repos · shell</text>
+          </g>
+          <g>
+            <rect x="282" y="430" width="156" height="62" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
+            <text x="360" y="455" class="cap">Browser Portal</text>
+            <text x="360" y="479" class="node-sub">logged-in sessions</text>
+          </g>
+          <g>
+            <rect x="442" y="430" width="236" height="62" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
+            <text x="560" y="455" class="cap">Right Device Context</text>
+            <text x="560" y="479" class="node-sub">VPN · cert · app · environment</text>
+          </g>
+        </svg>
+      </section>
+
+      <article class="flow-card">
+        <h2>What becomes possible</h2>
+        <div class="bullets">
+          <div class="bullet"><span class="dot green"></span><span>Read selected local files without uploading everything</span></div>
+          <div class="bullet"><span class="dot green"></span><span>Use logged-in browser portals and VPN-only pages</span></div>
+          <div class="bullet"><span class="dot green"></span><span>Run commands or tools on the machine with the right environment</span></div>
+          <div class="bullet"><span class="dot green"></span><span>Return results and evidence back to the agent</span></div>
+        </div>
+        <div class="quote">Your agent thinks in the cloud. LandGod executes on your devices. You stay in control.</div>
+      </article>
+    </div>
+
+    <div class="slide-number">02 / 02</div>
+  </section>
+</body>
+</html>
