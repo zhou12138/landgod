@@ -450,15 +450,31 @@
     <div class="two-grid">
       <article class="card">
         <h2>A. Worker 先注册本地能力</h2>
-        <p class="lead">这部分发生在 Worker 启动和连接 Gateway 时，是真实源码里的握手顺序。</p>
-        <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span><b>1. 出站连接</b>：Worker 用 <code>Authorization: Bearer token</code> 主动连 Gateway WebSocket；个人设备不暴露端口。</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>2. session_opened</b>：Gateway 校验 token 后创建 <code>connectionId</code>，给 Worker 发送 <code>session_opened</code>。</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>3. register</b>：Worker 发送 <code>client_id</code>、<code>client_name</code>、labels、resources；Gateway 生成 <code>userId/sessionId/serverKeyId</code> 并保存连接。</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>4. binding 建立</b>：Worker 保存 Gateway 返回的 server public key、sessionId、connectionId，用于后续校验签名 tool_call。</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>5. update_tools</b>：Worker 调用 <code>toolRegistry.getToolDefinitions()</code>，把本地工具定义发布给 Gateway；Gateway 存到当前连接的 <code>ci.tools</code>。</span></div>
+        <p class="lead">Worker 启动后先主动出站连接 Gateway，把设备身份、路由标签和本地工具定义发布出去。</p>
+        <div class="diagram" style="padding: 18px;">
+          <svg viewBox="0 0 800 430" style="height:430px" role="img" aria-label="LandGod worker registration workflow">
+            <defs><marker id="r4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="rs4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+
+            <path d="M146 72 L230 72" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
+            <path d="M570 72 L654 72" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
+            <path d="M700 112 C700 154 564 150 564 188" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M454 216 C330 216 270 184 270 128" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M270 128 C270 172 326 188 454 188" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M564 246 L564 290" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
+            <path d="M454 318 C330 318 250 278 250 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+
+            <rect x="28" y="30" width="120" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="88" y="62" class="node-title">Worker</text><text x="88" y="88" class="node-sub">outbound WS</text><text x="88" y="108" class="node-sub">Bearer token</text>
+            <rect x="230" y="30" width="138" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="299" y="58" class="node-title">Gateway</text><text x="299" y="84" class="node-sub">validate token</text><text x="299" y="106" class="node-sub">create connectionId</text>
+            <rect x="654" y="30" width="118" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#rs4)"/><text x="713" y="62" class="node-title">Worker</text><text x="713" y="88" class="node-sub">session_opened</text>
+
+            <rect x="448" y="184" width="230" height="62" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.45)" stroke-width="2" filter="url(#rs4)"/><text x="563" y="209" class="cap">register</text><text x="563" y="234" class="node-sub">client_id · client_name · labels · resources</text>
+            <rect x="92" y="168" width="262" height="72" rx="18" fill="rgba(245,158,11,.14)" stroke="rgba(245,158,11,.48)" stroke-width="2" filter="url(#rs4)"/><text x="223" y="196" class="cap">binding response</text><text x="223" y="220" class="node-sub">userId · sessionId · serverKeyId · public key</text>
+
+            <rect x="448" y="290" width="230" height="62" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="563" y="315" class="cap">update_tools</text><text x="563" y="340" class="node-sub">toolRegistry.getToolDefinitions()</text>
+            <rect x="82" y="280" width="292" height="78" rx="18" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#rs4)"/><text x="228" y="306" class="cap">Gateway stores capabilities</text><text x="228" y="330" class="node-sub">connectedClients[connectionId].tools</text><text x="228" y="350" class="node-sub">routeable by clientName / labels</text>
+          </svg>
         </div>
-        <div class="quote">真实点：能力不是 Agent 临时猜出来的，是 Worker 启动后通过 <code>update_tools</code> 发布到 Gateway 的。</div>
+        <div class="quote">真实点：能力不是 Agent 临时猜出来的，而是 Worker 启动后通过 <code>update_tools</code> 发布给 Gateway。</div>
       </article>
 
       <article class="card">
