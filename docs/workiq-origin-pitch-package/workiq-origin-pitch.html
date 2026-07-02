@@ -255,54 +255,54 @@
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">01 · Origin: WorkIQ Integration Gap</div>
+        <div class="eyebrow">01 · From WorkIQ Gap to Local Computer Access</div>
       </div>
-      <div class="brand"><div class="name">LandGod</div><div class="tag">WorkIQ Integration Origin</div></div>
+      <div class="brand"><div class="name">LandGod</div><div class="tag">Problem → Pattern</div></div>
     </header>
 
     <div class="three-grid">
       <article class="card">
-        <h2>Business Goal</h2>
-        <p class="lead">Enable Societas to operate WorkIQ on the user’s behalf — without screenshots, copy/paste, or manual CLI handoff.</p>
+        <h2>1. A Concrete Integration Gap</h2>
+        <p class="lead">Societas needed to operate WorkIQ for the user, but WorkIQ was only reachable through a local CLI.</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span>Cloud Agent handles reasoning</span></div>
-          <div class="bullet"><span class="dot blue"></span><span>WorkIQ was accessible only through <b>workiq CLI</b></span></div>
-          <div class="bullet"><span class="dot blue"></span><span>Users expect execution, not manual relay</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Cloud Agent handles reasoning and task planning</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>WorkIQ capability lived behind <b>workiq CLI</b></span></div>
+          <div class="bullet"><span class="dot blue"></span><span>User expects completed actions, not manual relay</span></div>
         </div>
-        <div class="quote">Not remote control. A governed execution bridge into the user’s real work environment.</div>
+        <div class="quote">The first problem was not “remote control”; it was secure local execution.</div>
       </article>
 
       <article class="card">
-        <h2>Non-Negotiables</h2>
-        <p class="lead">Preserve the user’s local trust boundary.</p>
+        <h2>2. The Real Boundary</h2>
+        <p class="lead">The valuable execution context was local and could not be moved into the cloud.</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot"></span><span>No WorkIQ API; local CLI only</span></div>
-          <div class="bullet"><span class="dot"></span><span>Depends on local identity, config, VPN, and device context</span></div>
+          <div class="bullet"><span class="dot"></span><span>No public API; local CLI only</span></div>
+          <div class="bullet"><span class="dot"></span><span>AAD tokens, cookies, VPN, device config stay local</span></div>
           <div class="bullet"><span class="dot"></span><span>No inbound exposure on personal devices</span></div>
-          <div class="bullet"><span class="dot"></span><span>AAD tokens, cookies, and corporate access remain local</span></div>
+          <div class="bullet"><span class="dot"></span><span>Worker connects outbound; Gateway routes intent</span></div>
         </div>
-        <div class="quote">Cloud intelligence needed a trusted local execution runtime.</div>
+        <div class="quote">Cloud intelligence needed a governed bridge into the user’s device context.</div>
       </article>
 
       <article class="card">
-        <h2>Initial Architecture: Gateway + Local Worker</h2>
-        <p class="lead">The device connects outbound; Gateway routes cloud intent to the local Worker.</p>
+        <h2>3. The Pattern Generalizes</h2>
+        <p class="lead">WorkIQ exposed a repeatable category: cloud Agents need access to the user’s existing local toolchain.</p>
         <div class="diagram">
-          <svg viewBox="0 0 640 240" role="img" aria-label="Societas Gateway Worker WorkIQ CLI">
+          <svg viewBox="0 0 640 240" role="img" aria-label="Problem to generalized local computer access pattern">
             <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
             <path d="M142 82 L240 82" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M390 82 L492 82" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
-            <rect x="18" y="36" width="126" height="92" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="81" y="74" class="node-title">Societas</text><text x="81" y="100" class="node-sub">Cloud Agent</text>
-            <rect x="238" y="36" width="154" height="92" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s)"/><text x="315" y="74" class="node-title">Gateway</text><text x="315" y="100" class="node-sub">Control Plane + Routing</text>
-            <rect x="492" y="36" width="130" height="92" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="557" y="74" class="node-title">Worker</text><text x="557" y="100" class="node-sub">Outbound Worker</text>
-            <text x="320" y="166" class="node-sub">Worker invokes workiq locally; identity and network context remain on device</text>
-            <text x="320" y="194" class="cap">Cloud Agent → Gateway → Local Worker → Local CLI</text>
+            <rect x="18" y="36" width="126" height="92" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="81" y="74" class="node-title">Cloud Agent</text><text x="81" y="100" class="node-sub">Intent</text>
+            <rect x="238" y="36" width="154" height="92" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s)"/><text x="315" y="74" class="node-title">Gateway</text><text x="315" y="100" class="node-sub">Govern + Route</text>
+            <rect x="492" y="36" width="130" height="92" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="557" y="74" class="node-title">Worker</text><text x="557" y="100" class="node-sub">Local Tools</text>
+            <text x="320" y="166" class="node-sub">From one CLI bridge to a local-computer access runtime</text>
+            <text x="320" y="194" class="cap">Cloud Agent → Gateway → Local Worker → User Tools</text>
           </svg>
         </div>
-        <div class="decision">Design principle: outbound-only connectivity; no exposed personal-device ports.</div>
+        <div class="decision">Generalization: make personal devices governed local execution runtimes for cloud Agents.</div>
       </article>
     </div>
 
-    <div class="footer-line"><b>First principle:</b> Cloud Agents need a governed execution bridge into local tool environments.</div>
+    <div class="footer-line"><b>Thesis:</b> Local Computer Access is the missing execution layer between cloud Agents and the user’s real work environment.</div>
     <div class="slide-number">01 / 03</div>
   </section>
 
@@ -310,44 +310,38 @@
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">02 · Product Insight: Local Tools Are the Real Runtime</div>
+        <div class="eyebrow">02 · MCPHub High-Level Architecture</div>
       </div>
-      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Personal Execution Harness</div></div>
+      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Control Plane + Runtime</div></div>
     </header>
 
     <div class="productivity">
       <article class="tall-panel">
-        <h2>The User’s Existing Toolchain</h2>
-        <div class="big">“Let my Agent use my existing tools.”</div>
-        <p>The highest-value work context already lives on user-owned devices.</p>
-        <div class="tool-grid">
-          <div class="tool">workiq</div>
-          <div class="tool">az</div>
-          <div class="tool">copilot</div>
-          <div class="tool">gh</div>
-          <div class="tool">kubectl</div>
-          <div class="tool">ssh</div>
-          <div class="tool">Portal</div>
-          <div class="tool">local repo</div>
+        <h2>Agent Entry Layer</h2>
+        <div class="big">Cloud Agent calls one governed entrypoint.</div>
+        <div class="bullets">
+          <div class="bullet"><span class="dot blue"></span><span>HTTP API / MCP-compatible surface</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Agent identity and heartbeat</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Tool call intent: <code>tool_name</code> + args</span></div>
         </div>
-        <div class="quote">User value: fewer handoffs, more completed actions.</div>
+        <div class="quote">Agents do not connect to personal devices directly.</div>
       </article>
 
       <section class="center-diagram">
-        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub Gateway personal multi-device tool entrypoint">
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub high-level architecture">
           <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
           <path d="M310 70 L310 122" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M310 220 L310 268" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M310 352 C132 352 106 390 106 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M310 352 C245 368 230 394 230 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M310 352 C375 368 390 394 390 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M310 352 C488 352 514 390 514 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M310 226 L310 270" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M310 352 L106 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M310 352 L250 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M310 352 L390 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M310 352 L525 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
 
-          <rect x="66" y="16" width="488" height="58" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="52" class="node-title">Societas / Cloud Agent</text>
-          <rect x="90" y="124" width="440" height="98" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="158" class="node-title">MCPHub Gateway</text><text x="310" y="184" class="node-sub">AAD Identity · Permission · Operation Boundary</text><text x="310" y="208" class="node-sub">Device Routing · Capability Registry · Activity History</text>
-          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">Personal Device Toolchain</text><text x="310" y="333" class="node-sub">Trusted devices under the same AAD identity connect outbound</text>
+          <rect x="66" y="16" width="488" height="58" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="52" class="node-title">Cloud Agents / Societas / OpenClaw</text>
+          <rect x="84" y="124" width="452" height="102" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="158" class="node-title">MCPHub Gateway</text><text x="310" y="184" class="node-sub">Auth · Policy · Routing · Capability Registry</text><text x="310" y="208" class="node-sub">Credential Broker · Activity History · Audit Trail</text>
+          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">Local Worker Runtime</text><text x="310" y="333" class="node-sub">Outbound WS(S), device-bound capabilities, local execution</text>
 
-          <rect x="32" y="430" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="105" y="454" class="cap">Desktop</text><text x="105" y="478" class="node-sub">WorkIQ / Portal</text>
+          <rect x="32" y="430" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="105" y="454" class="cap">Desktop</text><text x="105" y="478" class="node-sub">Office / Portal</text>
           <rect x="190" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="250" y="454" class="cap">Laptop</text><text x="250" y="478" class="node-sub">repo / browser</text>
           <rect x="330" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="390" y="454" class="cap">Cloud VM</text><text x="390" y="478" class="node-sub">az / deploy</text>
           <rect x="462" y="430" width="126" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="525" y="454" class="cap">DevBox</text><text x="525" y="478" class="node-sub">kubectl / build</text>
@@ -355,23 +349,22 @@
       </section>
 
       <article class="tall-panel">
-        <h2>From Point Integration to Reusable Runtime</h2>
-        <div class="big">One integration revealed a repeatable platform pattern.</div>
-        <p>Agents need access to the user’s existing local tool ecosystem.</p>
+        <h2>Governance Boundary</h2>
+        <div class="big">Gateway governs. Worker executes.</div>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>Generalizable</b>: CLI · Portal · Files · Browser · Repo</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Identity-bound</b>: AAD · Device · Permission</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Differentiated</b>: not another Agent — the execution runtime layer</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Safe by design</b>: credentials stay local; Gateway governs access</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Identity-bound</b>: AAD · device · permissions</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Capability-bound</b>: published tool catalog</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Credential-safe</b>: secrets stay local or short-lived</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Observable</b>: activity history and audit trail</span></div>
         </div>
         <div class="metric-row">
-          <div class="metric"><b>Less manual work</b><span>Less copy/paste and manual handoff</span></div>
-          <div class="metric"><b>More real actions</b><span>Agents move from recommendations to execution</span></div>
+          <div class="metric"><b>Control Plane</b><span>policy · route · observe</span></div>
+          <div class="metric"><b>Execution Plane</b><span>local tools · MCP · CLI</span></div>
         </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>Positioning:</b> Turn personal devices into governed local execution runtimes for cloud Agents.</div>
+    <div class="footer-line"><b>Architecture:</b> MCPHub is the governed control plane; Workers are device-local execution planes.</div>
     <div class="slide-number">02 / 03</div>
   </section>
 
