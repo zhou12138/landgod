@@ -235,9 +235,13 @@ function renderAgents() {
   renderTable('#agentsTable', ['Control', 'Agent', 'Last Seen', 'Source', 'Ops', 'Tools / Credentials', 'Recent Activity'], agents.map((agent) => {
     const control = agentControlFor(agent.agentId || 'unknown-agent');
     return [
-    `${statusPill(control.enabled === false ? 'disabled' : 'enabled', control.enabled === false ? 'bad' : 'good')}<br>
-      <button class="${control.enabled === false ? 'primary-button' : 'danger-button'}" data-control-agent="${escapeHtml(agent.agentId || 'unknown-agent')}" data-enabled="${control.enabled === false ? 'true' : 'false'}">${control.enabled === false ? 'Enable' : 'Disable'}</button>
-      ${control.reason ? `<br><span class="muted">${escapeHtml(control.reason)}</span>` : ''}`,
+    `<div class="control-cell">
+      <button class="control-switch ${control.enabled === false ? 'off' : 'on'}" data-control-agent="${escapeHtml(agent.agentId || 'unknown-agent')}" data-enabled="${control.enabled === false ? 'true' : 'false'}" aria-label="${control.enabled === false ? 'Enable' : 'Disable'} Agent ${escapeHtml(agent.agentId || 'unknown-agent')}">
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <span class="switch-label">${control.enabled === false ? 'Disabled' : 'Enabled'}</span>
+      </button>
+      ${control.reason ? `<span class="control-reason">${escapeHtml(control.reason)}</span>` : '<span class="control-reason subtle">Gateway policy</span>'}
+    </div>`,
     `<strong>${escapeHtml(agent.agentId || 'unknown-agent')}</strong><br><span class="muted">first ${escapeHtml(agent.firstSeenAt || '—')}</span><br><span class="muted">version ${escapeHtml(agent.agentVersion || '—')}</span>`,
     `<span>${escapeHtml(agent.lastSeenAt || '—')}</span><br>${statusPill(agent.lastStatus || 'observed', agent.lastStatus === 'completed' || agent.lastStatus === 'online' ? 'good' : agent.lastStatus === 'failed' ? 'bad' : '')}<br>${statusPill(agent.identityProof || 'unknown-proof', agent.identityProof === 'agent-token' ? 'good' : agent.identityProof === 'dev-unverified' ? 'warn' : '')}`,
     `<div class="kv compact-kv">
@@ -884,7 +888,7 @@ function bindEvents() {
     if (!target) return;
     const agentId = target.dataset.controlAgent;
     const enabled = target.dataset.enabled === 'true';
-    const reason = enabled ? '' : (prompt(`Reason for disabling Agent ${agentId}?`, 'disabled from WebUI') || 'disabled from WebUI');
+    const reason = enabled ? '' : (prompt(`Reason for disabling Agent ${agentId}?`, 'Disabled by operator') || 'Disabled by operator');
     try {
       await api('/control/agent', { method: 'POST', body: JSON.stringify({ agentId, enabled, reason }) });
       showToast(`${enabled ? 'Enabled' : 'Disabled'} Agent: ${agentId}`);
