@@ -439,23 +439,25 @@ Production gaps:
 
 Agents are currently HTTP callers, so without tracking they are effectively stateless from Gateway's point of view.
 
-The MVP Agent heartbeat is the right minimal step:
+The MVP Agent heartbeat is the right minimal step. Current temporary policy intentionally treats heartbeat as presence registration, not authorization:
 
 ```text
 Agent -> POST /agents/heartbeat -> Gateway
 ```
 
-MVP identity proof:
+Temporary MVP heartbeat policy:
 
 ```text
-agent_id + LANDGOD_AGENT_TOKEN
+agent_id only is accepted for presence registration.
+LANDGOD_AGENT_TOKEN is optional proof metadata, not required.
+Unauthenticated heartbeat is recorded as unauthenticated-heartbeat.
 ```
 
 Gateway records:
 
 - agent id;
 - last heartbeat;
-- identity proof mode;
+- proof/presence mode;
 - version;
 - capabilities;
 - source IP / User-Agent;
@@ -588,7 +590,7 @@ Important current protections:
 - finance/credential Worker isolation;
 - exact secret redaction;
 - Worker/tool central disable;
-- Agent heartbeat identity proof MVP;
+- Agent heartbeat presence registration MVP;
 - Gateway / Credential / Worker audit.
 
 Recommended production hardening:

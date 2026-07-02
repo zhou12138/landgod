@@ -212,19 +212,23 @@ function requireAdmin(req, res, action = 'admin') {
     return false;
 }
 
-function isAgentHeartbeatRequest(req) {
+function hasValidAgentHeartbeatToken(req) {
     const headerToken = req.headers['x-landgod-agent-token'] || req.headers['x-agent-token'];
     const bearer = getBearerToken(req);
-    if (REQUIRE_AGENT_AUTH) return headerToken === AGENT_TOKEN || bearer === AGENT_TOKEN;
-    // MVP/dev fallback: if no LANDGOD_AGENT_TOKEN is configured, admin auth is accepted;
-    // if admin auth is also disabled, heartbeat is accepted but marked as dev-unverified.
-    return isAdminRequest(req) || !REQUIRE_ADMIN_AUTH;
+    return REQUIRE_AGENT_AUTH && (headerToken === AGENT_TOKEN || bearer === AGENT_TOKEN);
+}
+
+function isAgentHeartbeatRequest(req) {
+    // Temporary MVP policy: Agent heartbeat is a presence signal, not an authorization boundary.
+    // Accept unauthenticated heartbeat registration so Agents can show up in Gateway/WebUI.
+    // This intentionally does not relax Worker auth, admin APIs, tool_call, or credential exchange.
+    return true;
 }
 
 function agentHeartbeatProof(req) {
-    if (REQUIRE_AGENT_AUTH) return 'agent-token';
+    if (hasValidAgentHeartbeatToken(req)) return 'agent-token';
     if (isAdminRequest(req) && REQUIRE_ADMIN_AUTH) return 'admin-token-fallback';
-    return 'dev-unverified';
+    return 'unauthenticated-heartbeat';
 }
 
 loadTokens();
@@ -1051,14 +1055,9 @@ const httpServer = http.createServer(async (req, res) => {
         return;
     }
 
-    // POST /agents/heartbeat - MVP Agent presence + identity proof.
+    // POST /agents/heartbeat - MVP Agent presence.
+    // Temporary policy: no token required for heartbeat registration; valid token is only recorded as proof metadata.
     if (req.method === 'POST' && req.url === '/agents/heartbeat') {
-        if (!isAgentHeartbeatRequest(req)) {
-            appendGatewayAudit('agent_heartbeat_auth_denied', { path: req.url, method: req.method, remoteAddress: getRequestRemoteAddress(req) });
-            res.writeHead(401);
-            res.end(JSON.stringify({ error: 'agent_auth_required' }));
-            return;
-        }
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {

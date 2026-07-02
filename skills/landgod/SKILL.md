@@ -46,13 +46,13 @@ landgod-gateway start --daemon
 | GET | /health | Health check |
 | GET | /clients | List connected workers |
 | GET | /agents | List observed Agent activity |
-| POST | /agents/heartbeat | Agent presence + MVP identity proof |
+| POST | /agents/heartbeat | Agent presence + optional proof metadata |
 | POST | /tool_call | Execute command on worker |
 | POST | /tokens | Create token |
 | GET | /tokens | List tokens |
 | DELETE | /tokens/:token | Revoke token |
 
-### Agent Heartbeat / Identity Proof (MVP)
+### Agent Heartbeat / Presence (Temporary No-Token MVP)
 
 When acting as an Agent that calls LandGod Gateway, report presence before tool calls and periodically during long tasks.
 
@@ -61,10 +61,12 @@ Gateway accepts Agent identity from:
 - JSON body: `agent_id` or `agentId`
 - Header: `x-landgod-agent-id`, `x-agent-id`, or `x-openclaw-agent-id`
 
-MVP identity proof:
+Temporary MVP policy:
 
-- Preferred: set `LANDGOD_AGENT_TOKEN` on Gateway and send `Authorization: Bearer <agent-token>` or `x-landgod-agent-token: <agent-token>`.
-- Dev fallback: if no `LANDGOD_AGENT_TOKEN` is configured, Gateway accepts admin auth; if admin auth is disabled too, heartbeat is accepted as `dev-unverified`.
+- `POST /agents/heartbeat` does **not** require token auth. It is a presence/registration signal only.
+- If `LANDGOD_AGENT_TOKEN` is configured and sent via `Authorization: Bearer <agent-token>` or `x-landgod-agent-token: <agent-token>`, Gateway records proof mode as `agent-token`.
+- Without a token, Gateway accepts the heartbeat and records proof mode as `unauthenticated-heartbeat`.
+- This does not relax Worker auth, admin APIs, tool calls, or credential exchange.
 - Never put agent tokens in memory/docs/logs. Use env vars or local secret files.
 
 Heartbeat example:
@@ -72,7 +74,6 @@ Heartbeat example:
 ```bash
 curl -X POST http://GATEWAY:8081/agents/heartbeat \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $LANDGOD_AGENT_TOKEN" \
   -d '{
     "agent_id": "agent-business-demo",
     "version": "openclaw-main",
@@ -93,7 +94,7 @@ Tool calls should include the same `agent_id`:
 }
 ```
 
-WebUI `Agents` page shows last heartbeat, identity proof mode, source IP/User-Agent, used tools, credentials, workers, and recent operations.
+WebUI `Agents` page shows last heartbeat, proof/presence mode, source IP/User-Agent, used tools, credentials, workers, and recent operations.
 
 ## Worker
 
