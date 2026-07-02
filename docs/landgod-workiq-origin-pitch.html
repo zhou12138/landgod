@@ -328,65 +328,64 @@
       </article>
 
       <section class="center-diagram">
-        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub layered high-level architecture">
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub architecture organized by LLM Agents, Service, and User Computers">
           <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
 
+          <!-- zone labels and boundaries -->
+          <text x="76" y="34" class="proto">LLM Agents</text>
+          <text x="310" y="34" class="proto">Service</text>
+          <text x="505" y="34" class="proto">User Computers</text>
+          <line x1="178" y1="50" x2="178" y2="490" stroke="rgba(148,163,184,.62)" stroke-width="2.2" stroke-dasharray="2 8"/>
+          <line x1="418" y1="50" x2="418" y2="490" stroke="rgba(148,163,184,.62)" stroke-width="2.2" stroke-dasharray="2 8"/>
+
           <!-- connectors behind nodes -->
-          <path d="M310 76 L310 112" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M310 252 L310 288" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M158 396 L108 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M255 396 L245 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M365 396 L388 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M464 396 L515 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M128 150 L238 210" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M128 330 L238 250" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M384 222 L520 130" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M384 246 L488 318" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M520 130 L384 222" stroke="#64748b" stroke-width="2.2" marker-end="url(#a2)" opacity=".65"/>
+          <path d="M488 318 L384 246" stroke="#64748b" stroke-width="2.2" marker-end="url(#a2)" opacity=".65"/>
 
-          <!-- layer labels -->
-          <text x="36" y="44" class="proto">Agent Layer</text>
-          <text x="36" y="154" class="proto">Control Plane</text>
-          <text x="36" y="322" class="proto">Execution Plane</text>
-          <text x="36" y="470" class="proto">Local Tools</text>
+          <!-- LLM agents -->
+          <path d="M45 132 C45 111 65 105 80 115 C91 96 120 102 124 122 C148 119 158 145 140 162 C144 184 113 191 98 176 C80 194 48 181 55 160 C43 154 38 143 45 132 Z" fill="rgba(251,113,133,.18)" stroke="rgba(251,113,133,.55)" stroke-width="2" filter="url(#s2)"/>
+          <text x="96" y="151" class="cap">Societas</text>
+          <rect x="42" y="292" width="104" height="66" rx="14" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.5)" stroke-width="2" filter="url(#s2)"/>
+          <rect x="34" y="292" width="10" height="66" fill="rgba(34,197,94,.18)" stroke="rgba(34,197,94,.42)" stroke-width="1"/>
+          <rect x="146" y="292" width="10" height="66" fill="rgba(34,197,94,.18)" stroke="rgba(34,197,94,.42)" stroke-width="1"/>
+          <text x="94" y="331" class="cap">Other Agents</text>
+          <text x="60" y="244" class="node-sub">• Online computers</text>
+          <text x="60" y="266" class="node-sub">• Query tools</text>
+          <text x="60" y="288" class="node-sub">• Run tools</text>
 
-          <!-- Agent layer -->
-          <rect x="84" y="20" width="452" height="56" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/>
-          <text x="310" y="43" class="node-title">Cloud Agents</text>
-          <text x="310" y="64" class="node-sub">Societas · OpenClaw · Claude · Cursor</text>
-          <text x="333" y="100" class="proto">HTTP(S) / MCP-compatible calls</text>
+          <!-- Service / MCP Hub -->
+          <path d="M236 206 C236 178 264 170 284 184 C301 158 345 166 350 194 C382 190 399 222 376 247 C382 276 338 288 316 266 C292 292 244 278 254 246 C236 240 226 222 236 206 Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#s2)"/>
+          <text x="310" y="232" class="node-title">MCP Hub</text>
+          <text x="390" y="178" class="node-sub">All tools are</text>
+          <text x="390" y="198" class="node-sub">user-scoped</text>
+          <text x="432" y="258" class="proto">WebSocket</text>
+          <text x="432" y="280" class="proto">AAD Auth</text>
 
-          <!-- Gateway control plane -->
-          <rect x="78" y="116" width="464" height="136" rx="24" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/>
-          <text x="310" y="144" class="node-title">MCPHub Gateway</text>
-          <rect x="102" y="164" width="112" height="44" rx="13" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
-          <text x="158" y="182" class="cap">Auth</text><text x="158" y="201" class="node-sub">agent · user</text>
-          <rect x="224" y="164" width="112" height="44" rx="13" fill="rgba(15,23,42,.72)" stroke="rgba(245,158,11,.42)" stroke-width="1.5"/>
-          <text x="280" y="182" class="cap">Policy</text><text x="280" y="201" class="node-sub">permission</text>
-          <rect x="346" y="164" width="112" height="44" rx="13" fill="rgba(15,23,42,.72)" stroke="rgba(34,197,94,.42)" stroke-width="1.5"/>
-          <text x="402" y="182" class="cap">Routing</text><text x="402" y="201" class="node-sub">device select</text>
-          <rect x="132" y="214" width="112" height="30" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(251,113,133,.42)" stroke-width="1.5"/>
-          <text x="188" y="234" class="node-sub">Credential Broker</text>
-          <rect x="254" y="214" width="112" height="30" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
-          <text x="310" y="234" class="node-sub">Capability Registry</text>
-          <rect x="376" y="214" width="112" height="30" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(148,163,184,.42)" stroke-width="1.5"/>
-          <text x="432" y="234" class="node-sub">Activity History</text>
+          <!-- User computer 2 -->
+          <rect x="500" y="90" width="94" height="62" rx="12" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.52)" stroke-width="2" filter="url(#s2)"/>
+          <text x="547" y="126" class="cap">Computer 2</text>
 
-          <!-- Worker execution plane -->
-          <text x="334" y="276" class="proto">outbound WS(S), signed tool calls</text>
-          <rect x="86" y="292" width="448" height="104" rx="24" fill="rgba(34,197,94,.13)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/>
-          <text x="310" y="320" class="node-title">Local Worker Runtime</text>
-          <rect x="112" y="340" width="126" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(34,197,94,.42)" stroke-width="1.5"/>
-          <text x="175" y="361" class="node-sub">Tool Registry</text>
-          <rect x="248" y="340" width="126" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
-          <text x="311" y="361" class="node-sub">MCP / Built-ins</text>
-          <rect x="384" y="340" width="126" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(245,158,11,.42)" stroke-width="1.5"/>
-          <text x="447" y="361" class="node-sub">Local Execution</text>
-
-          <!-- device / tool layer -->
-          <rect x="32" y="438" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
-          <text x="105" y="462" class="cap">Desktop</text><text x="105" y="486" class="node-sub">Office / Portal</text>
-          <rect x="190" y="438" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
-          <text x="250" y="462" class="cap">Laptop</text><text x="250" y="486" class="node-sub">repo / browser</text>
-          <rect x="330" y="438" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
-          <text x="390" y="462" class="cap">Cloud VM</text><text x="390" y="486" class="node-sub">az / deploy</text>
-          <rect x="462" y="438" width="126" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
-          <text x="525" y="462" class="cap">DevBox</text><text x="525" y="486" class="node-sub">kubectl / build</text>
+          <!-- User computer 1 container -->
+          <rect x="444" y="286" width="154" height="174" rx="30" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#s2)"/>
+          <text x="496" y="314" class="cap">User Computer 1</text>
+          <rect x="516" y="320" width="72" height="42" rx="0" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.5"/>
+          <text x="552" y="346" class="cap" fill="#0f172a">LandGod</text>
+          <path d="M552 362 L510 398" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
+          <path d="M552 362 L552 427" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
+          <path d="M552 362 L584 400" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
+          <rect x="468" y="394" width="72" height="34" rx="0" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+          <text x="504" y="416" class="node-sub" fill="#0f172a">WorkIQ CLI</text>
+          <rect x="518" y="424" width="68" height="30" rx="0" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+          <text x="552" y="444" class="node-sub" fill="#0f172a">File tools</text>
+          <rect x="552" y="396" width="62" height="36" rx="0" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+          <text x="583" y="418" class="node-sub" fill="#0f172a">Browser</text>
+          <text x="583" y="432" class="node-sub" fill="#0f172a">tools</text>
+          <text x="520" y="235" class="node-sub">• Register tools</text>
+          <text x="520" y="257" class="node-sub">• Run tools</text>
         </svg>
       </section>
 
