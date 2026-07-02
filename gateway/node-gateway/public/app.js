@@ -12,7 +12,7 @@ const state = {
   gatewayAudit: [],
   credentialAudit: [],
   workerAudit: [],
-  controlPolicy: { workers: {}, tools: {} },
+  controlPolicy: { workers: {}, tools: {}, agents: {} },
   currentView: 'overview',
 };
 
@@ -122,7 +122,7 @@ async function refreshData({ quiet = false } = {}) {
   if (gatewayAudit.status === 'fulfilled') state.gatewayAudit = gatewayAudit.value.entries || [];
   if (credentialAudit.status === 'fulfilled') state.credentialAudit = credentialAudit.value.entries || [];
   if (workerAudit.status === 'fulfilled') state.workerAudit = workerAudit.value.audit || [];
-  if (controlPolicy.status === 'fulfilled') state.controlPolicy = controlPolicy.value.policy || { workers: {}, tools: {} };
+  if (controlPolicy.status === 'fulfilled') state.controlPolicy = controlPolicy.value.policy || { workers: {}, tools: {}, agents: {} };
 
   render();
 
@@ -217,8 +217,24 @@ function renderOverview() {
   $('#overviewAudit').innerHTML = state.credentialAudit.length ? state.credentialAudit.slice(-6).reverse().map(renderAuditCard).join('') : '<div class="card-row muted">No credential audit events.</div>';
 }
 
+function agentControlFor(agentId) {
+  const entry = state.controlPolicy?.agents?.[agentId];
+  return { key: agentId, ...(entry || {}), enabled: entry?.enabled !== false };
+}
+
 function renderAgents() {
-  renderTable('#agentsTable', ['Agent', 'Last Seen', 'Source', 'Ops', 'Tools / Credentials', 'Recent Activity'], state.agents.map((agent) => [
+  const agentMap = new Map();
+  for (const agent of state.agents || []) agentMap.set(agent.agentId || 'unknown-agent', agent);
+  for (const agentId of Object.keys(state.controlPolicy?.agents || {})) {
+    if (!agentMap.has(agentId)) agentMap.set(agentId, { agentId, operationCount: 0, recentOperations: [] });
+  }
+  const agents = Array.from(agentMap.values()).sort((a, b) => String(b.lastSeenAt || '').localeCompare(String(a.lastSeenAt || '')));
+  renderTable('#agentsTable', ['Control', 'Agent', 'Last Seen', 'Source', 'Ops', 'Tools / Credentials', 'Recent Activity'], agents.map((agent) => {
+    const control = agentControlFor(agent.agentId || 'unknown-agent');
+    return [
+    `${statusPill(control.enabled === false ? 'disabled' : 'enabled', control.enabled === false ? 'bad' : 'good')}<br>
+      <button class="${control.enabled === false ? 'primary-button' : 'danger-button'}" data-control-agent="${escapeHtml(agent.agentId || 'unknown-agent')}" data-enabled="${control.enabled === false ? 'true' : 'false'}">${control.enabled === false ? 'Enable' : 'Disable'}</button>
+      ${control.reason ? `<br><span class="muted">${escapeHtml(control.reason)}</span>` : ''}`,
     `<strong>${escapeHtml(agent.agentId || 'unknown-agent')}</strong><br><span class="muted">first ${escapeHtml(agent.firstSeenAt || '—')}</span><br><span class="muted">version ${escapeHtml(agent.agentVersion || '—')}</span>`,
     `<span>${escapeHtml(agent.lastSeenAt || '—')}</span><br>${statusPill(agent.lastStatus || 'observed', agent.lastStatus === 'completed' || agent.lastStatus === 'online' ? 'good' : agent.lastStatus === 'failed' ? 'bad' : '')}<br>${statusPill(agent.identityProof || 'unknown-proof', agent.identityProof === 'agent-token' ? 'good' : agent.identityProof === 'dev-unverified' ? 'warn' : '')}`,
     `<div class="kv compact-kv">
@@ -236,7 +252,8 @@ function renderAgents() {
       <summary>${escapeHtml((agent.recentOperations || []).length)} recent operations</summary>
       <pre class="pre-wrap">${json(agent.recentOperations || [])}</pre>
     </details>`,
-  ]), 'No Agent activity observed yet. Use /tool_call with agent_id or x-landgod-agent-id.');
+  ];
+  }), 'No Agent activity observed yet. Use /tool_call with agent_id or x-landgod-agent-id.');
 }
 
 function renderWorkers() {
@@ -832,6 +849,19 @@ function bindEvents() {
     try {
       await api(`/credentials/${encodeURIComponent(id)}/revoke`, { method: 'POST', body: '{}' });
       showToast(`Credential revoked: ${id}`);
+      await refreshData({ quiet: true });
+    } catch (err) { showToast(err.message, true); }
+  });
+
+  document.body.addEventListener('click', async (event) => {
+    const target = event.target.closest('[data-control-agent]');
+    if (!target) return;
+    const agentId = target.dataset.controlAgent;
+    const enabled = target.dataset.enabled === 'true';
+    const reason = enabled ? '' : (prompt(`Reason for disabling Agent ${agentId}?`, 'disabled from WebUI') || 'disabled from WebUI');
+    try {
+      await api('/control/agent', { method: 'POST', body: JSON.stringify({ agentId, enabled, reason }) });
+      showToast(`${enabled ? 'Enabled' : 'Disabled'} Agent: ${agentId}`);
       await refreshData({ quiet: true });
     } catch (err) { showToast(err.message, true); }
   });

@@ -242,7 +242,7 @@ let controlPolicy = loadControlPolicy();
 function loadControlPolicy() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(CONTROL_POLICY_PATH)) {
-        return { version: 1, workers: {}, tools: {} };
+        return { version: 1, workers: {}, tools: {}, agents: {} };
     }
     try {
         const parsed = JSON.parse(fs.readFileSync(CONTROL_POLICY_PATH, 'utf-8'));
@@ -250,10 +250,11 @@ function loadControlPolicy() {
             version: 1,
             workers: parsed.workers && typeof parsed.workers === 'object' ? parsed.workers : {},
             tools: parsed.tools && typeof parsed.tools === 'object' ? parsed.tools : {},
+            agents: parsed.agents && typeof parsed.agents === 'object' ? parsed.agents : {},
         };
     } catch (err) {
         console.error(`Failed to load control policy: ${err.message}`);
-        return { version: 1, workers: {}, tools: {} };
+        return { version: 1, workers: {}, tools: {}, agents: {} };
     }
 }
 
@@ -288,6 +289,13 @@ function getWorkerControl(binding, connectionId) {
         if (entry) return { key, ...entry, enabled: entry.enabled !== false };
     }
     return { key: preferredWorkerKey(binding, connectionId), enabled: true, reason: '' };
+}
+
+function getAgentControl(agentId) {
+    const key = agentId || 'unknown-agent';
+    const entry = controlPolicy.agents?.[key];
+    if (entry) return { key, ...entry, enabled: entry.enabled !== false };
+    return { key, enabled: true, reason: '' };
 }
 
 function getToolControl(binding, connectionId, toolName) {
@@ -1100,7 +1108,7 @@ const httpServer = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/control/policy') {
         if (!requireAdmin(req, res, 'control:read')) return;
         res.writeHead(200);
-        res.end(JSON.stringify({ policy: controlPolicy }));
+        res.end(JSON.stringify({ policy: { version: 1, workers: controlPolicy.workers || {}, tools: controlPolicy.tools || {}, agents: controlPolicy.agents || {} } }));
         return;
     }
 
@@ -1123,6 +1131,34 @@ const httpServer = http.createServer(async (req, res) => {
                 appendGatewayAudit('control_worker_updated', { workerKey, entry: controlPolicy.workers[workerKey] });
                 res.writeHead(200);
                 res.end(JSON.stringify({ workerKey, entry: controlPolicy.workers[workerKey] }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/control/agent') {
+        if (!requireAdmin(req, res, 'control:agent')) return;
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                const agentId = parsed.agentId || parsed.agent_id;
+                if (!agentId || typeof agentId !== 'string') {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'agentId is required' }));
+                    return;
+                }
+                if (!controlPolicy.agents) controlPolicy.agents = {};
+                controlPolicy.agents[agentId] = controlEntry(parsed.enabled !== false, parsed.reason);
+                saveControlPolicy();
+                recordAgentActivity(req, { body: parsed, agentId: getRequestAgentId(req, parsed), action: 'control_agent_updated', status: controlPolicy.agents[agentId].enabled ? 'enabled' : 'disabled' });
+                appendGatewayAudit('control_agent_updated', { agentId, entry: controlPolicy.agents[agentId] });
+                res.writeHead(200);
+                res.end(JSON.stringify({ agentId, entry: controlPolicy.agents[agentId] }));
             } catch (err) {
                 res.writeHead(400);
                 res.end(JSON.stringify({ error: err.message }));
@@ -1287,6 +1323,14 @@ const httpServer = http.createServer(async (req, res) => {
                 const credentialScope = typeof parsed.credential_scope === 'string' ? parsed.credential_scope : (typeof parsed.credentialScope === 'string' ? parsed.credentialScope : null);
                 const agentId = typeof parsed.agent_id === 'string' ? parsed.agent_id : (typeof parsed.agentId === 'string' ? parsed.agentId : getRequestAgentId(req, parsed));
                 const clientName = parsed.clientName || parsed.client_name || (parsed.target && parsed.target.clientName);
+                const agentControl = getAgentControl(agentId);
+                if (agentControl.enabled === false) {
+                    recordAgentActivity(req, { agentId, action: 'tool_call_blocked_by_agent_policy', status: 'blocked', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
+                    appendGatewayAudit('tool_call_blocked_by_agent_policy', { agentId, control: agentControl, toolName: tool_name, clientName, connectionId: connection_id || null });
+                    res.writeHead(403);
+                    res.end(JSON.stringify({ error: 'agent_disabled_by_gateway_policy', agentId, control: agentControl }));
+                    return;
+                }
                 recordAgentActivity(req, { agentId, action: 'tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
                 appendGatewayAudit('tool_call_request_received', {
                     agentId,
@@ -1436,6 +1480,12 @@ const httpServer = http.createServer(async (req, res) => {
                         const agentId = typeof call.agent_id === 'string' ? call.agent_id : (typeof call.agentId === 'string' ? call.agentId : getRequestAgentId(req, call));
                         const clientName = call.clientName || call.client_name;
                         let targetConnId = call.connection_id;
+                        const agentControl = getAgentControl(agentId);
+                        if (agentControl.enabled === false) {
+                            recordAgentActivity(req, { agentId, action: 'batch_tool_call_blocked_by_agent_policy', status: 'blocked', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
+                            appendGatewayAudit('batch_tool_call_blocked_by_agent_policy', { index, agentId, control: agentControl, toolName: tool_name, clientName, connectionId: targetConnId || null });
+                            return { index, clientName, tool_name, error: 'agent_disabled_by_gateway_policy', agentId, control: agentControl };
+                        }
                         recordAgentActivity(req, { agentId, action: 'batch_tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
                         appendGatewayAudit('batch_tool_call_request_received', {
                             index,
