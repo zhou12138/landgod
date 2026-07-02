@@ -14,6 +14,7 @@ export interface CredentialGrant {
   credential_ref: string;
   arguments_hash: string;
   allowed_scopes?: string[];
+  requested_scope?: string | null;
   iat: string;
   nbf: string;
   exp: string;
@@ -28,6 +29,7 @@ export interface ExchangedCredential {
   credential_type: 'api_token' | 'username_password';
   credential_ref: string;
   secret: Record<string, unknown>;
+  scope?: string | null;
   expires_in: number;
 }
 
@@ -86,6 +88,7 @@ export function buildGrantSigningPayload(grant: CredentialGrant): Record<string,
     credential_ref: grant.credential_ref,
     arguments_hash: grant.arguments_hash,
     allowed_scopes: normalizeAllowedScopes(grant.allowed_scopes),
+    requested_scope: grant.requested_scope || null,
     iat: grant.iat,
     nbf: grant.nbf,
     exp: grant.exp,
@@ -154,6 +157,11 @@ export function validateCredentialGrant(params: {
   if (computedArgumentsHash !== grant.arguments_hash) {
     return { valid: false, code: 'grant_arguments_mismatch', message: 'credential grant arguments_hash mismatch' };
   }
+  const requestedScope = typeof grant.requested_scope === 'string' && grant.requested_scope.trim() ? grant.requested_scope.trim() : null;
+  const allowedScopes = normalizeAllowedScopes(grant.allowed_scopes);
+  if (requestedScope && allowedScopes.length > 0 && !allowedScopes.includes(requestedScope)) {
+    return { valid: false, code: 'grant_scope_mismatch', message: 'credential grant requested_scope is not allowed' };
+  }
   if (!params.serverPublicKeyPem) return { valid: false, code: 'grant_missing_key', message: 'server public key is unavailable' };
   try {
     const signature = grant.signature;
@@ -171,6 +179,23 @@ export function validateCredentialGrant(params: {
 }
 
 function getGatewayHttpBaseUrl(baseUrl: string): string {
+  const explicitExchangeUrl = process.env.LANDGOD_CREDENTIAL_EXCHANGE_URL?.trim();
+  if (explicitExchangeUrl) {
+    const url = new URL(explicitExchangeUrl);
+    url.pathname = url.pathname.replace(/\/credential\/exchange\/?$/, '');
+    url.search = '';
+    url.hash = '';
+    return url.toString().replace(/\/$/, '');
+  }
+  const explicitHttpUrl = process.env.LANDGOD_GATEWAY_HTTP_URL?.trim();
+  if (explicitHttpUrl) {
+    const url = new URL(explicitHttpUrl);
+    url.pathname = '';
+    url.search = '';
+    url.hash = '';
+    return url.toString().replace(/\/$/, '');
+  }
+
   const url = new URL(baseUrl);
   const originalProtocol = url.protocol;
   if (url.protocol === 'ws:') url.protocol = 'http:';

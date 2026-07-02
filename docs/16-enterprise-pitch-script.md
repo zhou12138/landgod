@@ -16,6 +16,16 @@
 
 ## 0. Executive Summary
 
+LandGod / MCPHub 的起源很朴素：**很多有价值的企业工具只有 CLI、本地程序、桌面流程或机器绑定环境，没有干净 API；云上的 Agent 想用，但调不到。**
+
+最初问题不是“我要远程控制电脑”，而是：
+
+```text
+如何让 Agent 安全调用那些没有 API、但真实有用的本地 CLI / 工具能力？
+```
+
+从这个 CLI/no-API gap 出发，命题自然扩展到企业执行层：能力不只散落在 CLI，也散落在内网、Windows 客户端、UKey、Office、浏览器登录态、文件系统、老 ERP 和本地脚本里。LandGod / MCPHub 要做的是把这些机器绑定能力安全注册成 Agent 可调用、可调度、可审计的企业工具池。
+
 企业现在不缺 AI 大脑。OpenAI、Claude、通义、DeepSeek、企业自研 Agent 都已经能理解问题、规划步骤、写代码、分析文档。
 
 真正卡住企业落地的是最后一公里：
@@ -53,7 +63,7 @@ Gateway 控制面
 
 ## 1. 30-second Pitch
 
-> 今天企业上 AI Agent，最大问题不是模型不会思考，而是 Agent 没法安全进入真实业务环境执行。很多系统没有 API，在内网、Windows 客户端、财务电脑、Office、UKey、浏览器登录态里。LandGod / MCPHub 把这些分散在企业机器上的本地工具和权限，通过 Gateway + Worker 注册成统一工具池，让任意 Agent 按权限、按策略、按审计调用。Agent 不直接接触密码，Gateway 做中央策略和凭据中介，Worker 在本地执行并保留审计。最终企业得到的是一个可控、可审批、可审计的 AI 执行层。
+> LandGod / MCPHub 起源于一个很现实的问题：很多企业能力只有 CLI、本地工具或机器绑定流程，没有 API，云上 Agent 调不到。今天企业上 AI Agent，最大问题不是模型不会思考，而是 Agent 没法安全进入真实业务环境执行。很多系统没有 API，在内网、Windows 客户端、财务电脑、Office、UKey、浏览器登录态里。LandGod / MCPHub 把这些分散在企业机器上的本地工具和权限，通过 Gateway + Worker 注册成统一工具池，让任意 Agent 按权限、按策略、按审计调用。Agent 不直接接触密码，Gateway 做中央策略和凭据中介，Worker 在本地执行并保留审计。最终企业得到的是一个可控、可审批、可审计的 AI 执行层。
 
 ---
 
@@ -61,7 +71,15 @@ Gateway 控制面
 
 ### Opening
 
-现在很多企业都在试 AI Agent，但很快会发现一个现实问题：
+LandGod / MCPHub 的起点不是一个宏大概念，而是一个很具体的痛点：
+
+> 有些工具只有 CLI，没有 API；有些流程只能在某台机器、本地网络、桌面环境或登录态里跑。云上的 Agent 明明知道该调用什么，却调不到。
+
+所以最初的问题不是“如何远程控制电脑”，而是：
+
+> **如何让 Agent 安全调用没有 API 的本地工具能力？**
+
+现在很多企业都在试 AI Agent，但很快会发现同一个现实问题：
 
 > Agent 很聪明，但落地业务时经常停在“我建议你怎么做”。
 
@@ -314,6 +332,133 @@ Office / Desktop         Shell / File / GPU          ERP / DB / Browser
 Computer Use             MCP stdio/http              UKey / Login State
 ```
 
+
+### Enterprise Deployment Topology Diagram
+
+```mermaid
+flowchart LR
+  subgraph AgentZone[Agent / Workflow Zone]
+    A1[OpenClaw / Claude / ChatGPT]
+    A2[LangGraph / Dify / 自研 Agent]
+  end
+
+  subgraph GatewayZone[Private Cloud / DMZ / Enterprise Gateway Zone]
+    G[LandGod Gateway + MCPHub]
+    UI[Gateway WebUI]
+    CB[Credential Broker]
+    P[Policy / Approval]
+    GA[Gateway Central Audit]
+  end
+
+  subgraph SecurityZone[Enterprise Security Services]
+    V[Vault / KMS optional]
+    SIEM[SIEM / Log Export optional]
+    IAM[SSO / OIDC / RBAC future]
+  end
+
+  subgraph FinanceLAN[Finance LAN]
+    W1[Finance Worker
+Windows/Linux]
+    ERP[ERP / Finance System]
+    OFFICE[Excel / PowerPoint]
+  end
+
+  subgraph OpsLAN[Ops / Production Network]
+    W2[Ops Worker]
+    PROD[Internal Systems]
+  end
+
+  subgraph RemoteSite[Branch / Remote Site]
+    W3[Remote Site Worker]
+    LOCAL[Local Apps / Files / Browser]
+  end
+
+  A1 --> G
+  A2 --> G
+  UI --> G
+  G --> CB
+  G --> P
+  G --> GA
+  CB -. future backend .-> V
+  GA -. export .-> SIEM
+  IAM -. future auth .-> UI
+
+  W1 -- outbound WebSocket --> G
+  W2 -- outbound WebSocket --> G
+  W3 -- outbound WebSocket --> G
+
+  W1 --> ERP
+  W1 --> OFFICE
+  W2 --> PROD
+  W3 --> LOCAL
+```
+
+
+### System Architecture Diagram
+
+```mermaid
+flowchart TB
+  subgraph AgentLayer[Agent Layer - swappable]
+    Agent[任意 Agent
+OpenAI / Claude / OpenClaw / LangGraph / 自研]
+  end
+
+  subgraph Gateway[LandGod Gateway / MCPHub Control Plane]
+    API[Agent API / tool_call]
+    Registry[Worker + Tool Registry]
+    Policy[Policy Engine]
+    Broker[Credential Broker
+credential_ref -> grant -> exchange]
+    Approval[Approval Engine
+future]
+    WebUI[Enterprise WebUI
+Overview / Workers / Scenarios / Credentials / Audit / Access]
+    Audit[Gateway Central Audit]
+  end
+
+  subgraph Worker[Worker Execution Plane]
+    Runtime[Managed Worker Runtime]
+    Enforce[Local Enforcement
+permission profile / final veto]
+    MCP[MCP Tool Runtime]
+    LocalAudit[Worker Local Audit]
+  end
+
+  subgraph Tools[Trusted Tool / MCP Layer]
+    BusinessMCP[Finance Monthly Report MCP]
+    OfficeMCP[Office / PPT / Excel MCP]
+    BrowserMCP[Browser / Desktop / Local Apps]
+  end
+
+  subgraph Enterprise[Enterprise Resources]
+    ERP[ERP / Finance / Internal APIs]
+    Files[Files / Reports]
+    Desktop[Windows Apps / Browser Login / UKey]
+  end
+
+  Agent --> API
+  WebUI --> API
+  API --> Policy
+  Policy --> Registry
+  Policy --> Broker
+  Policy --> Approval
+  API --> Audit
+  Registry --> Runtime
+  Broker --> Runtime
+  Runtime --> Enforce
+  Enforce --> MCP
+  MCP --> BusinessMCP
+  MCP --> OfficeMCP
+  MCP --> BrowserMCP
+  Runtime --> LocalAudit
+  BusinessMCP --> ERP
+  BusinessMCP --> Files
+  OfficeMCP --> Files
+  BrowserMCP --> Desktop
+  Broker --> Audit
+  LocalAudit --> Audit
+```
+
 ### Component Responsibilities
 
 | Component | Responsibility |
@@ -394,17 +539,24 @@ Release / Supply Chain Trust
 
 ```text
 Worker token / clientId / connectionId
+Optional Gateway Admin Auth
 Gateway Credential Broker
 credential_ref
+credential_scope
 single-use grant
 arguments_hash
 worker-bound / connection-bound exchange
 trustLevel
 credentials.enabled
 allowedScopes
-Worker local hard deny
-credential + shell_execute forbidden
-Gateway WebUI MVP
+requested_scope
+allowedTools wildcard blocked by default
+Worker server-side label override via token binding
+requireExactWorkerId for high-value credentials
+Finance / credential Worker isolation
+credential + shell/file/session/admin tools forbidden
+exact secret redaction on Worker response
+Gateway WebUI MVP with admin-token prompt
 Gateway central audit
 Worker local audit
 Credential audit
@@ -458,29 +610,38 @@ shell/file/session/admin 类工具默认禁止 credential
 
 ### Production Hardening Roadmap
 
-P0：
+Implemented P0 baseline：
 
 ```text
-Gateway Admin Auth
-Worker Security Profile
-Policy Sync / Ack
-Server-side Effective Access API
+Optional Gateway Admin Auth
+Credential allowedTools wildcard blocked by default
+credential_scope end-to-end
+Worker token binding / server-side labels
+requireExactWorkerId
+Finance / credential Worker isolation
+exact secret redaction
+P0 Credential Broker tests
 ```
 
-P1：
+Next P1：
 
 ```text
-Approval Engine
+Full Approval Engine
+Server-side Effective Access API
+Policy Sync / Ack
 Audit hash chain
 MCP connector signing
+SIEM export
 ```
 
 P2：
 
 ```text
-SSO / RBAC
-Vault / KMS
+SSO / fine-grained RBAC
+Vault / KMS integration
 Release signing / SBOM
+Worker attestation
+Network egress policy enforcement
 ```
 
 ---
@@ -715,11 +876,11 @@ labels: group=finance, env=demo
 3. 展示工具列表。
 
 ```text
-shell_execute
-file_read
-audit_read
-finance.invoice.read
+business-report-demo.run_monthly_close_demo
+business-report-demo.load_finance_invoices
 ```
+
+说明：finance / credential Worker 不暴露 shell/file/browser_eval 这类通用高危工具；即使配置里存在，也会被 Worker isolation 拒绝。
 
 4. 创建 credential。
 
@@ -727,8 +888,9 @@ finance.invoice.read
 cred_finance_readonly
 allowedAgent: agent-finance-bot
 allowedWorkerGroup: finance
-allowedTool: finance.invoice.read
-allowedScope: read
+allowedTool: business-report-demo.run_monthly_close_demo
+allowedScope: report
+allowedTools wildcard: blocked by default
 ```
 
 5. Agent 发起 tool_call。
@@ -736,9 +898,13 @@ allowedScope: read
 ```json
 {
   "agent_id": "agent-finance-bot",
-  "tool_name": "finance.invoice.read",
+  "tool_name": "business-report-demo.run_monthly_close_demo",
   "credential_ref": "cred_finance_readonly",
-  "arguments": { "month": "2026-06" }
+  "credential_scope": "report",
+  "arguments": {
+    "month": "2026-06",
+    "output_dir": "/tmp/landgod-finance-demo"
+  }
 }
 ```
 
@@ -763,7 +929,7 @@ Worker audit: tool_call received / completed
 
 ### Demo Message
 
-> 这不是 Agent 直接拿密码操作系统，而是 Agent 只拿 credential_ref。Gateway 做策略判断，Worker 本地执行，所有动作双审计。
+> 这不是 Agent 直接拿密码操作系统，而是 Agent 只拿 credential_ref 和 credential_scope。Gateway 做策略判断并签发一次性 grant，Worker 本地验证并只把短期 credential 注入可信财务工具。Agent 看不到 secret，shell/file 等通用工具在 finance Worker 上会被拒绝，所有动作都有 Gateway / Worker / Credential 三段审计。
 
 ---
 
@@ -785,7 +951,7 @@ Worker audit: tool_call received / completed
 
 回答：
 
-> LandGod 不是给 AI 裸电脑。它通过 Gateway policy、Worker local enforcement、tool trust、Credential Broker、approval、audit 把执行限制在企业规则里。高风险动作可以审批，凭据不暴露给 Agent，Worker 本地保留最终拒绝权。
+> LandGod 不是给 AI 裸电脑。它通过 Gateway policy、Worker isolation、tool trust、Credential Broker、approval、audit 把执行限制在企业规则里。高价值 credential 只能进入可信窄工具，allowedTools wildcard 默认禁止，finance / credential Worker 默认拒绝 shell/file/browser_eval 等通用高危工具，凭据不暴露给 Agent，Worker 本地保留最终拒绝权。
 
 ### Objection: 为什么不直接把数据/API 给 Agent？
 
@@ -972,8 +1138,13 @@ Gateway WebUI
 Worker 注册与工具发布
 基础 tool_call
 stdio MCP tool 发布
+Finance business-report demo
 Credential Broker MVP
-credential_ref → grant → exchange → trusted tool injection
+credential_ref + credential_scope → grant → exchange → trusted tool injection
+allowedTools wildcard blocked
+bad scope denied / good scope allowed
+Finance Worker shell_execute isolation blocked
+exact secret non-return
 Gateway central audit
 Worker local audit
 Credential audit
@@ -991,13 +1162,15 @@ Gateway / Worker 双审计正常
 仍需生产化增强：
 
 ```text
-Gateway Admin Auth
-Worker Security Profiles
+Full Approval Engine
 Policy Sync / Ack
-Server-side Effective Access
-Approval Engine
+Server-side Effective Access API
 Audit hash chain
-MCP signing
-SSO/RBAC/Vault/KMS
-Release signing/SBOM
+MCP connector signing
+SIEM export
+SSO / fine-grained RBAC
+Vault / KMS integration
+Worker attestation
+Network egress policy enforcement
+Release signing / SBOM
 ```

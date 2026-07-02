@@ -167,6 +167,27 @@ function truncateChars(value: string, maxChars: number): { value: string; trunca
   };
 }
 
+function redactExactSensitiveValues(value: string, exactValues: string[] | undefined): {
+  redactedText: string;
+  findings: ManagedClientDefenseFinding[];
+  blocked: boolean;
+} {
+  let redactedText = value;
+  const findings: ManagedClientDefenseFinding[] = [];
+  for (const raw of exactValues || []) {
+    if (typeof raw !== 'string' || raw.length < 4) continue;
+    if (!redactedText.includes(raw)) continue;
+    redactedText = redactedText.split(raw).join(REDACTED_VALUE);
+    findings.push(buildPolicyFinding(
+      'critical',
+      'exact-secret-redacted',
+      'Response contained an exact credential secret value and it was redacted',
+      { length: raw.length },
+    ));
+  }
+  return { redactedText, findings, blocked: false };
+}
+
 function redactSensitiveContent(value: string): {
   redactedText: string;
   findings: ManagedClientDefenseFinding[];
@@ -249,6 +270,7 @@ export interface ManagedClientToolResponseDefenseContext {
   responseText: string;
   responseMode: 'full' | 'handle' | 'status-only' | 'error';
   rawResult?: Record<string, unknown>;
+  exactSensitiveValues?: string[];
   runtimeConfig: Pick<ManagedClientRuntimeConfig, 'baseUrl' | 'clientId' | 'clientName' | 'mode'>;
 }
 
@@ -283,21 +305,24 @@ class NoopManagedClientDefenseLayer implements ManagedClientDefenseLayer {
   }
 
   async inspectToolResponse(context: ManagedClientToolResponseDefenseContext): Promise<ManagedClientToolResponseDefenseResult> {
-    // Demo mode: skip all redaction, truncation, and size limits.
+    const normalizedResponse = context.responseText.replace(/\r\n/g, '\n');
+    const exactRedactionResult = redactExactSensitiveValues(normalizedResponse, context.exactSensitiveValues);
+
+    // Demo mode skips generic redaction, truncation, and size limits, but exact credential
+    // values are still redacted because demo mode must never leak injected secrets.
     if (isDemoMode()) {
       return {
         allowed: true,
-        responseText: context.responseText,
-        findings: [],
+        responseText: exactRedactionResult.redactedText,
+        findings: exactRedactionResult.findings,
       };
     }
 
     const findings: ManagedClientDefenseFinding[] = [];
-    const normalizedResponse = context.responseText.replace(/\r\n/g, '\n');
     const effectiveLimit = getEffectiveResponseLimit(context);
-    const redactionResult = redactSensitiveContent(normalizedResponse);
+    const redactionResult = redactSensitiveContent(exactRedactionResult.redactedText);
 
-    findings.push(...redactionResult.findings);
+    findings.push(...exactRedactionResult.findings, ...redactionResult.findings);
 
     if (redactionResult.blocked) {
       return {

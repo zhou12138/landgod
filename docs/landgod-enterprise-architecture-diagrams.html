@@ -1,0 +1,117 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LandGod Enterprise Architecture Diagrams</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f8fafc; --fg:#172033; --muted:#5b6475; --line:#64748b; --neutral:#e2e8f0; --input:#bfdbfe; --process:#c7d2fe; --storage:#99f6e4; --external:#fde68a; --risk:#fecaca; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f172a; --fg:#e5e7eb; --muted:#a3adbd; --line:#94a3b8; --neutral:#334155; --input:#1d4ed8; --process:#4338ca; --storage:#0f766e; --external:#92400e; --risk:#991b1b; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  main { max-width:1180px; margin:32px auto; padding:0 20px 48px; }
+  h1 { margin:0 0 8px; font-size:26px; }
+  p { margin:0 0 24px; color:var(--muted); }
+  figure { margin:0 0 34px; padding:18px; border:1px solid color-mix(in srgb,var(--line),transparent 65%); border-radius:18px; background:color-mix(in srgb,var(--neutral),transparent 70%); }
+  figcaption { font-size:18px; font-weight:700; margin-bottom:14px; }
+  svg { width:100%; height:auto; display:block; }
+  .title{font-size:20px;font-weight:700;fill:var(--fg)} .label{font-size:14px;font-weight:650;fill:var(--fg)} .small{font-size:12px;fill:var(--muted)} .node{stroke:var(--line);stroke-width:1.2} .neutral{fill:var(--neutral)} .input{fill:var(--input)} .process{fill:var(--process)} .storage{fill:var(--storage)} .external{fill:var(--external)} .risk{fill:var(--risk)} .edge{stroke:var(--line);stroke-width:1.7;fill:none}.zone{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:7 5;opacity:.85}.zoneLabel{font-size:13px;font-weight:700;fill:var(--muted)}
+</style>
+<main>
+  <h1>LandGod / MCPHub Enterprise Architecture</h1>
+  <p>Enterprise Execution Harness for AI Agents — agent-swappable, execution-governed, credential-safe, and audit-ready.</p>
+
+  <figure>
+    <figcaption>1. Enterprise Deployment Topology</figcaption>
+    <svg viewBox="0 0 1120 660" role="img" aria-label="LandGod enterprise deployment topology">
+      <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="var(--line)"/></marker></defs>
+      <text class="title" x="24" y="32">Enterprise deployment topology</text>
+
+      <rect class="zone" x="24" y="60" width="210" height="210" rx="18"/><text class="zoneLabel" x="42" y="84">Agent / Workflow Zone</text>
+      <rect class="node input" x="52" y="110" width="154" height="58" rx="12"/><text class="label" x="75" y="136">OpenClaw</text><text class="small" x="75" y="154">Claude / ChatGPT</text>
+      <rect class="node input" x="52" y="188" width="154" height="58" rx="12"/><text class="label" x="78" y="214">LangGraph</text><text class="small" x="78" y="232">Dify / 自研 Agent</text>
+
+      <rect class="zone" x="302" y="60" width="300" height="350" rx="18"/><text class="zoneLabel" x="320" y="84">Private Cloud / Gateway Zone</text>
+      <rect class="node process" x="342" y="108" width="220" height="70" rx="14"/><text class="label" x="378" y="136">LandGod Gateway</text><text class="small" x="374" y="154">MCPHub Control Plane</text>
+      <rect class="node neutral" x="332" y="208" width="110" height="58" rx="12"/><text class="label" x="356" y="233">WebUI</text><text class="small" x="350" y="251">Admin console</text>
+      <rect class="node storage" x="462" y="208" width="110" height="58" rx="12"/><text class="label" x="486" y="233">Audit</text><text class="small" x="480" y="251">central logs</text>
+      <rect class="node process" x="332" y="294" width="110" height="62" rx="12"/><text class="label" x="352" y="319">Policy</text><text class="small" x="352" y="337">Approval</text>
+      <rect class="node process" x="462" y="294" width="110" height="62" rx="12"/><text class="label" x="486" y="319">Broker</text><text class="small" x="477" y="337">credentials</text>
+
+      <rect class="zone" x="650" y="60" width="210" height="210" rx="18"/><text class="zoneLabel" x="668" y="84">Security Services</text>
+      <rect class="node storage" x="682" y="112" width="146" height="52" rx="12"/><text class="label" x="721" y="136">Vault / KMS</text><text class="small" x="724" y="153">future</text>
+      <rect class="node storage" x="682" y="184" width="146" height="52" rx="12"/><text class="label" x="724" y="208">SIEM</text><text class="small" x="707" y="225">log export future</text>
+
+      <rect class="zone" x="650" y="315" width="210" height="275" rx="18"/><text class="zoneLabel" x="668" y="339">Finance LAN</text>
+      <rect class="node process" x="682" y="366" width="146" height="60" rx="12"/><text class="label" x="708" y="391">Finance Worker</text><text class="small" x="706" y="409">outbound WS</text>
+      <rect class="node external" x="682" y="454" width="146" height="52" rx="12"/><text class="label" x="722" y="478">ERP</text><text class="small" x="702" y="495">Finance system</text>
+      <rect class="node external" x="682" y="526" width="146" height="52" rx="12"/><text class="label" x="708" y="550">Office</text><text class="small" x="704" y="567">Excel / PPT</text>
+
+      <rect class="zone" x="900" y="315" width="190" height="275" rx="18"/><text class="zoneLabel" x="918" y="339">Ops / Remote Sites</text>
+      <rect class="node process" x="926" y="366" width="138" height="58" rx="12"/><text class="label" x="960" y="390">Ops Worker</text><text class="small" x="955" y="407">prod network</text>
+      <rect class="node process" x="926" y="452" width="138" height="58" rx="12"/><text class="label" x="948" y="476">Branch Worker</text><text class="small" x="955" y="493">local network</text>
+      <rect class="node external" x="926" y="532" width="138" height="42" rx="12"/><text class="label" x="952" y="557">Local Apps</text>
+
+      <path class="edge" marker-end="url(#arrow)" d="M206 139 C252 139 286 139 342 139"/>
+      <path class="edge" marker-end="url(#arrow)" d="M206 217 C252 217 286 170 342 154"/>
+      <path class="edge" marker-end="url(#arrow)" d="M442 237 L462 237"/>
+      <path class="edge" marker-end="url(#arrow)" d="M452 178 L392 294"/>
+      <path class="edge" marker-end="url(#arrow)" d="M452 178 L517 294"/>
+      <path class="edge" marker-end="url(#arrow)" d="M572 325 C620 325 640 166 682 142" stroke-dasharray="5 4"/>
+      <path class="edge" marker-end="url(#arrow)" d="M572 237 C626 237 636 210 682 210" stroke-dasharray="5 4"/>
+      <path class="edge" marker-end="url(#arrow)" d="M682 396 C610 396 610 150 562 143"/>
+      <path class="edge" marker-end="url(#arrow)" d="M926 395 C790 395 682 148 562 143"/>
+      <path class="edge" marker-end="url(#arrow)" d="M926 482 C790 482 682 160 562 154"/>
+      <path class="edge" marker-end="url(#arrow)" d="M755 426 L755 454"/>
+      <path class="edge" marker-end="url(#arrow)" d="M755 506 L755 526"/>
+      <path class="edge" marker-end="url(#arrow)" d="M995 510 L995 532"/>
+      <text class="small" x="610" y="132">Workers use outbound WebSocket</text>
+    </svg>
+  </figure>
+
+  <figure>
+    <figcaption>2. System Overall Architecture</figcaption>
+    <svg viewBox="0 0 1120 760" role="img" aria-label="LandGod system architecture">
+      <defs><marker id="arrow2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="var(--line)"/></marker></defs>
+      <text class="title" x="24" y="32">System architecture: agent-swappable execution harness</text>
+
+      <rect class="zone" x="24" y="64" width="1072" height="94" rx="18"/><text class="zoneLabel" x="44" y="88">Agent Layer — replaceable</text>
+      <rect class="node input" x="352" y="92" width="416" height="44" rx="12"/><text class="label" x="424" y="119">OpenAI / Claude / OpenClaw / LangGraph / 自研 Agent</text>
+
+      <rect class="zone" x="24" y="190" width="1072" height="190" rx="18"/><text class="zoneLabel" x="44" y="214">LandGod Gateway / MCPHub Control Plane</text>
+      <rect class="node process" x="60" y="248" width="130" height="58" rx="12"/><text class="label" x="96" y="272">Agent API</text><text class="small" x="96" y="290">tool_call</text>
+      <rect class="node process" x="230" y="248" width="140" height="58" rx="12"/><text class="label" x="254" y="272">Policy Engine</text><text class="small" x="258" y="290">access rules</text>
+      <rect class="node process" x="410" y="248" width="155" height="58" rx="12"/><text class="label" x="431" y="272">Credential Broker</text><text class="small" x="434" y="290">ref → grant → exchange</text>
+      <rect class="node neutral" x="605" y="248" width="130" height="58" rx="12"/><text class="label" x="636" y="272">WebUI</text><text class="small" x="620" y="290">scenarios / audit</text>
+      <rect class="node storage" x="775" y="248" width="130" height="58" rx="12"/><text class="label" x="804" y="272">Audit</text><text class="small" x="798" y="290">central evidence</text>
+      <rect class="node process" x="945" y="248" width="110" height="58" rx="12"/><text class="label" x="970" y="272">Approval</text><text class="small" x="980" y="290">future</text>
+
+      <rect class="zone" x="24" y="414" width="1072" height="150" rx="18"/><text class="zoneLabel" x="44" y="438">Worker Execution Plane</text>
+      <rect class="node process" x="110" y="474" width="180" height="58" rx="12"/><text class="label" x="145" y="498">Managed Worker</text><text class="small" x="145" y="516">IP / labels / resources</text>
+      <rect class="node risk" x="350" y="474" width="180" height="58" rx="12"/><text class="label" x="383" y="498">Local Enforcement</text><text class="small" x="388" y="516">final veto</text>
+      <rect class="node process" x="590" y="474" width="180" height="58" rx="12"/><text class="label" x="635" y="498">MCP Runtime</text><text class="small" x="622" y="516">trusted tools only</text>
+      <rect class="node storage" x="830" y="474" width="160" height="58" rx="12"/><text class="label" x="864" y="498">Worker Audit</text><text class="small" x="866" y="516">local evidence</text>
+
+      <rect class="zone" x="24" y="600" width="1072" height="120" rx="18"/><text class="zoneLabel" x="44" y="624">Enterprise Resources</text>
+      <rect class="node external" x="110" y="650" width="170" height="46" rx="12"/><text class="label" x="140" y="678">ERP / Finance</text>
+      <rect class="node external" x="340" y="650" width="170" height="46" rx="12"/><text class="label" x="370" y="678">Files / Reports</text>
+      <rect class="node external" x="570" y="650" width="170" height="46" rx="12"/><text class="label" x="604" y="678">Office / Browser</text>
+      <rect class="node external" x="800" y="650" width="170" height="46" rx="12"/><text class="label" x="838" y="678">UKey / Local Apps</text>
+
+      <path class="edge" marker-end="url(#arrow2)" d="M560 136 L560 190 L125 248"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M190 277 L230 277"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M370 277 L410 277"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M565 277 L605 277"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M735 277 L775 277"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M905 277 L945 277"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M300 306 C300 390 200 390 200 474"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M487 306 C487 390 440 390 440 474"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M290 503 L350 503"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M530 503 L590 503"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M770 503 L830 503"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M680 532 L195 650"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M680 532 L425 650"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M680 532 L655 650"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M680 532 L885 650"/>
+      <path class="edge" marker-end="url(#arrow2)" d="M910 532 C910 575 840 590 840 306" stroke-dasharray="5 4"/>
+      <text class="small" x="618" y="350">Credential Broker + Gateway audit + Worker audit provide execution evidence</text>
+    </svg>
+  </figure>
+</main>

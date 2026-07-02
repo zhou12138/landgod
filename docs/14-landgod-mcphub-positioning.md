@@ -1,5 +1,19 @@
 # LandGod / MCPHub Positioning
 
+## Idea Origin
+
+LandGod started from a practical gap: many valuable tools only exist as local CLI tools, desktop tools, or machine-bound workflows. They do not have clean cloud APIs, so a cloud-hosted Agent cannot directly call them.
+
+The first-order problem was not “remote control a computer.” It was:
+
+```text
+How can an Agent safely call useful local CLI/tool capabilities that do not expose an API?
+```
+
+From that CLI/no-API gap, the broader LandGod thesis emerged: enterprise capabilities are scattered across machines, networks, permissions, login states, UKeys, files, Office installs, browsers, and local scripts. LandGod turns those local capabilities into governed, schedulable Agent tools.
+
+---
+
 ## One-Line Understanding
 
 **LandGod is a distributed execution network for AI agents. MCPHub is the customer-facing control-plane and tool-gateway form of that network.**
@@ -74,6 +88,9 @@ It is responsible for:
 - Policy / Auth / RBAC
 - tool allowlists
 - approval gates
+- Credential Broker
+- Worker identity binding
+- credential scope enforcement
 - queueing and routing
 - label-based routing
 - batch execution
@@ -82,6 +99,16 @@ It is responsible for:
 - artifacts
 
 It is not just a forwarder. It is an agent execution governance plane.
+
+Security posture:
+
+```text
+Agent is untrusted.
+Gateway policy decides authority.
+Worker executes only within its allowed trust boundary.
+Credentials enter trusted narrow tools, never general tools.
+Every sensitive execution is auditable.
+```
 
 ---
 
@@ -108,6 +135,16 @@ Not every machine needs a Worker. API-only systems can be exposed directly as MC
 ---
 
 ## Product Positioning
+
+MCPHub should be presented as the customer-facing, security-governed form of LandGod. It is not merely a tool proxy or MCP aggregator. It is a controlled gateway for enterprise agent execution.
+
+Security is not optional for MCPHub. Without policy, RBAC, credential isolation, Worker identity, approval, and audit, LandGod becomes a high-risk remote execution surface: any compromised or injected Agent could potentially route actions into real machines, intranets, login sessions, UKeys, files, or credentials. Therefore MCPHub must ship as a governed control plane by default, not as a naked pass-through.
+
+Core product claim:
+
+```text
+MCPHub = MCP compatibility + enterprise execution governance.
+```
 
 LandGod / MCPHub is not:
 

@@ -7,6 +7,15 @@ const GRANT_TTL_MS = parseInt(process.env.LANDGOD_CREDENTIAL_GRANT_TTL_MS || '30
 const CREDENTIALS_FILE = 'credentials.json';
 const AUDIT_FILE = 'credential-audit.jsonl';
 const GRANT_SIGN_VERSION = 1;
+const ALLOW_CREDENTIAL_WILDCARD_TOOLS = process.env.LANDGOD_ALLOW_CREDENTIAL_WILDCARD_TOOLS === 'true';
+const DEFAULT_CREDENTIAL_DENIED_TOOLS = [
+  'shell_execute',
+  'file_read',
+  'file_write',
+  'audit_read',
+  'external_http_post',
+  'remote_configure_mcp_server',
+];
 
 function sortJsonValue(value) {
   if (Array.isArray(value)) return value.map((item) => sortJsonValue(item));
@@ -70,6 +79,7 @@ function buildGrantSigningPayload(grant) {
     credential_ref: grant.credential_ref,
     arguments_hash: grant.arguments_hash,
     allowed_scopes: normalizeAllowedScopes(grant.allowed_scopes),
+    requested_scope: grant.requested_scope || null,
     iat: grant.iat,
     nbf: grant.nbf,
     exp: grant.exp,
@@ -93,6 +103,7 @@ function publicCredentialView(credential) {
     createdAt: credential.createdAt,
     updatedAt: credential.updatedAt,
     allowedScopes: normalizeAllowedScopes(credential.allowedScopes),
+    requireExactWorkerId: credential.requireExactWorkerId === true,
     expiresAt: credential.expiresAt || null,
     lastUsedAt: credential.lastUsedAt || null,
     policyVersion: credential.policyVersion || 1,
@@ -154,6 +165,16 @@ function createCredentialBroker(options) {
     if (type === 'username_password' && (typeof secret.username !== 'string' || typeof secret.password !== 'string')) {
       throw new Error('username_password secret.username and secret.password are required');
     }
+    const allowedTools = Array.isArray(input.allowedTools) ? input.allowedTools.map(String).map((item) => item.trim()).filter(Boolean) : [];
+    if (allowedTools.length === 0) {
+      throw new Error('allowedTools must include at least one trusted domain tool');
+    }
+    if (!ALLOW_CREDENTIAL_WILDCARD_TOOLS && allowedTools.includes('*')) {
+      throw new Error('credential allowedTools wildcard is disabled; list trusted domain tools explicitly');
+    }
+    const deniedTools = Array.isArray(input.deniedTools)
+      ? Array.from(new Set([...DEFAULT_CREDENTIAL_DENIED_TOOLS, ...input.deniedTools.map(String)]))
+      : DEFAULT_CREDENTIAL_DENIED_TOOLS;
     const now = new Date().toISOString();
     const credential = {
       id,
@@ -164,9 +185,10 @@ function createCredentialBroker(options) {
       allowedAgents: Array.isArray(input.allowedAgents) ? input.allowedAgents.map(String) : ['*'],
       allowedWorkerIds: Array.isArray(input.allowedWorkerIds) ? input.allowedWorkerIds.map(String) : [],
       allowedWorkerGroups: Array.isArray(input.allowedWorkerGroups) ? input.allowedWorkerGroups.map(String) : [],
-      allowedTools: Array.isArray(input.allowedTools) ? input.allowedTools.map(String) : [],
-      deniedTools: Array.isArray(input.deniedTools) ? input.deniedTools.map(String) : ['shell_execute', 'external_http_post'],
+      allowedTools,
+      deniedTools,
       allowedScopes: normalizeAllowedScopes(input.allowedScopes),
+      requireExactWorkerId: input.requireExactWorkerId === true,
       expiresAt: typeof input.expiresAt === 'string' ? input.expiresAt : null,
       createdAt: now,
       updatedAt: now,
@@ -210,6 +232,7 @@ function createCredentialBroker(options) {
 
   function workerMatches(credential, binding) {
     if (isAllowed(credential.allowedWorkerIds, binding.clientId) || isAllowed(credential.allowedWorkerIds, binding.connectionId)) return true;
+    if (credential.requireExactWorkerId === true) return false;
     const labels = binding.labels || {};
     if (credential.allowedWorkerGroups.includes('*')) return true;
     return credential.allowedWorkerGroups.some((group) => labels.group === group || labels.workerGroup === group || labels.worker_group === group);
@@ -223,6 +246,11 @@ function createCredentialBroker(options) {
     if (credential.deniedTools.includes(params.toolName)) return { allowed: false, code: 'credential_tool_denied', reason: `Credential denies tool: ${params.toolName}` };
     if (!isAllowed(credential.allowedTools, params.toolName)) return { allowed: false, code: 'credential_tool_not_allowed', reason: `Credential is not allowed for tool: ${params.toolName}` };
     if (!isAllowed(credential.allowedAgents, params.agentId)) return { allowed: false, code: 'credential_agent_not_allowed', reason: `Agent is not allowed for credential: ${params.agentId}` };
+    const requestedScope = typeof params.credentialScope === 'string' && params.credentialScope.trim() ? params.credentialScope.trim() : null;
+    const allowedScopes = normalizeAllowedScopes(credential.allowedScopes);
+    if (requestedScope && allowedScopes.length > 0 && !allowedScopes.includes(requestedScope)) {
+      return { allowed: false, code: 'credential_scope_not_allowed', reason: `Credential scope is not allowed: ${requestedScope}` };
+    }
     if (!workerMatches(credential, params.binding)) return { allowed: false, code: 'credential_worker_not_allowed', reason: 'Credential is not allowed for target worker' };
     return { allowed: true, credential };
   }
@@ -260,6 +288,7 @@ function createCredentialBroker(options) {
       credential_ref: params.credentialRef,
       arguments_hash: hashArguments(params.argumentsPayload),
       allowed_scopes: normalizeAllowedScopes(credential.allowedScopes),
+      requested_scope: typeof params.credentialScope === 'string' && params.credentialScope.trim() ? params.credentialScope.trim() : null,
       iat: new Date(nowMs).toISOString(),
       nbf: new Date(nowMs).toISOString(),
       exp: new Date(expMs).toISOString(),
@@ -281,6 +310,7 @@ function createCredentialBroker(options) {
       decision: 'allow',
       argumentsHash: grant.arguments_hash,
       policyVersion: grant.policy_version,
+      credentialScope: grant.requested_scope || null,
     });
     return { ...grant };
   }
@@ -336,6 +366,7 @@ function createCredentialBroker(options) {
       toolName: grant.tool_name,
       credentialRef: grant.credential_ref,
       credentialType: credential.type,
+      credentialScope: grant.requested_scope || null,
       decision: 'allow',
       expiresIn: Math.max(0, Math.floor((Date.parse(grant.exp) - Date.now()) / 1000)),
     });
@@ -343,6 +374,7 @@ function createCredentialBroker(options) {
       credential_type: credential.type,
       credential_ref: credential.id,
       secret: credential.secret,
+      scope: grant.requested_scope || null,
       expires_in: Math.max(0, Math.floor((Date.parse(grant.exp) - Date.now()) / 1000)),
     };
   }

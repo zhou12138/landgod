@@ -18,9 +18,22 @@
       </div>
       <nav class="nav" aria-label="Gateway Console Navigation">
         <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="agents">Agents</button>
         <button class="nav-item" data-view="workers">Workers</button>
         <button class="nav-item" data-view="tools">Tools</button>
         <button class="nav-item" data-view="credentials">Credentials</button>
+        <div class="nav-group expanded" data-nav-group="scenarios">
+          <div class="nav-parent-row">
+            <button class="nav-item nav-parent" data-view="finance-demo"><span>Scenarios</span></button>
+            <button class="nav-toggle" data-nav-toggle="scenarios" aria-expanded="true" aria-label="Toggle scenarios navigation">▾</button>
+          </div>
+          <div class="nav-sub" aria-label="Scenario Navigation">
+            <button class="nav-subitem active" data-view-jump="finance-demo" type="button">Finance Monthly Report</button>
+            <button class="nav-subitem" type="button" disabled>IT Ops Patrol <span>soon</span></button>
+            <button class="nav-subitem" type="button" disabled>Supplier Reconciliation <span>soon</span></button>
+            <button class="nav-subitem" type="button" disabled>Office / PPT Generator <span>soon</span></button>
+          </div>
+        </div>
         <button class="nav-item" data-view="tasks">Tasks</button>
         <button class="nav-item" data-view="audit">Audit</button>
         <button class="nav-item" data-view="access">Effective Access</button>
@@ -87,12 +100,24 @@
         </div>
       </section>
 
+      <section id="view-agents" class="view">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Agents</h2>
+              <p class="panel-desc">Observed Agent/API callers. Gateway HTTP is stateless, so this tracks recent operations by <code>agent_id</code> or Agent headers.</p>
+            </div>
+          </div>
+          <div class="table-wrap"><table id="agentsTable"></table></div>
+        </article>
+      </section>
+
       <section id="view-workers" class="view">
         <article class="panel">
           <div class="panel-header">
             <div>
               <h2>Workers</h2>
-              <p class="panel-desc">Connected Worker nodes. Future policy profiles will be assigned here.</p>
+              <p class="panel-desc">Connected Worker nodes. Gateway central control can enable/disable Workers here.</p>
             </div>
           </div>
           <div class="table-wrap"><table id="workersTable"></table></div>
@@ -104,7 +129,7 @@
           <div class="panel-header">
             <div>
               <h2>Published tools</h2>
-              <p class="panel-desc">Tools currently published by connected Workers.</p>
+              <p class="panel-desc">Tools currently published by connected Workers. Disable a tool here to block Gateway dispatch before it reaches the Worker.</p>
             </div>
           </div>
           <div id="toolsList" class="stack"></div>
@@ -153,6 +178,88 @@
         </div>
       </section>
 
+      <section id="view-finance-demo" class="view">
+        <div class="demo-hero panel">
+          <div>
+            <span class="pill">Scenario: Finance Monthly Report</span>
+            <h2>AI Monthly Business Report</h2>
+            <p class="panel-desc">Business-facing scenario: Agent → Gateway → Worker → MCP → Credential Broker → Audit. The finance report demo is the first scenario template.</p>
+          </div>
+          <div class="demo-actions">
+            <button id="demoCreateCredentialBtn" class="ghost-button">Create demo credential</button>
+            <button id="demoRunBtn" class="primary-button">Run finance demo</button>
+          </div>
+        </div>
+
+        <article class="panel scenario-declaration">
+          <div class="panel-header">
+            <div>
+              <h2>Scenario declaration</h2>
+              <p class="panel-desc">This is a demo scenario template, not a generic shell/tool smoke test.</p>
+            </div>
+            <span class="pill">Demo Scenario</span>
+          </div>
+          <div class="scenario-flow-line">
+            <span>Business request</span>
+            <strong>→</strong>
+            <span>Agent</span>
+            <strong>→</strong>
+            <span>Gateway policy</span>
+            <strong>→</strong>
+            <span>Credential grant</span>
+            <strong>→</strong>
+            <span>Finance Worker</span>
+            <strong>→</strong>
+            <span>Trusted MCP</span>
+            <strong>→</strong>
+            <span>Report artifacts</span>
+            <strong>→</strong>
+            <span>Audit evidence</span>
+          </div>
+          <p class="panel-desc">Scenario objective: generate a monthly business report from mock ERP orders and mock Finance invoices, while proving credential safety and execution auditability.</p>
+        </article>
+
+        <div class="demo-flow" id="financeDemoFlow"></div>
+
+        <div class="two-column wide-left demo-results">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Demo result</h2>
+                <p class="panel-desc">Artifacts and credential safety summary from <code>business-report-demo.run_monthly_close_demo</code>.</p>
+              </div>
+            </div>
+            <pre id="financeDemoResult" class="code-block">No demo run yet.</pre>
+          </article>
+          <div class="stack">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Demo inputs</h2>
+                  <p class="panel-desc">Defaults match the bundled mock ERP/Finance data.</p>
+                </div>
+              </div>
+              <form id="financeDemoForm" class="form-grid">
+                <label>Agent ID <input name="agent_id" value="agent-business-demo" /></label>
+                <label>Client name <input name="clientName" value="BusinessReportWorker" /></label>
+                <label>Credential ref <input name="credential_ref" value="cred_demo_finance_readonly" /></label>
+                <label>Month <input name="month" value="2026-06" /></label>
+                <label>Output dir <input name="output_dir" value="/tmp/landgod-business-report-demo-webui" /></label>
+              </form>
+            </article>
+            <article class="panel credential-policy-panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Credential policy</h2>
+                  <p class="panel-desc">Finance scenario uses a readonly credential ref. Secret values are never shown to the Agent or UI.</p>
+                </div>
+              </div>
+              <div id="financeCredentialPolicy"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section id="view-tasks" class="view">
         <article class="panel">
           <div class="panel-header">
@@ -166,6 +273,35 @@
       </section>
 
       <section id="view-audit" class="view">
+        <article class="panel audit-filter-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Audit search & filters</h2>
+              <p class="panel-desc">Client-side filter across Gateway, Credential, and Worker audit data currently loaded in WebUI.</p>
+            </div>
+          </div>
+          <form id="auditFilterForm" class="form-row audit-filter-row">
+            <input name="query" placeholder="Search text / task / worker / event" />
+            <input name="tool" placeholder="Tool name" />
+            <input name="credential" placeholder="Credential ref" />
+            <select name="source">
+              <option value="all">All sources</option>
+              <option value="gateway">Gateway</option>
+              <option value="credential">Credential</option>
+              <option value="worker">Worker</option>
+            </select>
+            <select name="decision">
+              <option value="all">Any decision</option>
+              <option value="allow">allow</option>
+              <option value="deny">deny</option>
+              <option value="audit">audit/none</option>
+            </select>
+            <button class="primary-button" type="submit">Filter</button>
+            <button class="ghost-button" id="auditFilterClearBtn" type="button">Clear</button>
+          </form>
+          <div id="auditFilterSummary" class="muted">No filters applied.</div>
+        </article>
+
         <article class="panel audit-central-panel">
           <div class="panel-header">
             <div>
@@ -208,12 +344,17 @@
               </div>
             </div>
             <form id="accessForm" class="form-row">
-              <input name="agentId" placeholder="agent-a" />
-              <input name="workerId" placeholder="worker clientId or connectionId" />
-              <input name="workerGroup" placeholder="worker group label" />
-              <input name="toolName" placeholder="tool name" />
-              <input name="credentialRef" placeholder="cred_ref" />
+              <input name="agentId" list="accessAgentOptions" placeholder="agent-a" />
+              <input name="workerId" list="accessWorkerOptions" placeholder="worker clientId / name / connectionId" />
+              <input name="workerGroup" list="accessWorkerGroupOptions" placeholder="worker group label" />
+              <input name="toolName" list="accessToolOptions" placeholder="tool name" />
+              <input name="credentialRef" list="accessCredentialOptions" placeholder="cred_ref" />
               <button class="primary-button" type="submit">Evaluate</button>
+              <datalist id="accessAgentOptions"></datalist>
+              <datalist id="accessWorkerOptions"></datalist>
+              <datalist id="accessWorkerGroupOptions"></datalist>
+              <datalist id="accessToolOptions"></datalist>
+              <datalist id="accessCredentialOptions"></datalist>
             </form>
             <div id="accessResult" class="decision-box empty">Fill the fields and evaluate.</div>
           </article>
@@ -224,12 +365,18 @@
                 <p class="panel-desc">Sends <code>/tool_call</code>. Use with safe read-only tools first.</p>
               </div>
             </div>
+            <div class="button-row smoke-actions">
+              <button class="ghost-button" id="prefillFromAccessBtn" type="button">Use Effective Access inputs</button>
+              <button class="ghost-button" id="prefillFinanceDemoBtn" type="button">Finance demo preset</button>
+            </div>
             <form id="toolCallForm" class="form-grid">
-              <label>Agent ID <input name="agent_id" placeholder="agent-a" /></label>
-              <label>Client name <input name="clientName" placeholder="finance-win-01" /></label>
-              <label>Tool name <input name="tool_name" placeholder="finance.invoice.read" required /></label>
-              <label>Credential ref <input name="credential_ref" placeholder="cred_finance_readonly" /></label>
+              <label>Agent ID <input name="agent_id" list="accessAgentOptions" placeholder="agent-a" /></label>
+              <label>Client name <input name="clientName" list="accessWorkerOptions" placeholder="finance-win-01" /></label>
+              <label>Tool name <input name="tool_name" list="accessToolOptions" placeholder="finance.invoice.read" required /></label>
+              <label>Credential ref <input name="credential_ref" list="accessCredentialOptions" placeholder="cred_finance_readonly" /></label>
+              <label>Credential scope <input name="credential_scope" list="toolCallScopeOptions" placeholder="report" /></label>
               <label>Arguments JSON <textarea name="arguments" rows="5" placeholder='{"id":1}'>{}</textarea></label>
+              <datalist id="toolCallScopeOptions"></datalist>
               <button class="primary-button" type="submit">Send tool call</button>
             </form>
             <pre id="toolCallResult" class="code-block">No call yet.</pre>

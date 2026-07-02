@@ -17,13 +17,18 @@ GATEWAY_NODE_SRC = gateway/node-gateway
 GATEWAY_PY_SRC = gateway/python-sdk
 GATEWAY_PY_SERVER_SRC = gateway/python-gateway
 
-# 产物文件名
-WORKER_PKG = $(DOWNLOADS_DIR)/landgod-0.1.2.tgz
-GATEWAY_NODE_PKG = $(DOWNLOADS_DIR)/landgod-gateway-0.1.2.tgz
-GATEWAY_PY_WHL = $(DOWNLOADS_DIR)/landgod_gateway-0.1.2-py3-none-any.whl
-GATEWAY_PY_SDIST = $(DOWNLOADS_DIR)/landgod_gateway-0.1.2.tar.gz
-GATEWAY_PY_SERVER_WHL = $(DOWNLOADS_DIR)/landgod_gateway_server-0.1.2-py3-none-any.whl
-GATEWAY_PY_SERVER_SDIST = $(DOWNLOADS_DIR)/landgod_gateway_server-0.1.2.tar.gz
+# 产物文件名（从各 package/pyproject 自动读取版本，避免写死旧版本）
+WORKER_VERSION := $(shell node -p "require('./package.json').version")
+GATEWAY_NODE_VERSION := $(shell node -p "require('./gateway/node-gateway/package.json').version")
+GATEWAY_PY_VERSION := $(shell python3 -c "import tomllib; print(tomllib.load(open('gateway/python-sdk/pyproject.toml','rb'))['project']['version'])")
+GATEWAY_PY_SERVER_VERSION := $(shell python3 -c "import tomllib; print(tomllib.load(open('gateway/python-gateway/pyproject.toml','rb'))['project']['version'])")
+
+WORKER_PKG = $(DOWNLOADS_DIR)/landgod-$(WORKER_VERSION).tgz
+GATEWAY_NODE_PKG = $(DOWNLOADS_DIR)/landgod-gateway-$(GATEWAY_NODE_VERSION).tgz
+GATEWAY_PY_WHL = $(DOWNLOADS_DIR)/landgod_gateway-$(GATEWAY_PY_VERSION)-py3-none-any.whl
+GATEWAY_PY_SDIST = $(DOWNLOADS_DIR)/landgod_gateway-$(GATEWAY_PY_VERSION).tar.gz
+GATEWAY_PY_SERVER_WHL = $(DOWNLOADS_DIR)/landgod_gateway_server-$(GATEWAY_PY_SERVER_VERSION)-py3-none-any.whl
+GATEWAY_PY_SERVER_SDIST = $(DOWNLOADS_DIR)/landgod_gateway_server-$(GATEWAY_PY_SERVER_VERSION).tar.gz
 
 .PHONY: all worker gateway gateway-node gateway-python gateway-python-server clean
 

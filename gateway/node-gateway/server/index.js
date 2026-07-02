@@ -25,6 +25,11 @@ const WS_PORT = parseInt(process.env.LANDGOD_WS_PORT || "8080");
 const HTTP_PORT = parseInt(process.env.LANDGOD_HTTP_PORT || "8081");
 const DATA_DIR = process.env.LANDGOD_DATA_DIR || path.join(require('os').homedir(), '.landgod-gateway');
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const ADMIN_TOKEN = process.env.LANDGOD_ADMIN_TOKEN || '';
+const REQUIRE_ADMIN_AUTH = ADMIN_TOKEN.length > 0;
+const AGENT_TOKEN = process.env.LANDGOD_AGENT_TOKEN || '';
+const REQUIRE_AGENT_AUTH = AGENT_TOKEN.length > 0;
+const WORKER_TOKEN_BINDINGS_JSON = process.env.LANDGOD_WORKER_TOKEN_BINDINGS_JSON || '';
 
 // ========================
 // 生成 Ed25519 密钥对
@@ -133,15 +138,42 @@ const credentialBroker = createCredentialBroker({
 // ========================
 // Token 注册表
 // ========================
-// tokens.json no longer used (single-token mode)
+// tokens.json no longer used by default. Optional LANDGOD_WORKER_TOKEN_BINDINGS_JSON
+// can bind a token to server-side clientId/clientName/labels without breaking single-token mode.
 const tokenRegistry = new Map();
+
+function normalizeTokenBinding(raw) {
+    if (!raw || typeof raw !== 'object') return {};
+    const labels = raw.labels && typeof raw.labels === 'object' && !Array.isArray(raw.labels) ? raw.labels : {};
+    return {
+        device_name: typeof raw.device_name === 'string' ? raw.device_name : (typeof raw.clientName === 'string' ? raw.clientName : '*'),
+        clientId: typeof raw.clientId === 'string' ? raw.clientId : (typeof raw.client_id === 'string' ? raw.client_id : null),
+        clientName: typeof raw.clientName === 'string' ? raw.clientName : (typeof raw.client_name === 'string' ? raw.client_name : null),
+        labels,
+        active: raw.active !== false,
+        created_at: raw.created_at || 'env',
+    };
+}
 
 function loadTokens() {
     require('fs').mkdirSync(DATA_DIR, { recursive: true });
-    // Single-token mode: only the startup token is valid
     tokenRegistry.clear();
-    tokenRegistry.set(AUTH_TOKEN, { device_name: '*', created_at: 'startup', active: true });
-    console.log('Auth token registered (single-token mode)');
+    tokenRegistry.set(AUTH_TOKEN, { device_name: '*', created_at: 'startup', active: true, labels: {} });
+    if (WORKER_TOKEN_BINDINGS_JSON.trim()) {
+        try {
+            const parsed = JSON.parse(WORKER_TOKEN_BINDINGS_JSON);
+            for (const [token, binding] of Object.entries(parsed || {})) {
+                if (typeof token === 'string' && token.trim()) {
+                    tokenRegistry.set(token, normalizeTokenBinding(binding));
+                }
+            }
+            console.log(`Auth tokens registered with server-side bindings: ${tokenRegistry.size}`);
+        } catch (err) {
+            console.error(`Failed to parse LANDGOD_WORKER_TOKEN_BINDINGS_JSON: ${err.message}`);
+        }
+    } else {
+        console.log('Auth token registered (single-token mode)');
+    }
 }
 
 function saveTokens() {
@@ -150,13 +182,137 @@ function saveTokens() {
 
 function isValidToken(token) {
     if (!token) return false;
-    // 兼容旧的硬编码 token
-    if (token === AUTH_TOKEN) return true;
     const entry = tokenRegistry.get(token);
-    return entry && entry.active;
+    return Boolean(entry && entry.active);
+}
+
+function getTokenBinding(token) {
+    const entry = tokenRegistry.get(token);
+    return entry && entry.active ? entry : null;
+}
+
+function getBearerToken(req) {
+    const authHeader = req.headers['authorization'];
+    const parts = authHeader ? String(authHeader).split(/\s+/) : [];
+    return parts.length === 2 && /^bearer$/i.test(parts[0]) ? parts[1] : null;
+}
+
+function isAdminRequest(req) {
+    if (!REQUIRE_ADMIN_AUTH) return true;
+    const headerToken = req.headers['x-landgod-admin-token'];
+    const bearer = getBearerToken(req);
+    return headerToken === ADMIN_TOKEN || bearer === ADMIN_TOKEN;
+}
+
+function requireAdmin(req, res, action = 'admin') {
+    if (isAdminRequest(req)) return true;
+    appendGatewayAudit('admin_auth_denied', { action, path: req.url, method: req.method });
+    res.writeHead(401);
+    res.end(JSON.stringify({ error: 'admin_auth_required', action }));
+    return false;
+}
+
+function isAgentHeartbeatRequest(req) {
+    const headerToken = req.headers['x-landgod-agent-token'] || req.headers['x-agent-token'];
+    const bearer = getBearerToken(req);
+    if (REQUIRE_AGENT_AUTH) return headerToken === AGENT_TOKEN || bearer === AGENT_TOKEN;
+    // MVP/dev fallback: if no LANDGOD_AGENT_TOKEN is configured, admin auth is accepted;
+    // if admin auth is also disabled, heartbeat is accepted but marked as dev-unverified.
+    return isAdminRequest(req) || !REQUIRE_ADMIN_AUTH;
+}
+
+function agentHeartbeatProof(req) {
+    if (REQUIRE_AGENT_AUTH) return 'agent-token';
+    if (isAdminRequest(req) && REQUIRE_ADMIN_AUTH) return 'admin-token-fallback';
+    return 'dev-unverified';
 }
 
 loadTokens();
+
+// ========================
+// Gateway central control policy
+// ========================
+const CONTROL_POLICY_PATH = path.join(DATA_DIR, 'control-policy.json');
+let controlPolicy = loadControlPolicy();
+
+function loadControlPolicy() {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(CONTROL_POLICY_PATH)) {
+        return { version: 1, workers: {}, tools: {} };
+    }
+    try {
+        const parsed = JSON.parse(fs.readFileSync(CONTROL_POLICY_PATH, 'utf-8'));
+        return {
+            version: 1,
+            workers: parsed.workers && typeof parsed.workers === 'object' ? parsed.workers : {},
+            tools: parsed.tools && typeof parsed.tools === 'object' ? parsed.tools : {},
+        };
+    } catch (err) {
+        console.error(`Failed to load control policy: ${err.message}`);
+        return { version: 1, workers: {}, tools: {} };
+    }
+}
+
+function saveControlPolicy() {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(CONTROL_POLICY_PATH, JSON.stringify(controlPolicy, null, 2));
+}
+
+function controlEntry(enabled, reason) {
+    return {
+        enabled: enabled !== false,
+        reason: typeof reason === 'string' ? reason : '',
+        updatedAt: new Date().toISOString(),
+    };
+}
+
+function workerIdentityKeys(binding, connectionId) {
+    return Array.from(new Set([
+        binding?.clientId,
+        binding?.clientName,
+        connectionId || binding?.connectionId,
+    ].filter(Boolean)));
+}
+
+function preferredWorkerKey(binding, connectionId) {
+    return binding?.clientId || binding?.clientName || connectionId || binding?.connectionId || '';
+}
+
+function getWorkerControl(binding, connectionId) {
+    for (const key of workerIdentityKeys(binding, connectionId)) {
+        const entry = controlPolicy.workers[key];
+        if (entry) return { key, ...entry, enabled: entry.enabled !== false };
+    }
+    return { key: preferredWorkerKey(binding, connectionId), enabled: true, reason: '' };
+}
+
+function getToolControl(binding, connectionId, toolName) {
+    const workerKeys = ['*', ...workerIdentityKeys(binding, connectionId)];
+    for (const workerKey of workerKeys) {
+        const entry = controlPolicy.tools?.[workerKey]?.[toolName];
+        if (entry) return { workerKey, toolName, ...entry, enabled: entry.enabled !== false };
+    }
+    return { workerKey: preferredWorkerKey(binding, connectionId), toolName, enabled: true, reason: '' };
+}
+
+function assertCentralControlAllows(connectionId, toolName) {
+    const clientInfo = connectedClients.get(connectionId);
+    const binding = clientInfo?.binding;
+    const workerControl = getWorkerControl(binding, connectionId);
+    if (workerControl.enabled === false) {
+        const err = new Error(`Worker disabled by Gateway control policy: ${workerControl.key}`);
+        err.code = 'worker_disabled_by_gateway_policy';
+        err.control = workerControl;
+        throw err;
+    }
+    const toolControl = getToolControl(binding, connectionId, toolName);
+    if (toolControl.enabled === false) {
+        const err = new Error(`Tool disabled by Gateway control policy: ${toolName}`);
+        err.code = 'tool_disabled_by_gateway_policy';
+        err.control = toolControl;
+        throw err;
+    }
+}
 
 // ========================
 // 连接状态管理
@@ -277,6 +433,105 @@ function readGatewayAudit(limit = 200) {
     });
 }
 
+// ========================
+// Agent activity registry (HTTP callers are stateless, so track observed operations)
+// ========================
+const AGENT_ACTIVITY_PATH = path.join(DATA_DIR, 'agent-activity.json');
+let agentActivity = loadAgentActivity();
+
+function loadAgentActivity() {
+    if (!fs.existsSync(AGENT_ACTIVITY_PATH)) return {};
+    try {
+        const parsed = JSON.parse(fs.readFileSync(AGENT_ACTIVITY_PATH, 'utf-8'));
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (err) {
+        console.error(`Failed to load agent activity: ${err.message}`);
+        return {};
+    }
+}
+
+function saveAgentActivity() {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(AGENT_ACTIVITY_PATH, JSON.stringify(agentActivity, null, 2), { mode: 0o600 });
+}
+
+function getRequestRemoteAddress(req) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) return String(forwarded).split(',')[0].trim();
+    return normalizeRemoteAddress(req.socket?.remoteAddress);
+}
+
+function getRequestAgentId(req, body = {}) {
+    const candidates = [
+        body.agent_id,
+        body.agentId,
+        req.headers['x-landgod-agent-id'],
+        req.headers['x-agent-id'],
+        req.headers['x-openclaw-agent-id'],
+    ];
+    const found = candidates.find((item) => typeof item === 'string' && item.trim());
+    return found ? String(found).trim() : 'unknown-agent';
+}
+
+function rememberLimited(list, value, max = 30) {
+    if (!value) return list || [];
+    const existing = Array.isArray(list) ? list.filter((item) => item !== value) : [];
+    existing.unshift(value);
+    return existing.slice(0, max);
+}
+
+function recordAgentActivity(req, params = {}) {
+    const agentId = params.agentId || getRequestAgentId(req, params.body || {});
+    const now = new Date().toISOString();
+    const current = agentActivity[agentId] || {
+        agentId,
+        firstSeenAt: now,
+        operationCount: 0,
+        tools: [],
+        credentials: [],
+        workers: [],
+        recentOperations: [],
+    };
+    current.lastSeenAt = now;
+    current.operationCount = (current.operationCount || 0) + 1;
+    current.lastAction = params.action || 'unknown';
+    current.lastStatus = params.status || 'observed';
+    current.identityProof = params.identityProof || current.identityProof || 'unknown';
+    current.agentVersion = params.agentVersion || current.agentVersion || null;
+    current.capabilities = Array.isArray(params.capabilities) ? params.capabilities : (current.capabilities || []);
+    current.lastRemoteAddress = getRequestRemoteAddress(req);
+    current.lastUserAgent = req.headers['user-agent'] || '';
+    current.tools = rememberLimited(current.tools, params.toolName);
+    current.credentials = rememberLimited(current.credentials, params.credentialRef);
+    current.workers = rememberLimited(current.workers, params.workerKey || params.clientName || params.connectionId);
+    current.recentOperations = [{
+        timestamp: now,
+        action: params.action || 'unknown',
+        status: params.status || 'observed',
+        toolName: params.toolName || null,
+        credentialRef: params.credentialRef || null,
+        workerKey: params.workerKey || params.clientName || params.connectionId || null,
+        taskId: params.taskId || null,
+        identityProof: params.identityProof || null,
+    }, ...(current.recentOperations || [])].slice(0, 50);
+    agentActivity[agentId] = current;
+    saveAgentActivity();
+    appendGatewayAudit('agent_activity_observed', {
+        agentId,
+        action: params.action || 'unknown',
+        status: params.status || 'observed',
+        toolName: params.toolName || null,
+        credentialRef: params.credentialRef || null,
+        workerKey: params.workerKey || params.clientName || params.connectionId || null,
+        taskId: params.taskId || null,
+    });
+    return current;
+}
+
+function listAgentActivity() {
+    return Object.values(agentActivity).sort((a, b) => String(b.lastSeenAt || '').localeCompare(String(a.lastSeenAt || '')));
+}
+
 // Drain queued tasks for a newly-registered worker
 async function drainQueue(connectionId, clientName, workerLabels) {
     const toRemove = [];
@@ -295,6 +550,7 @@ async function drainQueue(connectionId, clientName, workerLabels) {
                 try {
                     const result = await sendToolCall(connectionId, queued.tool_name, queued.arguments || {}, queued.timeout || 30000, {
                         credentialRef: queued.credential_ref || null,
+                        credentialScope: queued.credential_scope || null,
                         agentId: queued.agent_id || 'default-agent',
                         taskId: queued.taskId,
                     });
@@ -336,6 +592,11 @@ server.on('error', (err) => {
 });
 console.log(`WebSocket server running at ws://0.0.0.0:${WS_PORT}`);
 
+function normalizeRemoteAddress(remoteAddress) {
+    if (!remoteAddress) return null;
+    return String(remoteAddress).replace(/^::ffff:/, '');
+}
+
 server.on("connection", (client, req) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -350,11 +611,12 @@ server.on("connection", (client, req) => {
     console.log(`Client connected with valid token! (${token.substring(0, 12)}... device: ${tokenInfo.device_name})`);
 
     const connectionId = `conn-${uuid.v4()}`;
+    const remoteAddress = normalizeRemoteAddress(req.socket?.remoteAddress);
     appendGatewayAudit('worker_connection_opened', {
         connectionId,
         workerTokenId: tokenInfo.id || tokenInfo.device_name || 'legacy',
         deviceName: tokenInfo.device_name || 'legacy',
-        remoteAddress: req.socket?.remoteAddress,
+        remoteAddress,
     });
 
     // 发送 session_opened 事件
@@ -391,12 +653,21 @@ server.on("connection", (client, req) => {
                 const serverKeyId = `key-${uuid.v4()}`;
                 const userId = `user-${uuid.v4()}`;
 
+                const tokenBinding = getTokenBinding(token);
+                const serverLabels = tokenBinding && tokenBinding.labels && typeof tokenBinding.labels === 'object' ? tokenBinding.labels : {};
+                const clientLabels = message.params.labels || {};
+                const effectiveClientId = tokenBinding?.clientId || message.params.client_id;
+                const effectiveClientName = tokenBinding?.clientName || message.params.client_name;
                 const binding = {
                     userId,
-                    clientId: message.params.client_id,
-                    clientName: message.params.client_name,
-                    labels: message.params.labels || {},
+                    clientId: effectiveClientId,
+                    clientName: effectiveClientName,
+                    // Server-side labels override self-reported labels for trusted routing/credential policy.
+                    labels: { ...clientLabels, ...serverLabels },
+                    selfReportedLabels: clientLabels,
                     resources: message.params.resources || {},
+                    ip: remoteAddress,
+                    remoteAddress,
                     connectionId,
                     sessionId,
                     serverKeyId,
@@ -404,8 +675,8 @@ server.on("connection", (client, req) => {
 
                 // 清理同名旧连接（防止重连后残留）
                 for (const [oldConnId, oldInfo] of connectedClients) {
-                    if (oldInfo.binding && oldInfo.binding.clientName === message.params.client_name && oldConnId !== connectionId) {
-                        console.log(`[register] Removing stale connection for ${message.params.client_name}: ${oldConnId}`);
+                    if (oldInfo.binding && oldInfo.binding.clientName === binding.clientName && oldConnId !== connectionId) {
+                        console.log(`[register] Removing stale connection for ${binding.clientName}: ${oldConnId}`);
                         if (oldInfo.client.readyState === WebSocket.OPEN) {
                             oldInfo.client.close(1000, 'Replaced by new connection');
                         }
@@ -420,7 +691,7 @@ server.on("connection", (client, req) => {
                     type: "res", id: taskId, ok: true,
                     payload: {
                         user_id: userId,
-                        client_id: message.params.client_id,
+                        client_id: binding.clientId,
                         connection_id: connectionId,
                         session_id: sessionId,
                         server_key_id: serverKeyId,
@@ -435,12 +706,13 @@ server.on("connection", (client, req) => {
                     clientName: binding.clientName,
                     sessionId,
                     labels: binding.labels,
+                    selfReportedLabels: binding.selfReportedLabels,
                     resources: binding.resources,
                 });
-                console.log(`[register] Client registered: ${message.params.client_name}. session_id: ${sessionId}, connectionId: ${connectionId}`);
+                console.log(`[register] Client registered: ${binding.clientName}. session_id: ${sessionId}, connectionId: ${connectionId}`);
 
-                // Drain queued tasks for this worker
-                drainQueue(connectionId, message.params.client_name, message.params.labels || {});
+                // Drain queued tasks for this worker using server-side effective labels.
+                drainQueue(connectionId, binding.clientName, binding.labels || {});
 
             } else if (message.method === "update_tools") {
                 client.send(JSON.stringify({
@@ -550,6 +822,19 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {
         if (client.readyState !== WebSocket.OPEN) {
             return reject(new Error(`Client ${connectionId} is not in OPEN state`));
         }
+        try {
+            assertCentralControlAllows(connectionId, toolName);
+        } catch (err) {
+            appendGatewayAudit('tool_call_blocked_by_control_policy', {
+                connectionId,
+                clientId: binding?.clientId,
+                clientName: binding?.clientName,
+                toolName,
+                code: err.code,
+                control: err.control,
+            });
+            return reject(err);
+        }
 
         const requestId = `tool_call-${randomUUID()}`;
         const taskId = options.taskId || `task-${randomUUID()}`;
@@ -562,6 +847,7 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {
                 binding,
                 toolName,
                 argumentsPayload: args || {},
+                credentialScope: options.credentialScope || null,
                 taskId,
                 requestId,
             });
@@ -596,6 +882,7 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {
             arguments: args || {},
             timeout,
             credentialRef: options.credentialRef || null,
+            credentialScope: options.credentialScope || null,
             credentialGrant: credentialGrant ? {
                 grant_id: credentialGrant.grant_id,
                 credential_ref: credentialGrant.credential_ref,
@@ -604,6 +891,7 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {
                 worker_id: credentialGrant.worker_id,
                 connection_id: credentialGrant.connection_id,
                 tool_name: credentialGrant.tool_name,
+                requested_scope: credentialGrant.requested_scope || null,
                 exp: credentialGrant.exp,
             } : null,
         };
@@ -732,6 +1020,7 @@ const httpServer = http.createServer(async (req, res) => {
 
     // GET /clients - 列出所有已连接的客户端（自动清理死连接）
     if (req.method === 'GET' && req.url === '/clients') {
+        if (!requireAdmin(req, res, 'clients:read')) return;
         const clients = [];
         const toDelete = [];
         for (const [connId, info] of connectedClients) {
@@ -739,14 +1028,19 @@ const httpServer = http.createServer(async (req, res) => {
                 toDelete.push(connId);
                 continue;
             }
+            const control = getWorkerControl(info.binding, connId);
             clients.push({
                 connectionId: connId,
                 clientId: info.binding.clientId,
                 clientName: info.binding.clientName,
                 labels: info.binding.labels || {},
+                ip: info.binding.ip || info.binding.remoteAddress || null,
+                remoteAddress: info.binding.remoteAddress || info.binding.ip || null,
                 resources: info.binding.resources || {},
                 sessionId: info.binding.sessionId,
                 connected: true,
+                enabled: control.enabled !== false,
+                control,
             });
         }
         for (const connId of toDelete) {
@@ -757,8 +1051,114 @@ const httpServer = http.createServer(async (req, res) => {
         return;
     }
 
+    // POST /agents/heartbeat - MVP Agent presence + identity proof.
+    if (req.method === 'POST' && req.url === '/agents/heartbeat') {
+        if (!isAgentHeartbeatRequest(req)) {
+            appendGatewayAudit('agent_heartbeat_auth_denied', { path: req.url, method: req.method, remoteAddress: getRequestRemoteAddress(req) });
+            res.writeHead(401);
+            res.end(JSON.stringify({ error: 'agent_auth_required' }));
+            return;
+        }
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                const agentId = getRequestAgentId(req, parsed);
+                const heartbeat = recordAgentActivity(req, {
+                    body: parsed,
+                    agentId,
+                    action: 'agent_heartbeat',
+                    status: 'online',
+                    identityProof: agentHeartbeatProof(req),
+                    agentVersion: typeof parsed.version === 'string' ? parsed.version : null,
+                    capabilities: Array.isArray(parsed.capabilities) ? parsed.capabilities.map(String) : [],
+                });
+                res.writeHead(200);
+                res.end(JSON.stringify({ ok: true, agent: heartbeat }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    // GET /agents - observed Agent activity against Gateway HTTP APIs.
+    if (req.method === 'GET' && req.url === '/agents') {
+        if (!requireAdmin(req, res, 'agents:read')) return;
+        res.writeHead(200);
+        res.end(JSON.stringify({ agents: listAgentActivity() }));
+        return;
+    }
+
+    // Gateway central control policy — enable/disable Workers and tools from WebUI.
+    if (req.method === 'GET' && req.url === '/control/policy') {
+        if (!requireAdmin(req, res, 'control:read')) return;
+        res.writeHead(200);
+        res.end(JSON.stringify({ policy: controlPolicy }));
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/control/worker') {
+        if (!requireAdmin(req, res, 'control:worker')) return;
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                const workerKey = parsed.workerKey || parsed.clientId || parsed.clientName || parsed.connectionId;
+                if (!workerKey || typeof workerKey !== 'string') {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'workerKey is required' }));
+                    return;
+                }
+                controlPolicy.workers[workerKey] = controlEntry(parsed.enabled !== false, parsed.reason);
+                saveControlPolicy();
+                recordAgentActivity(req, { body: parsed, agentId: getRequestAgentId(req, parsed), action: 'control_worker_updated', status: controlPolicy.workers[workerKey].enabled ? 'enabled' : 'disabled', workerKey });
+                appendGatewayAudit('control_worker_updated', { workerKey, entry: controlPolicy.workers[workerKey] });
+                res.writeHead(200);
+                res.end(JSON.stringify({ workerKey, entry: controlPolicy.workers[workerKey] }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && req.url === '/control/tool') {
+        if (!requireAdmin(req, res, 'control:tool')) return;
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const parsed = JSON.parse(body || '{}');
+                const workerKey = parsed.workerKey || parsed.clientId || parsed.clientName || parsed.connectionId || '*';
+                const toolName = parsed.toolName || parsed.tool_name;
+                if (!toolName || typeof toolName !== 'string') {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'toolName is required' }));
+                    return;
+                }
+                if (!controlPolicy.tools[workerKey]) controlPolicy.tools[workerKey] = {};
+                controlPolicy.tools[workerKey][toolName] = controlEntry(parsed.enabled !== false, parsed.reason);
+                saveControlPolicy();
+                recordAgentActivity(req, { body: parsed, agentId: getRequestAgentId(req, parsed), action: 'control_tool_updated', status: controlPolicy.tools[workerKey][toolName].enabled ? 'enabled' : 'disabled', workerKey, toolName });
+                appendGatewayAudit('control_tool_updated', { workerKey, toolName, entry: controlPolicy.tools[workerKey][toolName] });
+                res.writeHead(200);
+                res.end(JSON.stringify({ workerKey, toolName, entry: controlPolicy.tools[workerKey][toolName] }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
     // Credential Center MVP — metadata/admin APIs never return secret values.
     if (req.method === 'GET' && req.url.startsWith('/credentials/audit')) {
+        if (!requireAdmin(req, res, 'credentials:audit')) return;
         const urlObj = new URL(req.url, `http://${req.headers.host}`);
         const limit = parseInt(urlObj.searchParams.get('limit') || '100', 10);
         res.writeHead(200);
@@ -767,18 +1167,21 @@ const httpServer = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && req.url === '/credentials') {
+        if (!requireAdmin(req, res, 'credentials:read')) return;
         res.writeHead(200);
         res.end(JSON.stringify({ credentials: credentialBroker.listCredentials() }));
         return;
     }
 
     if (req.method === 'POST' && req.url === '/credentials') {
+        if (!requireAdmin(req, res, 'credentials:create')) return;
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
             try {
                 const parsed = JSON.parse(body || '{}');
                 const credential = credentialBroker.createCredential(parsed, 'http-admin');
+                recordAgentActivity(req, { body: parsed, agentId: getRequestAgentId(req, parsed), action: 'credential_created', status: 'created', credentialRef: credential.id });
                 res.writeHead(201);
                 res.end(JSON.stringify({ credential }));
             } catch (err) {
@@ -790,9 +1193,11 @@ const httpServer = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && req.url.startsWith('/credentials/') && req.url.endsWith('/revoke')) {
+        if (!requireAdmin(req, res, 'credentials:revoke')) return;
         const credentialId = decodeURIComponent(req.url.split('/credentials/')[1].split('/revoke')[0]);
         try {
             const credential = credentialBroker.revokeCredential(credentialId, 'http-admin');
+            recordAgentActivity(req, { agentId: getRequestAgentId(req, {}), action: 'credential_revoked', status: 'revoked', credentialRef: credentialId });
             res.writeHead(200);
             res.end(JSON.stringify({ credential }));
         } catch (err) {
@@ -864,6 +1269,7 @@ const httpServer = http.createServer(async (req, res) => {
 
     // POST /tool_call - 向客户端发送工具调用
     if (req.method === 'POST' && req.url.startsWith('/tool_call')) {
+        if (!requireAdmin(req, res, 'tool_call')) return;
         const toolCallUrl = new URL(req.url, `http://${req.headers.host}`);
         const isAsync = toolCallUrl.searchParams.get('async') === 'true';
         const isQueue = toolCallUrl.searchParams.get('queue') === 'true';
@@ -874,8 +1280,10 @@ const httpServer = http.createServer(async (req, res) => {
                 const parsed = JSON.parse(body);
                 const { connection_id, tool_name, arguments: args, timeout, labels } = parsed;
                 const credentialRef = typeof parsed.credential_ref === 'string' ? parsed.credential_ref : (typeof parsed.credentialRef === 'string' ? parsed.credentialRef : null);
-                const agentId = typeof parsed.agent_id === 'string' ? parsed.agent_id : (typeof parsed.agentId === 'string' ? parsed.agentId : 'default-agent');
+                const credentialScope = typeof parsed.credential_scope === 'string' ? parsed.credential_scope : (typeof parsed.credentialScope === 'string' ? parsed.credentialScope : null);
+                const agentId = typeof parsed.agent_id === 'string' ? parsed.agent_id : (typeof parsed.agentId === 'string' ? parsed.agentId : getRequestAgentId(req, parsed));
                 const clientName = parsed.clientName || parsed.client_name || (parsed.target && parsed.target.clientName);
+                recordAgentActivity(req, { agentId, action: 'tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
 
                 if (!tool_name) {
                     res.writeHead(400);
@@ -893,8 +1301,9 @@ const httpServer = http.createServer(async (req, res) => {
                     }
                     if (!targetConnId) {
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, agent_id: agentId, createdAt: new Date().toISOString() });
+                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
+                            recordAgentActivity(req, { agentId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, clientName, taskId, body: parsed });
                             console.log(`[queue] Task ${taskId} queued for ${clientName}`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -918,8 +1327,9 @@ const httpServer = http.createServer(async (req, res) => {
                     }
                     if (!targetConnId) {
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, agent_id: agentId, createdAt: new Date().toISOString() });
+                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
+                            recordAgentActivity(req, { agentId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, workerKey: JSON.stringify(labels), taskId, body: parsed });
                             console.log(`[queue] Task ${taskId} queued for labels ${JSON.stringify(labels)}`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -941,8 +1351,9 @@ const httpServer = http.createServer(async (req, res) => {
                     if (!firstEntry) {
                         // Queue mode: store task for later execution
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, agent_id: agentId, createdAt: new Date().toISOString() });
+                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
+                            recordAgentActivity(req, { agentId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, taskId, body: parsed });
                             console.log(`[queue] Task ${taskId} queued (no clients online)`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -957,17 +1368,19 @@ const httpServer = http.createServer(async (req, res) => {
 
                 // Async mode: return task_id immediately, execute in background
                 if (isAsync) {
-                    const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, agent_id: agentId });
+                    const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                    recordAgentActivity(req, { agentId, action: 'tool_call_async_started', status: 'pending', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, taskId, body: parsed });
                     res.writeHead(202);
                     res.end(JSON.stringify({ taskId, status: 'pending' }));
                     // Execute in background
-                    sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, agentId, taskId })
+                    sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, credentialScope, agentId, taskId })
                         .then(result => completeTask(taskId, result))
                         .catch(err => failTask(taskId, err.message));
                     return;
                 }
 
-                const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, agentId });
+                const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, credentialScope, agentId });
+                recordAgentActivity(req, { agentId, action: 'tool_call_completed', status: 'completed', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: parsed });
                 res.writeHead(200);
                 res.end(JSON.stringify(result));
             } catch (err) {
@@ -981,6 +1394,7 @@ const httpServer = http.createServer(async (req, res) => {
 
     // POST /batch_tool_call - 并行批量工具调用
     if (req.method === 'POST' && req.url === '/batch_tool_call') {
+        if (!requireAdmin(req, res, 'batch_tool_call')) return;
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', async () => {
@@ -999,9 +1413,11 @@ const httpServer = http.createServer(async (req, res) => {
                     try {
                         const { tool_name, arguments: args, timeout } = call;
                         const credentialRef = typeof call.credential_ref === 'string' ? call.credential_ref : (typeof call.credentialRef === 'string' ? call.credentialRef : null);
-                        const agentId = typeof call.agent_id === 'string' ? call.agent_id : (typeof call.agentId === 'string' ? call.agentId : 'default-agent');
+                        const credentialScope = typeof call.credential_scope === 'string' ? call.credential_scope : (typeof call.credentialScope === 'string' ? call.credentialScope : null);
+                        const agentId = typeof call.agent_id === 'string' ? call.agent_id : (typeof call.agentId === 'string' ? call.agentId : getRequestAgentId(req, call));
                         const clientName = call.clientName || call.client_name;
                         let targetConnId = call.connection_id;
+                        recordAgentActivity(req, { agentId, action: 'batch_tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
 
                         if (!tool_name) {
                             return { index, clientName, error: "Missing tool_name" };
@@ -1039,8 +1455,9 @@ const httpServer = http.createServer(async (req, res) => {
                         }
 
                         const taskId = typeof call.task_id === 'string' ? call.task_id : (typeof call.taskId === 'string' ? call.taskId : undefined);
-                        const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || globalTimeout || 30000, { credentialRef, agentId, taskId });
-                        return { index, clientName, tool_name, credential_ref: credentialRef, result };
+                        const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || globalTimeout || 30000, { credentialRef, credentialScope, agentId, taskId });
+                        recordAgentActivity(req, { agentId, action: 'batch_tool_call_completed', status: 'completed', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, taskId, body: call });
+                        return { index, clientName, tool_name, credential_ref: credentialRef, credential_scope: credentialScope, result };
                     } catch (err) {
                         return { index, clientName: call.clientName || call.client_name, error: err.message };
                     }
@@ -1060,6 +1477,7 @@ const httpServer = http.createServer(async (req, res) => {
 
     // GET /gateway/audit - Gateway 中央审计日志（远程备份）
     if (req.method === 'GET' && req.url.startsWith('/gateway/audit')) {
+        if (!requireAdmin(req, res, 'gateway:audit')) return;
         const url = new URL(req.url, `http://${req.headers.host}`);
         const limit = Math.min(Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200, 1000);
         res.end(JSON.stringify({ entries: readGatewayAudit(limit) }));
@@ -1068,6 +1486,7 @@ const httpServer = http.createServer(async (req, res) => {
 
     // GET /audit - 获取所有 Worker 的审计日志（集中查看）
     if (req.method === 'GET' && req.url.startsWith('/audit')) {
+        if (!requireAdmin(req, res, 'worker:audit')) return;
         const urlObj = new URL(req.url, `http://${req.headers.host}`);
         const clientName = urlObj.searchParams.get('clientName');
         const limit = parseInt(urlObj.searchParams.get('limit') || '50', 10);
@@ -1105,15 +1524,24 @@ const httpServer = http.createServer(async (req, res) => {
 
     // GET /tools - 列出所有已注册的工具
     if (req.method === 'GET' && req.url === '/tools') {
+        if (!requireAdmin(req, res, 'tools:read')) return;
         const result = [];
         for (const [connId, info] of connectedClients) {
             if (info.client.readyState === WebSocket.OPEN && info.binding) {
                 const toolNames = info.tools ? Object.keys(info.tools) : [];
+                const tools = toolNames.map((toolName) => ({
+                    name: toolName,
+                    enabled: getToolControl(info.binding, connId, toolName).enabled !== false,
+                    control: getToolControl(info.binding, connId, toolName),
+                }));
                 result.push({
                     clientName: info.binding.clientName,
+                    clientId: info.binding.clientId,
                     connectionId: connId,
+                    enabled: getWorkerControl(info.binding, connId).enabled !== false,
                     toolCount: toolNames.length,
                     tools: toolNames,
+                    toolDetails: tools,
                 });
             }
         }
@@ -1138,6 +1566,7 @@ const httpServer = http.createServer(async (req, res) => {
 
     // GET /tasks - 列出所有任务
     if (req.method === 'GET' && req.url.startsWith('/tasks')) {
+        if (!requireAdmin(req, res, 'tasks:read')) return;
         const urlObj = new URL(req.url, `http://${req.headers.host}`);
         const status = urlObj.searchParams.get('status');
         const limit = parseInt(urlObj.searchParams.get('limit') || '50', 10);
@@ -1148,10 +1577,26 @@ const httpServer = http.createServer(async (req, res) => {
         result = result.slice(-limit);
         const queueInfo = taskQueue.map(q => ({
             taskId: q.taskId,
+            status: 'queued',
             clientName: q.clientName,
             labels: q.labels,
             tool_name: q.tool_name,
+            argumentKeys: q.arguments && typeof q.arguments === 'object' ? Object.keys(q.arguments) : [],
+            timeout: q.timeout,
+            credential_ref: q.credential_ref,
+            credential_scope: q.credential_scope,
+            agent_id: q.agent_id,
             createdAt: q.createdAt,
+            request: {
+                clientName: q.clientName,
+                labels: q.labels,
+                tool_name: q.tool_name,
+                arguments: q.arguments,
+                timeout: q.timeout,
+                credential_ref: q.credential_ref,
+                credential_scope: q.credential_scope,
+                agent_id: q.agent_id,
+            },
         }));
         res.writeHead(200);
         res.end(JSON.stringify({ tasks: result, queued: queueInfo }));

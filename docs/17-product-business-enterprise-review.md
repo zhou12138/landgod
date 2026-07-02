@@ -90,6 +90,137 @@ Credential audit
 可控执行链路
 ```
 
+### 1.1.1 Architecture Diagrams
+
+下面两张图用于把产品本质从“远程工具调用”讲清楚为“Agent 企业执行 Harness”。
+
+
+#### Enterprise Deployment Topology Diagram
+
+```mermaid
+flowchart LR
+  subgraph AgentZone[Agent / Workflow Zone]
+    A1[OpenClaw / Claude / ChatGPT]
+    A2[LangGraph / Dify / 自研 Agent]
+  end
+
+  subgraph GatewayZone[Private Cloud / DMZ / Enterprise Gateway Zone]
+    G[LandGod Gateway + MCPHub]
+    UI[Gateway WebUI]
+    CB[Credential Broker]
+    P[Policy / Approval]
+    GA[Gateway Central Audit]
+  end
+
+  subgraph SecurityZone[Enterprise Security Services]
+    V[Vault / KMS optional]
+    SIEM[SIEM / Log Export optional]
+    IAM[SSO / OIDC / RBAC future]
+  end
+
+  subgraph FinanceLAN[Finance LAN]
+    W1[Finance Worker
+Windows/Linux]
+    ERP[ERP / Finance System]
+    OFFICE[Excel / PowerPoint]
+  end
+
+  subgraph OpsLAN[Ops / Production Network]
+    W2[Ops Worker]
+    PROD[Internal Systems]
+  end
+
+  subgraph RemoteSite[Branch / Remote Site]
+    W3[Remote Site Worker]
+    LOCAL[Local Apps / Files / Browser]
+  end
+
+  A1 --> G
+  A2 --> G
+  UI --> G
+  G --> CB
+  G --> P
+  G --> GA
+  CB -. future backend .-> V
+  GA -. export .-> SIEM
+  IAM -. future auth .-> UI
+
+  W1 -- outbound WebSocket --> G
+  W2 -- outbound WebSocket --> G
+  W3 -- outbound WebSocket --> G
+
+  W1 --> ERP
+  W1 --> OFFICE
+  W2 --> PROD
+  W3 --> LOCAL
+```
+
+
+#### System Architecture Diagram
+
+```mermaid
+flowchart TB
+  subgraph AgentLayer[Agent Layer - swappable]
+    Agent[任意 Agent
+OpenAI / Claude / OpenClaw / LangGraph / 自研]
+  end
+
+  subgraph Gateway[LandGod Gateway / MCPHub Control Plane]
+    API[Agent API / tool_call]
+    Registry[Worker + Tool Registry]
+    Policy[Policy Engine]
+    Broker[Credential Broker
+credential_ref -> grant -> exchange]
+    Approval[Approval Engine
+future]
+    WebUI[Enterprise WebUI
+Overview / Workers / Scenarios / Credentials / Audit / Access]
+    Audit[Gateway Central Audit]
+  end
+
+  subgraph Worker[Worker Execution Plane]
+    Runtime[Managed Worker Runtime]
+    Enforce[Local Enforcement
+permission profile / final veto]
+    MCP[MCP Tool Runtime]
+    LocalAudit[Worker Local Audit]
+  end
+
+  subgraph Tools[Trusted Tool / MCP Layer]
+    BusinessMCP[Finance Monthly Report MCP]
+    OfficeMCP[Office / PPT / Excel MCP]
+    BrowserMCP[Browser / Desktop / Local Apps]
+  end
+
+  subgraph Enterprise[Enterprise Resources]
+    ERP[ERP / Finance / Internal APIs]
+    Files[Files / Reports]
+    Desktop[Windows Apps / Browser Login / UKey]
+  end
+
+  Agent --> API
+  WebUI --> API
+  API --> Policy
+  Policy --> Registry
+  Policy --> Broker
+  Policy --> Approval
+  API --> Audit
+  Registry --> Runtime
+  Broker --> Runtime
+  Runtime --> Enforce
+  Enforce --> MCP
+  MCP --> BusinessMCP
+  MCP --> OfficeMCP
+  MCP --> BrowserMCP
+  Runtime --> LocalAudit
+  BusinessMCP --> ERP
+  BusinessMCP --> Files
+  OfficeMCP --> Files
+  BrowserMCP --> Desktop
+  Broker --> Audit
+  LocalAudit --> Audit
+```
+
 ### 1.2 Current Product Strengths
 
 #### Strength A: 方向抓到了企业 Agent 落地的真痛点

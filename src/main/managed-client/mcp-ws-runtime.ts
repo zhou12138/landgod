@@ -74,6 +74,49 @@ async function promptForToolCallApproval(params: {
   }
 }
 
+
+
+function isCredentialWorkerIsolationEnabled(config: ManagedClientRuntimeConfig): boolean {
+  const labels = config.labels || {};
+  const values = Object.values(labels).map((value) => String(value).toLowerCase());
+  const keys = Object.keys(labels).map((value) => String(value).toLowerCase());
+  return values.some((value) => value.includes('finance') || value.includes('credential') || value.includes('sensitive'))
+    || keys.some((key) => key.includes('finance') || key.includes('credential') || key.includes('sensitive'));
+}
+
+function isCredentialWorkerIsolationBlockedTool(toolName: string): boolean {
+  return toolName === 'shell_execute'
+    || toolName === 'file_read'
+    || toolName === 'file_write'
+    || toolName === 'audit_read'
+    || toolName === 'external_http_post'
+    || toolName === 'remote_configure_mcp_server'
+    || toolName === 'browser_eval'
+    || toolName.startsWith('session_')
+    || toolName.includes('shell')
+    || toolName.includes('execute')
+    || toolName.includes('eval');
+}
+
+function collectExactSecretValues(credential: ExchangedCredential | null): string[] {
+  const values: string[] = [];
+  const visit = (value: unknown): void => {
+    if (typeof value === 'string' && value.length >= 4) {
+      values.push(value);
+      return;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    if (value && typeof value === 'object') {
+      for (const item of Object.values(value as Record<string, unknown>)) visit(item);
+    }
+  };
+  if (credential?.secret) visit(credential.secret);
+  return Array.from(new Set(values));
+}
+
 function redactCredentialForAudit(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => redactCredentialForAudit(item));
@@ -1395,6 +1438,17 @@ export class ManagedClientMcpWsRuntime {
       return;
     }
 
+    if (isCredentialWorkerIsolationEnabled(this.config) && isCredentialWorkerIsolationBlockedTool(toolName)) {
+      this.appendAuditEntry(`[managed-client-mcp-ws] credential-worker isolation blocked: ${toolName}`, {
+        requestId,
+        toolName,
+        labels: this.config.labels,
+        reason: 'Finance/credential Worker cannot run general-purpose tools',
+      }, 1);
+      await this.sendToolError(socket, requestId, 'credential_worker_isolation_blocked', `Finance/credential Worker cannot run general-purpose tool: ${toolName}`);
+      return;
+    }
+
     const requestInspection = await this.defenseLayer.inspectToolCall({
       requestId,
       connectionId: this.connectionId,
@@ -1490,17 +1544,24 @@ export class ManagedClientMcpWsRuntime {
         return;
       }
       const grantScopes = Array.isArray(credentialGrant.allowed_scopes) ? credentialGrant.allowed_scopes : [];
+      const requestedScope = typeof credentialGrant.requested_scope === 'string' && credentialGrant.requested_scope.trim()
+        ? credentialGrant.requested_scope.trim()
+        : null;
       const allowedScopes = binding.credentialAccess.allowedScopes;
-      if (grantScopes.length > 0 && allowedScopes.length > 0 && grantScopes.some((scope) => !allowedScopes.includes(scope))) {
+      const scopeRejected = requestedScope
+        ? allowedScopes.length > 0 && !allowedScopes.includes(requestedScope)
+        : grantScopes.length > 0 && allowedScopes.length > 0 && grantScopes.some((scope) => !allowedScopes.includes(scope));
+      if (scopeRejected) {
         this.appendAuditEntry(`[managed-client-mcp-ws] credential grant denied: ${toolName}`, {
           requestId,
           toolName,
           credentialRef: credentialGrant.credential_ref,
           grantScopes,
+          requestedScope,
           allowedScopes,
-          reason: 'Grant scopes exceed tool allowed scopes',
+          reason: 'Credential scope is not accepted by this tool',
         }, 1);
-        await this.sendToolError(socket, requestId, 'credential_scope_not_accepted', 'Credential grant scopes are not accepted by this tool');
+        await this.sendToolError(socket, requestId, 'credential_scope_not_accepted', 'Credential scope is not accepted by this tool');
         return;
       }
       effectiveArgumentsPayload = {
@@ -1604,6 +1665,7 @@ export class ManagedClientMcpWsRuntime {
           responseText: rawMessage,
           responseMode: 'error',
           rawResult: result,
+          exactSensitiveValues: collectExactSecretValues(exchangedCredential),
           runtimeConfig: {
             baseUrl: this.config.baseUrl,
             clientId: this.config.clientId,
@@ -1650,6 +1712,7 @@ export class ManagedClientMcpWsRuntime {
         responseText: outboundResponseText,
         responseMode: resultMode,
         rawResult: result,
+        exactSensitiveValues: collectExactSecretValues(exchangedCredential),
         runtimeConfig: {
           baseUrl: this.config.baseUrl,
           clientId: this.config.clientId,
