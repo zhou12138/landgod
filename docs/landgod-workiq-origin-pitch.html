@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LandGod / MCPHub 起源故事：WorkIQ Bridge</title>
+  <title>LandGod 起源：从 WorkIQ 集成到个人生产力工具</title>
   <style>
     :root {
       --text: #f8fafc;
@@ -77,11 +77,11 @@
       color: var(--soft);
       font-size: 27px;
       line-height: 1.36;
-      max-width: 1050px;
+      max-width: 1060px;
       font-weight: 520;
     }
     .brand {
-      width: 245px;
+      width: 250px;
       padding: 18px 20px;
       border: 1px solid rgba(56,189,248,.32);
       background: rgba(15,23,42,.62);
@@ -101,6 +101,7 @@
       padding: 28px;
       box-shadow: 0 18px 50px rgba(0,0,0,.20);
       min-width: 0;
+      min-height: 548px;
     }
     .panel h2 { margin: 0 0 16px; font-size: 31px; letter-spacing: -0.03em; }
     .panel p { margin: 0; color: var(--soft); font-size: 22px; line-height: 1.5; }
@@ -134,40 +135,66 @@
       margin: 6px 6px 0 0;
       font-weight: 700;
     }
-
-    .diagram {
-      position: relative;
-      z-index: 1;
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 18px;
-      background: rgba(2,6,23,.35);
-      border: 1px solid var(--line);
-      border-radius: 30px;
-      padding: 26px 28px 24px;
-    }
-    svg { width: 100%; height: 520px; display:block; }
-    .node-title { fill:#f8fafc; font-size: 23px; font-weight: 850; text-anchor: middle; }
-    .node-sub { fill:#cbd5e1; font-size: 15px; font-weight: 520; text-anchor: middle; }
-    .cap { fill:#e2e8f0; font-size: 15px; font-weight: 720; text-anchor: middle; }
     .footer-line { position:absolute; left:72px; right:72px; bottom:42px; border-top:1px solid rgba(148,163,184,.16); padding-top:17px; color:var(--soft); font-size:25px; line-height:1.35; font-weight:640; }
     .footer-line b { color:white; }
 
-    .evolution { position:relative; z-index:1; display:grid; grid-template-columns: 1fr 1fr; gap:28px; }
-    .stage {
-      min-height: 548px;
+    .diagram {
+      margin-top: 20px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(2,6,23,.28);
+      padding: 18px;
+    }
+    svg { width: 100%; height: 260px; display:block; }
+    .node-title { fill:#f8fafc; font-size: 22px; font-weight: 850; text-anchor: middle; }
+    .node-sub { fill:#cbd5e1; font-size: 15px; font-weight: 520; text-anchor: middle; }
+    .cap { fill:#e2e8f0; font-size: 15px; font-weight: 720; text-anchor: middle; }
+
+    .productivity {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 430px 1fr 430px;
+      gap: 26px;
+      align-items: stretch;
+    }
+    .tall-panel {
       background: rgba(15,23,42,.74);
       border: 1px solid var(--line);
       border-radius: 28px;
       padding: 26px;
-      display:grid;
-      align-content:start;
+      min-height: 548px;
     }
-    .stage h2 { margin:0 0 12px; font-size: 31px; letter-spacing:-.03em; }
-    .stage .tag { color:var(--muted); font-size: 18px; margin-bottom:18px; }
-    .stage p { color:var(--soft); font-size:21px; line-height:1.45; margin:0; }
-    .mini-diagram { margin-top:20px; border:1px solid var(--line); border-radius:22px; background:rgba(2,6,23,.28); padding:18px; }
-    .mini-diagram svg { height: 260px; }
+    .tall-panel h2 { margin:0 0 14px; font-size:31px; letter-spacing:-.03em; }
+    .tall-panel p { margin:0; color:var(--soft); font-size:21px; line-height:1.45; }
+    .big {
+      font-size: 39px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+      font-weight: 880;
+      margin-bottom: 16px;
+    }
+    .tool-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+    .tool {
+      border: 1px solid rgba(148,163,184,.22);
+      background: rgba(2,6,23,.34);
+      border-radius: 16px;
+      padding: 14px 12px;
+      text-align: center;
+      color: #dbeafe;
+      font-size: 18px;
+      font-weight: 780;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .center-diagram {
+      border:1px solid var(--line);
+      border-radius:30px;
+      background:rgba(2,6,23,.35);
+      padding:26px;
+      display:grid;
+      align-content:center;
+    }
+    .center-diagram svg { height: 520px; }
 
     @media print { body { padding:0; display:block; background:white; } .slide { page-break-after:always; box-shadow:none; } }
   </style>
@@ -176,97 +203,111 @@
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Origin Story</div>
+        <div class="eyebrow">Page 1 · 问题与当时方案</div>
         <h1>Societas 要集成 WorkIQ，<br/>但 WorkIQ 只有本地 CLI</h1>
-        <div class="subtitle">我们的 Agent 在云上，WorkIQ 的能力却在用户工作电脑里的 <code>workiq</code> CLI。没有 API、没有云端入口，怎么办？</div>
+        <div class="subtitle">Agent 在云上，工具在用户工作电脑上。没有 API，只有本地 <code>workiq</code> CLI，这就是最初必须解决的“桥”的问题。</div>
       </div>
-      <div class="brand"><div class="name">LandGod</div><div class="tag">从 WorkIQ Bridge 开始</div></div>
+      <div class="brand"><div class="name">LandGod</div><div class="tag">WorkIQ Bridge 起点</div></div>
     </header>
 
     <div class="grid-2">
       <article class="panel">
-        <h2>真实约束</h2>
-        <p>Societas 可以理解需求、规划任务、总结结果，但它无法直接调用用户电脑上的本地 CLI。</p>
+        <h2>遇到的问题</h2>
+        <p>Societas 可以理解需求、规划任务、总结结果，但它无法直接调用用户电脑上的 WorkIQ CLI。</p>
         <div class="bullets">
           <div class="bullet"><span class="dot"></span><span>WorkIQ 当时没有标准 API，只有本地 <b>workiq CLI</b></span></div>
-          <div class="bullet"><span class="dot"></span><span>CLI 安装在用户工作电脑上，依赖本地登录态、配置和网络环境</span></div>
-          <div class="bullet"><span class="dot"></span><span>Societas Agent 在云上，拿不到用户电脑上的命令行能力</span></div>
+          <div class="bullet"><span class="dot"></span><span>CLI 安装在用户工作电脑上，依赖本地登录态、配置和公司网络</span></div>
+          <div class="bullet"><span class="dot"></span><span>Societas Agent 在云上，天然访问不到这台机器上的工具</span></div>
           <div class="bullet"><span class="dot"></span><span>不能把用户凭据、token、公司环境直接搬到云上</span></div>
         </div>
-        <div class="quote">问题不是 Societas 不够聪明，而是它缺少一座通向用户本地工具环境的桥。</div>
+        <div class="quote">瓶颈不是 Agent 不够聪明，而是它碰不到用户本地工具箱。</div>
       </article>
 
       <article class="panel">
-        <h2>最初要解决的问题</h2>
-        <p>我们需要一个机制，让云上的 Societas 可以在用户授权下，把任务送到工作电脑，由本地环境调用 WorkIQ CLI，再把结果回传。</p>
-        <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span>Agent 只表达意图，不直接持有本地凭据</span></div>
-          <div class="bullet"><span class="dot green"></span><span>用户电脑负责执行 <span class="code-pill">workiq ...</span></span></div>
-          <div class="bullet"><span class="dot green"></span><span>结果回到云上 Agent，用于继续推理和生成报告</span></div>
-          <div class="bullet"><span class="dot green"></span><span>执行边界由用户控制，可见、可撤销</span></div>
+        <h2>当时的方案：先搭一座桥</h2>
+        <p>让用户工作电脑主动连接云上，云上的 Societas 只发送任务，本地 Worker 调用 WorkIQ CLI，再把结果回传。</p>
+        <div class="diagram">
+          <svg viewBox="0 0 640 260" role="img" aria-label="Societas 到 WorkIQ 本地 CLI 的桥">
+            <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+            <path d="M165 92 L255 92" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M380 92 L470 92" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
+            <rect x="24" y="42" width="146" height="100" rx="20" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="97" y="82" class="node-title">Societas</text><text x="97" y="111" class="node-sub">云上 Agent</text>
+            <rect x="250" y="42" width="140" height="100" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="320" y="82" class="node-title">工作电脑</text><text x="320" y="111" class="node-sub">本地 Worker</text>
+            <rect x="470" y="42" width="146" height="100" rx="20" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s)"/><text x="543" y="82" class="node-title">workiq</text><text x="543" y="111" class="node-sub">本地 CLI</text>
+            <text x="320" y="198" class="node-sub">Agent 只发任务；凭据和执行环境留在用户电脑</text>
+            <text x="320" y="224" class="cap">这就是 LandGod 的最初形态：Cloud Agent ↔ Local Tool Bridge</text>
+          </svg>
         </div>
-        <div class="quote">这就是 LandGod 的起点：不是先做平台，而是先搭一座让 Agent 够到本地工具的桥。</div>
+        <div class="bullets">
+          <div class="bullet"><span class="dot green"></span><span>跑通 WorkIQ 无 API 集成</span></div>
+          <div class="bullet"><span class="dot green"></span><span>保留本地凭据和环境，不把公司登录态搬到云上</span></div>
+        </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>起点：</b>Societas 在云上；WorkIQ 在用户电脑上；LandGod 负责把两者安全连接起来。</div>
+    <div class="footer-line"><b>第一性问题：</b>云上 Agent 很强，但用户真正的工具、登录态和执行环境在本地设备上。</div>
     <div class="slide-number">01 / 02</div>
   </section>
 
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">From Bridge to Gateway</div>
-        <h1>后来发现：这座桥可以泛化</h1>
-        <div class="subtitle">一开始只是“工作电脑直接连云上 Agent”。加入 Gateway 后，LandGod 从 WorkIQ 专用桥，演进成可泛化的 MCPHub Gateway。</div>
+        <div class="eyebrow">Page 2 · 泛化后的产品价值</div>
+        <h1>后来发现：这不是 WorkIQ 专属问题，<br/>而是个人生产力提效工具</h1>
+        <div class="subtitle">加入 Gateway 后，这座桥可以从“WorkIQ 专用连接”泛化成 MCPHub Gateway：让云上 Agent 使用用户个人设备上的整个本地工具生态。</div>
       </div>
-      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">通向本地工具生态</div></div>
+      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">个人工具运行时</div></div>
     </header>
 
-    <div class="evolution">
-      <article class="stage">
-        <h2>第一阶段：点对点桥</h2>
-        <div class="tag">Societas ↔ 用户工作电脑 ↔ WorkIQ CLI</div>
-        <p>最初实现没有 Gateway。目标很直接：让用户工作电脑连接云上，让 Societas 可以触发本地 WorkIQ CLI。</p>
-        <div class="mini-diagram">
-          <svg viewBox="0 0 560 260" role="img" aria-label="点对点桥">
-            <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
-            <path d="M145 90 L245 90" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M315 90 L415 90" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
-            <rect x="20" y="42" width="126" height="96" rx="20" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="83" y="82" class="node-title">Societas</text><text x="83" y="110" class="node-sub">云上 Agent</text>
-            <rect x="220" y="42" width="126" height="96" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="283" y="82" class="node-title">工作电脑</text><text x="283" y="110" class="node-sub">本地执行</text>
-            <rect x="414" y="42" width="126" height="96" rx="20" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s)"/><text x="477" y="82" class="node-title">workiq</text><text x="477" y="110" class="node-sub">本地 CLI</text>
-            <text x="280" y="200" class="node-sub">优点：能跑通 WorkIQ 集成；缺点：专用、点对点、不容易扩展</text>
-          </svg>
-        </div>
-        <div class="bullets">
-          <div class="bullet"><span class="dot amber"></span><span>解决了 WorkIQ 无 API 的问题</span></div>
-          <div class="bullet"><span class="dot amber"></span><span>但还是偏一次性连接，难以管理多 Agent、多设备、多工具</span></div>
+    <div class="productivity">
+      <article class="tall-panel">
+        <h2>抽象后的洞察</h2>
+        <div class="big">每个高级用户，都有一个本地工具箱。</div>
+        <p>WorkIQ 只是第一个例子。真正可泛化的是：很多高价值能力都只存在于用户自己的设备上。</p>
+        <div class="tool-grid">
+          <div class="tool">workiq</div>
+          <div class="tool">az</div>
+          <div class="tool">copilot</div>
+          <div class="tool">gh</div>
+          <div class="tool">kubectl</div>
+          <div class="tool">ssh</div>
+          <div class="tool">Portal</div>
+          <div class="tool">local repo</div>
         </div>
       </article>
 
-      <article class="stage">
-        <h2>第二阶段：MCPHub Gateway</h2>
-        <div class="tag">任意 Agent → Gateway → 任意设备 Worker → 任意本地工具</div>
-        <p>加入 Gateway 后，我们发现这不是 WorkIQ 专属问题，而是云上 Agent 访问本地工具生态的通用问题。</p>
-        <div class="mini-diagram">
-          <svg viewBox="0 0 560 260" role="img" aria-label="MCPHub Gateway">
-            <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
-            <path d="M280 62 L280 105" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/><path d="M280 174 C150 174 120 190 120 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/><path d="M280 174 C280 190 280 198 280 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/><path d="M280 174 C410 174 440 190 440 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-            <rect x="80" y="16" width="400" height="48" rx="16" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="280" y="47" class="node-title">Societas / Claude / Codex / 任意 Agent</text>
-            <rect x="92" y="106" width="376" height="70" rx="20" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="280" y="137" class="node-title">MCPHub Gateway</text><text x="280" y="160" class="node-sub">路由 · 授权 · 能力注册 · Activity</text>
-            <rect x="34" y="218" width="170" height="36" rx="13" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="119" y="242" class="cap">workiq / az</text>
-            <rect x="220" y="218" width="120" height="36" rx="13" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="280" y="242" class="cap">copilot / gh</text>
-            <rect x="356" y="218" width="170" height="36" rx="13" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="441" y="242" class="cap">Portal / 文件 / VPN</text>
-          </svg>
-        </div>
+      <section class="center-diagram">
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub Gateway 个人生产力工具">
+          <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
+          <path d="M310 74 L310 128" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M310 222 L310 276" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M310 358 C150 358 112 392 112 428" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M310 358 C310 388 310 402 310 428" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M310 358 C470 358 508 392 508 428" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+
+          <rect x="70" y="18" width="480" height="60" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="56" class="node-title">任意云上 Agent</text>
+          <rect x="86" y="130" width="448" height="96" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="166" class="node-title">MCPHub Gateway</text><text x="310" y="194" class="node-sub">路由 · 授权 · 能力发现 · Activity History</text><text x="310" y="216" class="node-sub">从点对点桥，变成通用个人工具入口</text>
+          <rect x="82" y="278" width="456" height="82" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="313" class="node-title">用户个人设备 Worker</text><text x="310" y="340" class="node-sub">工作电脑 · 家里 Mac · Linux Dev Box · VPN 笔记本</text>
+
+          <rect x="38" y="428" width="148" height="54" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="112" y="462" class="cap">本地 CLI</text>
+          <rect x="226" y="428" width="168" height="54" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="310" y="462" class="cap">文件 / Repo</text>
+          <rect x="434" y="428" width="148" height="54" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="508" y="462" class="cap">Portal / VPN</text>
+        </svg>
+      </section>
+
+      <article class="tall-panel">
+        <h2>产品价值变了</h2>
+        <p>LandGod 不只是 WorkIQ 集成方案，而是让云上 Agent 调用个人设备工具生态的生产力基础设施。</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span>从 WorkIQ 专用桥，泛化成云上 Agent 的本地工具 Gateway</span></div>
-          <div class="bullet"><span class="dot green"></span><span>可以接任意 Agent、任意用户设备、任意本地 CLI / Portal / 文件环境</span></div>
+          <div class="bullet"><span class="dot green"></span><span>用户不用再复制输出、截图、上传文件、手动跑命令</span></div>
+          <div class="bullet"><span class="dot green"></span><span>Agent 可以使用用户已经配置好的 CLI、浏览器和本地 repo</span></div>
+          <div class="bullet"><span class="dot green"></span><span>凭据、cookie、SSH key、VPN 环境继续留在用户设备</span></div>
+          <div class="bullet"><span class="dot green"></span><span>多台设备都能变成 Agent 的本地工具运行时</span></div>
         </div>
+        <div class="quote">云上 Agent 负责思考，MCPHub Gateway 连接设备，本地工具负责执行。</div>
       </article>
     </div>
 
-    <div class="footer-line"><b>抽象后的 LandGod：</b>不是只集成 WorkIQ，而是让云上 Agent 通过 MCPHub Gateway 使用用户设备上的整个本地工具生态。</div>
+    <div class="footer-line"><b>最终定位：</b>LandGod / MCPHub Gateway 是个人生产力提效工具，让云上 Agent 玩转用户自己的本地工具箱。</div>
     <div class="slide-number">02 / 02</div>
   </section>
 </body>
