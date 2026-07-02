@@ -258,6 +258,21 @@
     }
     .metric b { display:block; color:white; font-size: 24px; margin-bottom: 5px; }
     .metric span { color: var(--soft); font-size: 16px; line-height: 1.3; }
+    .demo-box {
+      margin-top: 18px;
+      border: 1px dashed rgba(56,189,248,.52);
+      background: rgba(56,189,248,.08);
+      border-radius: 24px;
+      padding: 22px;
+      min-height: 170px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .demo-box .label { color: var(--blue); font-size: 18px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .demo-box .main { color: white; font-size: 30px; line-height: 1.12; font-weight: 900; letter-spacing: -.04em; }
+    .demo-box .sub { color: var(--soft); font-size: 17px; line-height: 1.35; }
 
     @media print { body { padding:0; display:block; background:white; } .slide { page-break-after:always; box-shadow:none; } }
   </style>
@@ -267,38 +282,38 @@
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">01 · From WorkIQ Gap to Local Computer Access</div>
+        <div class="eyebrow">01 · Problem → Generalized Product Pattern</div>
       </div>
-      <div class="brand"><div class="name">LandGod</div><div class="tag">Problem → Pattern</div></div>
+      <div class="brand"><div class="name">LandGod</div><div class="tag">Problem → Generalization</div></div>
     </header>
 
     <div class="three-grid">
       <article class="card">
-        <h2>1. A Concrete Integration Gap</h2>
-        <p class="lead">Societas needed to operate WorkIQ for the user, but WorkIQ was only reachable through a local CLI.</p>
+        <h2>1. Start with WorkIQ</h2>
+        <p class="lead">Societas needed to operate WorkIQ for the user, but the capability existed only on the user’s local computer.</p>
         <div class="bullets">
           <div class="bullet"><span class="dot blue"></span><span>Cloud Agent handles reasoning and task planning</span></div>
           <div class="bullet"><span class="dot blue"></span><span>WorkIQ capability lived behind <b>workiq CLI</b></span></div>
           <div class="bullet"><span class="dot blue"></span><span>User expects completed actions, not manual relay</span></div>
         </div>
-        <div class="quote">The first problem was not “remote control”; it was secure local execution.</div>
+        <div class="quote">The WorkIQ gap reveals the product category: secure local execution for Agents.</div>
       </article>
 
       <article class="card">
-        <h2>2. The Real Boundary</h2>
-        <p class="lead">The valuable execution context was local and could not be moved into the cloud.</p>
+        <h2>2. The Boundary is General</h2>
+        <p class="lead">WorkIQ is one example of a broader pattern: valuable tools, identity, and work context remain local.</p>
         <div class="bullets">
           <div class="bullet"><span class="dot"></span><span>No public API; local CLI only</span></div>
           <div class="bullet"><span class="dot"></span><span>AAD tokens, cookies, VPN, device config stay local</span></div>
           <div class="bullet"><span class="dot"></span><span>No inbound exposure on personal devices</span></div>
           <div class="bullet"><span class="dot"></span><span>Worker connects outbound; Gateway routes intent</span></div>
         </div>
-        <div class="quote">Cloud intelligence needed a governed bridge into the user’s device context.</div>
+        <div class="quote">The same boundary appears across CLI tools, browsers, repos, VPNs, and internal systems.</div>
       </article>
 
       <article class="card">
-        <h2>3. The Pattern Generalizes</h2>
-        <p class="lead">WorkIQ exposed a repeatable category: cloud Agents need access to the user’s existing local toolchain.</p>
+        <h2>3. Direct Generalization</h2>
+        <p class="lead">The product is not a WorkIQ bridge; it is Local Computer Access for cloud Agents.</p>
         <div class="diagram">
           <svg viewBox="0 0 640 240" role="img" aria-label="Problem to generalized local computer access pattern">
             <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
@@ -310,11 +325,11 @@
             <text x="320" y="194" class="cap">Cloud Agent → Gateway → Local Worker → User Tools</text>
           </svg>
         </div>
-        <div class="decision">Generalization: make personal devices governed local execution runtimes for cloud Agents.</div>
+        <div class="decision">Generalization: turn personal devices into governed local execution runtimes for cloud Agents.</div>
       </article>
     </div>
 
-    <div class="footer-line"><b>Thesis:</b> Local Computer Access is the missing execution layer between cloud Agents and the user’s real work environment.</div>
+    <div class="footer-line"><b>Thesis:</b> The WorkIQ problem directly generalizes into Local Computer Access: cloud intelligence, local execution.</div>
     <div class="slide-number">01 / 03</div>
   </section>
 
@@ -322,21 +337,21 @@
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">02 · MCPHub High-Level Architecture</div>
+        <div class="eyebrow">02 · Product Architecture + Demo Placeholder</div>
       </div>
-      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Control Plane + Runtime</div></div>
+      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Architecture + Demo</div></div>
     </header>
 
     <div class="productivity">
       <article class="tall-panel">
-        <h2>Agent Entry Layer</h2>
-        <div class="big">Cloud Agent calls one governed entrypoint.</div>
+        <h2>Product Architecture</h2>
+        <div class="big">One governed cloud service connects Agents to user-owned execution planes.</div>
         <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span>HTTP API / MCP-compatible surface</span></div>
-          <div class="bullet"><span class="dot blue"></span><span>Agent identity and heartbeat</span></div>
-          <div class="bullet"><span class="dot blue"></span><span>Tool call intent: <code>tool_name</code> + args</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>Agent layer</b>: HTTP / MCP-compatible entry</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>Gateway layer</b>: auth, policy, routing, registry, activity</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>Worker layer</b>: local tools, files, browsers, CLIs</span></div>
         </div>
-        <div class="quote">Agents do not connect to personal devices directly.</div>
+        <div class="quote">Cloud Agent calls the Gateway; Worker executes locally.</div>
       </article>
 
       <section class="center-diagram">
@@ -430,22 +445,21 @@
       </section>
 
       <article class="tall-panel">
-        <h2>Governance Boundary</h2>
-        <div class="big">Gateway governs. Worker executes.</div>
-        <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>Identity-bound</b>: AAD · device · permissions</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Capability-bound</b>: published tool catalog</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Credential-safe</b>: secrets stay local or short-lived</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Observable</b>: activity history and audit trail</span></div>
+        <h2>Demo Placeholder</h2>
+        <div class="big">Show one Agent action crossing from cloud intent into local execution.</div>
+        <div class="demo-box">
+          <div class="label">Live demo slot</div>
+          <div class="main">Agent → MCPHub → Worker → Local Tool</div>
+          <div class="sub">Example: call <code>workiq</code> / local CLI / browser tool from a cloud Agent, then return result + Activity trace.</div>
         </div>
         <div class="metric-row">
-          <div class="metric"><b>Control Plane</b><span>policy · route · observe</span></div>
-          <div class="metric"><b>Execution Plane</b><span>local tools · MCP · CLI</span></div>
+          <div class="metric"><b>Input</b><span>tool intent + args</span></div>
+          <div class="metric"><b>Output</b><span>result + audit trace</span></div>
         </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>Architecture:</b> MCPHub is the governed control plane; Workers are device-local execution planes.</div>
+    <div class="footer-line" style="font-size:18px; bottom:24px; border-top:0; padding-top:0"><b>Architecture + Demo:</b> one governed Gateway; local Workers execute.</div>
     <div class="slide-number">02 / 03</div>
   </section>
 
@@ -453,9 +467,9 @@
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">03 · Trusted Execution: How Agents Call Local Capabilities</div>
+        <div class="eyebrow">03 · Product Workflow: Register, Invoke, Execute</div>
       </div>
-      <div class="brand"><div class="name">Real Workflow</div><div class="tag">Register · Publish · Execute</div></div>
+      <div class="brand"><div class="name">Product Flow</div><div class="tag">Register · Invoke · Return</div></div>
     </header>
 
     <div class="two-grid">
@@ -586,7 +600,7 @@
       </article>
     </div>
 
-    <div class="footer-line" style="font-size:22px"><b>Workflow:</b> register capabilities first; invoke later through a signed, routed tool_call. Gateway governs; Worker executes; Activity proves.</div>
+    <div class="footer-line" style="font-size:22px"><b>Product Flow:</b> Workers publish capabilities first; Agents invoke later through Gateway; results return through Gateway with Activity trace.</div>
     <div class="slide-number">03 / 03</div>
   </section>
 </body>
