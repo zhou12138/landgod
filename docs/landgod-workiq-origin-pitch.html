@@ -450,33 +450,36 @@
 
     <div class="two-grid">
       <article class="card">
-        <h2>A. 我作为 Agent 如何知道 LandGod / MCPHub？</h2>
-        <p class="lead">这一步发生在调用前：我先根据 OpenClaw Skill 和本地工具笔记确定 Gateway 地址、API 规范和调用约定。</p>
+        <h2>A. Agent 如何知道入口，Worker 如何包装能力？</h2>
+        <p class="lead">左上是我作为 Agent 的入口发现；左下是 Worker 在本地把内置工具和 MCP 工具集合包装成统一 tool definitions。</p>
         <div class="diagram" style="padding: 18px;">
-          <svg viewBox="0 0 800 430" style="height:430px" role="img" aria-label="Agent discovers and calls LandGod Gateway workflow">
+          <svg viewBox="0 0 800 450" style="height:450px" role="img" aria-label="Agent discovers LandGod and Worker packages local capabilities">
             <defs><marker id="d4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="ds4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
 
-            <path d="M92 108 L92 160" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
-            <path d="M214 202 L304 202" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
-            <path d="M538 202 L628 202" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
-            <path d="M688 244 C688 308 502 314 502 350" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
-            <path d="M304 366 C168 364 102 304 92 244" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
+            <path d="M136 64 L224 64" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
+            <path d="M414 64 L502 64" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
+            <path d="M106 222 L238 286" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
+            <path d="M106 370 L238 316" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
+            <path d="M464 304 L560 304" stroke="#64748b" stroke-width="3" marker-end="url(#d4)"/>
+            <path d="M678 304 C724 262 708 166 648 110" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#d4)"/>
 
-            <rect x="24" y="28" width="136" height="80" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#ds4)"/><text x="92" y="58" class="node-title">OpenClaw Agent</text><text x="92" y="84" class="node-sub">悟空 / main</text>
-            <rect x="18" y="160" width="148" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#ds4)"/><text x="92" y="190" class="node-title">Skill + config</text><text x="92" y="216" class="node-sub">landgod/SKILL.md</text><text x="92" y="236" class="node-sub">TOOLS.md → :3000</text>
+            <rect x="26" y="24" width="112" height="80" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#ds4)"/><text x="82" y="54" class="node-title">Agent</text><text x="82" y="80" class="node-sub">悟空 / main</text>
+            <rect x="224" y="24" width="190" height="80" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#ds4)"/><text x="319" y="52" class="node-title">Skill + config</text><text x="319" y="78" class="node-sub">landgod/SKILL.md · TOOLS.md</text>
+            <rect x="502" y="24" width="176" height="80" rx="18" fill="rgba(245,158,11,.15)" stroke="rgba(245,158,11,.56)" stroke-width="2" filter="url(#ds4)"/><text x="590" y="52" class="node-title">Gateway HTTP API</text><text x="590" y="78" class="node-sub">heartbeat / clients / tool_call</text>
+            <text x="180" y="50" class="proto">local read</text><text x="458" y="50" class="proto">HTTP(S)</text>
 
-            <rect x="304" y="158" width="236" height="88" rx="18" fill="rgba(245,158,11,.15)" stroke="rgba(245,158,11,.56)" stroke-width="2" filter="url(#ds4)"/><text x="422" y="186" class="node-title">HTTP REST</text><text x="422" y="212" class="node-sub">POST /agents/heartbeat</text><text x="422" y="234" class="node-sub">agent_id + capabilities</text>
-            <text x="258" y="190" class="proto">local read</text>
-            <text x="582" y="190" class="proto">HTTP</text>
+            <rect x="26" y="178" width="160" height="88" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#ds4)"/><text x="106" y="206" class="node-title">Built-in tools</text><text x="106" y="232" class="node-sub">shell / file / browser</text><text x="106" y="254" class="node-sub">desktop tools allowlist</text>
+            <rect x="26" y="326" width="160" height="88" rx="18" fill="rgba(56,189,248,.12)" stroke="rgba(56,189,248,.46)" stroke-width="2" filter="url(#ds4)"/><text x="106" y="354" class="node-title">MCP tools</text><text x="106" y="380" class="node-sub">stdio / HTTP MCP</text><text x="106" y="402" class="node-sub">computer-use / external</text>
 
-            <rect x="628" y="158" width="140" height="88" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#ds4)"/><text x="698" y="186" class="node-title">Gateway</text><text x="698" y="212" class="node-sub">records Agent</text><text x="698" y="234" class="node-sub">presence/proof</text>
+            <rect x="238" y="262" width="226" height="88" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.58)" stroke-width="2" filter="url(#ds4)"/><text x="351" y="290" class="node-title">ManagedClientMcpToolRegistry</text><text x="351" y="316" class="node-sub">buildBindings()</text><text x="351" y="338" class="node-sub">toolBindings: advertisedName → upstreamName</text>
+            <text x="220" y="248" class="proto">local MCP client</text><text x="220" y="388" class="proto">MCP listTools()</text>
 
-            <rect x="344" y="322" width="316" height="88" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#ds4)"/><text x="502" y="350" class="node-title">HTTP REST tool call</text><text x="502" y="376" class="node-sub">GET /clients → choose Worker</text><text x="502" y="398" class="node-sub">POST /tool_call: clientName / labels / tool_name / args</text>
-            <text x="602" y="300" class="proto">HTTP</text>
-            <text x="198" y="342" class="proto">HTTP response</text>
+            <rect x="560" y="264" width="174" height="80" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#ds4)"/><text x="647" y="292" class="node-title">getToolDefinitions()</text><text x="647" y="318" class="node-sub">name · description</text><text x="647" y="340" class="node-sub">input_schema</text>
+            <text x="512" y="292" class="proto">local JSON</text>
+            <text x="700" y="196" class="proto">WS(S) update_tools</text>
           </svg>
         </div>
-        <div class="quote">具体到这台环境：我不是“自动神秘发现”，而是读到 LandGod Skill、TOOLS.md 里的 Gateway 地址，再按 HTTP API 发 heartbeat / clients / tool_call。</div>
+        <div class="quote">真实点：Worker 先把内置 tools 和 MCP server 的 tools 包装进 <code>toolRegistry</code>，再用 <code>update_tools</code> 把统一的工具定义发布给 Gateway。</div>
       </article>
 
       <article class="card">
