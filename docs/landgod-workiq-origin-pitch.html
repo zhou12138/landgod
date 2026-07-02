@@ -535,14 +535,16 @@
             <line x1="258" y1="54" x2="258" y2="392" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
             <line x1="548" y1="54" x2="548" y2="392" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
 
-            <rect x="62" y="114" width="148" height="70" rx="20" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#callS)"/>
-            <circle cx="88" cy="150" r="16" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
-            <image href="assets/societas-logo-icon.png" x="73" y="133" width="31" height="33" preserveAspectRatio="xMidYMid meet"/>
-            <text x="146" y="144" class="cap">Agent</text>
-            <text x="146" y="162" class="node-sub">tool intent</text>
-            <rect x="76" y="304" width="148" height="50" rx="15" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.4" filter="url(#callS)"/>
-            <text x="150" y="326" class="cap">Tool Result</text>
-            <text x="150" y="343" class="node-sub">JSON · file · stdout</text>
+            <rect x="50" y="98" width="184" height="270" rx="26" fill="rgba(251,113,133,.10)" stroke="rgba(251,113,133,.42)" stroke-width="2" filter="url(#callS)"/>
+            <text x="142" y="123" class="cap">Agent Runtime</text>
+            <rect x="72" y="142" width="140" height="56" rx="17" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.4"/>
+            <circle cx="94" cy="170" r="14" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
+            <image href="assets/societas-logo-icon.png" x="81" y="155" width="27" height="29" preserveAspectRatio="xMidYMid meet"/>
+            <text x="154" y="164" class="node-sub">HTTP request</text>
+            <text x="154" y="181" class="node-sub">/tool_call</text>
+            <rect x="72" y="296" width="140" height="52" rx="17" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.4"/>
+            <text x="142" y="318" class="cap">Tool Result</text>
+            <text x="142" y="336" class="node-sub">JSON · file · stdout</text>
 
             <path d="M304 116 C296 90 324 78 351 94 C372 68 419 76 430 110 C466 106 488 140 464 170 C486 194 476 226 450 236 L450 356 C450 378 429 392 398 392 L340 392 C310 392 292 376 292 354 L292 236 C268 224 264 190 290 172 C276 150 284 122 304 116Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#callS)"/>
             <text x="390" y="130" class="node-title">Gateway</text>
@@ -569,16 +571,16 @@
             <text x="726" y="286" class="node-sub">CLI</text>
             <text x="670" y="256" class="proto">local device</text>
 
-            <path d="M210 148 C250 148 282 148 320 148" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
-            <text x="224" y="122" class="cap">1. HTTP /tool_call</text>
+            <path d="M212 170 C252 160 282 152 320 148" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
+            <text x="230" y="112" class="cap">1. HTTP /tool_call</text>
             <path d="M450 148 C500 148 552 154 610 164" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
             <text x="482" y="118" class="cap">2. route by worker</text>
             <path d="M472 278 C520 258 562 228 610 218" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
             <text x="492" y="292" class="cap">3. signed WS call</text>
             <path d="M620 294 C560 340 504 350 460 344" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#callA)" opacity=".9"/>
             <text x="500" y="358" class="cap">4a. result</text>
-            <path d="M316 344 C274 344 246 338 224 330" stroke="#38bdf8" stroke-width="3.2" fill="none" marker-end="url(#callA)" opacity=".9"/>
-            <text x="238" y="366" class="cap">4b. return to Agent</text>
+            <path d="M316 344 C272 346 242 338 212 322" stroke="#38bdf8" stroke-width="3.2" fill="none" marker-end="url(#callA)" opacity=".9"/>
+            <text x="238" y="368" class="cap">4b. return to Agent</text>
           </svg>
         </div>
         <div class="workflow-note"><b>Route / Execute:</b> Gateway selects Worker by connectionId, clientName, or labels; Worker verifies and invokes <code>toolRegistry.callTool</code>.</div>
