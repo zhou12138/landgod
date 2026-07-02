@@ -328,98 +328,100 @@
       </article>
 
       <section class="center-diagram">
-        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub architecture organized by LLM Agents, Service, and User Computers">
-          <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub high-level architecture with distinct agent producers and user device execution plane">
+          <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><marker id="b2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
 
-          <!-- zone labels and boundaries -->
-          <text x="76" y="34" class="proto">LLM Agents</text>
-          <text x="310" y="34" class="proto">Service</text>
-          <text x="505" y="34" class="proto">User Computers</text>
-          <line x1="178" y1="50" x2="178" y2="490" stroke="rgba(148,163,184,.62)" stroke-width="2.2" stroke-dasharray="2 8"/>
-          <line x1="418" y1="50" x2="418" y2="490" stroke="rgba(148,163,184,.62)" stroke-width="2.2" stroke-dasharray="2 8"/>
+          <!-- zones -->
+          <text x="84" y="30" class="proto">Agent Producers</text>
+          <text x="310" y="30" class="proto">MCPHub Service</text>
+          <text x="512" y="30" class="proto">User Execution Plane</text>
+          <line x1="182" y1="48" x2="182" y2="488" stroke="rgba(148,163,184,.55)" stroke-width="2" stroke-dasharray="2 8"/>
+          <line x1="420" y1="48" x2="420" y2="488" stroke="rgba(148,163,184,.55)" stroke-width="2" stroke-dasharray="2 8"/>
 
-          <!-- connectors behind nodes -->
-          <path d="M162 95 L238 204" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M162 171 L238 220" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M162 247 L238 238" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M162 344 L238 252" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M384 222 L520 130" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M384 246 L488 318" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M520 130 L384 222" stroke="#64748b" stroke-width="2.2" marker-end="url(#a2)" opacity=".65"/>
-          <path d="M488 318 L384 246" stroke="#64748b" stroke-width="2.2" marker-end="url(#a2)" opacity=".65"/>
+          <!-- agent fan-in bus -->
+          <path d="M164 102 L204 102 L204 238 L230 238" stroke="#64748b" stroke-width="2.6" fill="none" marker-end="url(#a2)"/>
+          <path d="M164 164 L204 164" stroke="#64748b" stroke-width="2.6" fill="none"/>
+          <path d="M164 226 L204 226" stroke="#64748b" stroke-width="2.6" fill="none"/>
+          <path d="M164 288 L204 288 L204 238" stroke="#64748b" stroke-width="2.6" fill="none"/>
+          <text x="206" y="218" class="proto">HTTP(S)</text>
+          <text x="206" y="236" class="proto">MCP calls</text>
 
-          <!-- LLM agents -->
-          <rect x="34" y="66" width="128" height="58" rx="16" fill="rgba(251,113,133,.13)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#s2)"/>
-          <circle cx="60" cy="95" r="18" fill="rgba(15,23,42,.72)" stroke="rgba(251,113,133,.50)" stroke-width="2"/>
-          <g transform="translate(42 77) scale(.30)">
-              <path d="M60 10 C30 10 15 35 15 55 C15 75 30 95 45 100 L45 110 L55 110 L55 100 C55 100 60 102 65 100 L65 110 L75 110 L75 100 C90 95 105 75 105 55 C105 35 90 10 60 10Z" fill="#ef4444"/>
-              <path d="M20 45 C5 40 0 50 5 60 C10 70 20 65 25 55 C28 48 25 45 20 45Z" fill="#ef4444"/>
-              <path d="M100 45 C115 40 120 50 115 60 C110 70 100 65 95 55 C92 48 95 45 100 45Z" fill="#ef4444"/>
-              <path d="M45 15 Q35 5 30 8" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
-              <path d="M75 15 Q85 5 90 8" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="45" cy="35" r="6" fill="#050810"/>
-              <circle cx="75" cy="35" r="6" fill="#050810"/>
-              <circle cx="46" cy="34" r="2.5" fill="#00e5cc"/>
-              <circle cx="76" cy="34" r="2.5" fill="#00e5cc"/>
-            </g>
-          <text x="116" y="100" class="cap">OpenClaw</text>
+          <!-- OpenClaw -->
+          <rect x="34" y="76" width="130" height="52" rx="15" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.48)" stroke-width="2" filter="url(#s2)"/>
+          <circle cx="58" cy="102" r="16" fill="rgba(15,23,42,.72)" stroke="rgba(251,113,133,.50)" stroke-width="2"/>
+          <g transform="translate(40 84) scale(.30)">
+            <path d="M60 10 C30 10 15 35 15 55 C15 75 30 95 45 100 L45 110 L55 110 L55 100 C55 100 60 102 65 100 L65 110 L75 110 L75 100 C90 95 105 75 105 55 C105 35 90 10 60 10Z" fill="#ef4444"/>
+            <path d="M20 45 C5 40 0 50 5 60 C10 70 20 65 25 55 C28 48 25 45 20 45Z" fill="#ef4444"/>
+            <path d="M100 45 C115 40 120 50 115 60 C110 70 100 65 95 55 C92 48 95 45 100 45Z" fill="#ef4444"/>
+            <path d="M45 15 Q35 5 30 8" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+            <path d="M75 15 Q85 5 90 8" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="45" cy="35" r="6" fill="#050810"/><circle cx="75" cy="35" r="6" fill="#050810"/>
+            <circle cx="46" cy="34" r="2.5" fill="#00e5cc"/><circle cx="76" cy="34" r="2.5" fill="#00e5cc"/>
+          </g>
+          <text x="114" y="107" class="cap">OpenClaw</text>
 
-          <rect x="34" y="142" width="128" height="58" rx="16" fill="rgba(56,189,248,.13)" stroke="rgba(56,189,248,.48)" stroke-width="2" filter="url(#s2)"/>
-          <circle cx="60" cy="171" r="18" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
-          <path d="M52 171 C52 164 56 160 62 160 C68 160 72 164 73 171" fill="none" stroke="#38bdf8" stroke-width="3.2" stroke-linecap="round"/>
-          <path d="M73 171 C79 171 82 173 82 178 C82 184 76 188 70 188 L52 188" fill="none" stroke="#a78bfa" stroke-width="3.2" stroke-linecap="round"/>
-          <text x="116" y="176" class="cap">Societas</text>
+          <!-- Societas -->
+          <rect x="34" y="138" width="130" height="52" rx="15" fill="rgba(56,189,248,.12)" stroke="rgba(56,189,248,.48)" stroke-width="2" filter="url(#s2)"/>
+          <circle cx="58" cy="164" r="16" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
+          <path d="M51 164 C51 158 55 154 61 154 C66 154 70 158 71 163" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          <path d="M71 163 C76 163 80 166 80 171 C80 176 75 179 69 179 L51 179" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+          <text x="114" y="169" class="cap">Societas</text>
 
-          <rect x="34" y="218" width="128" height="58" rx="16" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.48)" stroke-width="2" filter="url(#s2)"/>
-          <circle cx="60" cy="247" r="18" fill="rgba(15,23,42,.72)" stroke="rgba(167,139,250,.50)" stroke-width="2"/>
-          <g transform="translate(48 235) scale(1.0)">
-              <circle cx="12" cy="12" r="12" fill="#f8fafc"/>
-              <path d="M12 .5C5.65 .5.5 5.65.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.25.8-.58v-2.05c-3.2.7-3.9-1.38-3.9-1.38-.52-1.32-1.27-1.67-1.27-1.67-1.04-.72.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.67 1.25 3.32.95.1-.74.4-1.25.72-1.53-2.56-.3-5.26-1.28-5.26-5.7 0-1.26.45-2.3 1.18-3.1-.12-.3-.51-1.5.11-3.06 0 0 .96-.31 3.15 1.18.92-.26 1.9-.38 2.88-.39.98 0 1.96.13 2.88.39 2.18-1.49 3.14-1.18 3.14-1.18.62 1.56.23 2.76.11 3.06.73.8 1.17 1.84 1.17 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.77 1.06.77 2.13v3.15c0 .33.21.69.79.57A11.52 11.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" fill="#0f172a"/>
-            </g>
-          <text x="116" y="244" class="cap">GitHub</text>
-          <text x="116" y="263" class="node-sub">Copilot</text>
+          <!-- GitHub Copilot -->
+          <rect x="34" y="200" width="130" height="52" rx="15" fill="rgba(167,139,250,.12)" stroke="rgba(167,139,250,.48)" stroke-width="2" filter="url(#s2)"/>
+          <circle cx="58" cy="226" r="16" fill="rgba(15,23,42,.72)" stroke="rgba(167,139,250,.50)" stroke-width="2"/>
+          <g transform="translate(46 214) scale(1)"><circle cx="12" cy="12" r="12" fill="#f8fafc"/><path d="M12 .5C5.65 .5.5 5.65.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.25.8-.58v-2.05c-3.2.7-3.9-1.38-3.9-1.38-.52-1.32-1.27-1.67-1.27-1.67-1.04-.72.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.67 1.25 3.32.95.1-.74.4-1.25.72-1.53-2.56-.3-5.26-1.28-5.26-5.7 0-1.26.45-2.3 1.18-3.1-.12-.3-.51-1.5.11-3.06 0 0 .96-.31 3.15 1.18.92-.26 1.9-.38 2.88-.39.98 0 1.96.13 2.88.39 2.18-1.49 3.14-1.18 3.14-1.18.62 1.56.23 2.76.11 3.06.73.8 1.17 1.84 1.17 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.77 1.06.77 2.13v3.15c0 .33.21.69.79.57A11.52 11.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" fill="#0f172a"/></g>
+          <text x="112" y="221" class="cap">GitHub</text><text x="112" y="238" class="node-sub">Copilot</text>
 
-          <rect x="34" y="314" width="128" height="68" rx="16" fill="rgba(34,197,94,.13)" stroke="rgba(34,197,94,.46)" stroke-width="2" filter="url(#s2)"/>
-          <circle cx="58" cy="340" r="8" fill="rgba(56,189,248,.22)" stroke="rgba(56,189,248,.52)"/>
-          <circle cx="84" cy="340" r="8" fill="rgba(167,139,250,.22)" stroke="rgba(167,139,250,.52)"/>
-          <circle cx="110" cy="340" r="8" fill="rgba(245,158,11,.22)" stroke="rgba(245,158,11,.52)"/>
-          <text x="98" y="368" class="cap">Other Agents</text>
-          <text x="58" y="286" class="node-sub">• Query tools</text>
-          <text x="58" y="306" class="node-sub">• Run tools</text>
+          <!-- Other agents -->
+          <rect x="34" y="262" width="130" height="52" rx="15" fill="rgba(34,197,94,.12)" stroke="rgba(34,197,94,.48)" stroke-width="2" filter="url(#s2)"/>
+          <circle cx="54" cy="288" r="8" fill="rgba(56,189,248,.22)" stroke="rgba(56,189,248,.52)"/>
+          <circle cx="78" cy="288" r="8" fill="rgba(167,139,250,.22)" stroke="rgba(167,139,250,.52)"/>
+          <circle cx="102" cy="288" r="8" fill="rgba(245,158,11,.22)" stroke="rgba(245,158,11,.52)"/>
+          <text x="128" y="293" class="cap">Others</text>
 
-          <!-- Service / MCP Hub -->
-          <path d="M236 206 C236 178 264 170 284 184 C301 158 345 166 350 194 C382 190 399 222 376 247 C382 276 338 288 316 266 C292 292 244 278 254 246 C236 240 226 222 236 206 Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#s2)"/>
-          <text x="310" y="232" class="node-title">MCP Hub</text>
-          <text x="390" y="178" class="node-sub">All tools are</text>
-          <text x="390" y="198" class="node-sub">user-scoped</text>
-          <text x="432" y="258" class="proto">WebSocket</text>
-          <text x="432" y="280" class="proto">AAD Auth</text>
+          <!-- MCPHub service boundary -->
+          <rect x="230" y="118" width="160" height="242" rx="26" fill="rgba(245,224,119,.14)" stroke="rgba(245,224,119,.60)" stroke-width="2" filter="url(#s2)"/>
+          <text x="310" y="150" class="node-title">MCPHub Gateway</text>
+          <rect x="252" y="176" width="116" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.4"/>
+          <text x="310" y="198" class="node-sub">Agent API</text>
+          <rect x="252" y="220" width="116" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(245,158,11,.42)" stroke-width="1.4"/>
+          <text x="310" y="242" class="node-sub">Policy + Routing</text>
+          <rect x="252" y="264" width="116" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(34,197,94,.42)" stroke-width="1.4"/>
+          <text x="310" y="286" class="node-sub">Capability Registry</text>
+          <rect x="252" y="308" width="116" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(148,163,184,.42)" stroke-width="1.4"/>
+          <text x="310" y="330" class="node-sub">Activity History</text>
+          <text x="310" y="382" class="proto">all tools are user-scoped</text>
 
-          <!-- User devices -->
-          <rect x="486" y="82" width="104" height="38" rx="12" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.52)" stroke-width="2" filter="url(#s2)"/>
-          <text x="538" y="106" class="cap">Laptop</text>
-          <rect x="486" y="132" width="104" height="38" rx="12" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.52)" stroke-width="2" filter="url(#s2)"/>
-          <text x="538" y="156" class="cap">VM</text>
-          <rect x="486" y="182" width="104" height="38" rx="12" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.52)" stroke-width="2" filter="url(#s2)"/>
-          <text x="538" y="206" class="cap">DevBox</text>
+          <!-- service <-> device flows -->
+          <path d="M390 210 L454 168" stroke="#38bdf8" stroke-width="3.2" marker-end="url(#b2)"/>
+          <text x="404" y="182" class="proto">locate device</text>
+          <path d="M456 250 L390 278" stroke="#64748b" stroke-width="2.5" marker-end="url(#a2)"/>
+          <text x="406" y="270" class="proto">register tools</text>
+          <path d="M390 302 L456 344" stroke="#38bdf8" stroke-width="3.2" marker-end="url(#b2)"/>
+          <text x="404" y="332" class="proto">run tool</text>
 
-          <!-- Workstation container -->
-          <rect x="444" y="286" width="154" height="174" rx="30" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#s2)"/>
-          <text x="496" y="314" class="cap">Workshop</text>
-          <rect x="516" y="320" width="72" height="42" rx="10" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
-          <text x="552" y="346" class="cap">LandGod</text>
-          <path d="M552 362 L510 398" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
-          <path d="M552 362 L552 427" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
-          <path d="M552 362 L584 400" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
-          <rect x="468" y="394" width="72" height="34" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.2"/>
-          <text x="504" y="416" class="node-sub">WorkIQ CLI</text>
-          <rect x="518" y="424" width="68" height="30" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.2"/>
-          <text x="552" y="444" class="node-sub">File tools</text>
-          <rect x="552" y="396" width="62" height="36" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.2"/>
-          <text x="583" y="418" class="node-sub">Browser</text>
-          <text x="583" y="432" class="node-sub">tools</text>
-          <text x="520" y="235" class="node-sub">• Register tools</text>
-          <text x="520" y="257" class="node-sub">• Run tools</text>
+          <!-- devices -->
+          <rect x="456" y="74" width="126" height="38" rx="12" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#s2)"/>
+          <text x="519" y="98" class="cap">Laptop</text>
+          <rect x="456" y="122" width="126" height="38" rx="12" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#s2)"/>
+          <text x="519" y="146" class="cap">VM</text>
+          <rect x="456" y="170" width="126" height="38" rx="12" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.50)" stroke-width="2" filter="url(#s2)"/>
+          <text x="519" y="194" class="cap">DevBox</text>
+
+          <rect x="442" y="292" width="154" height="178" rx="30" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#s2)"/>
+          <text x="519" y="320" class="cap">Workshop</text>
+          <rect x="482" y="334" width="76" height="38" rx="10" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.4"/>
+          <text x="520" y="358" class="cap">LandGod</text>
+          <path d="M520 372 L482 404" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
+          <path d="M520 372 L522 432" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
+          <path d="M520 372 L565 405" stroke="#64748b" stroke-width="2" marker-end="url(#a2)"/>
+          <rect x="448" y="400" width="72" height="34" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.2"/>
+          <text x="484" y="422" class="node-sub">WorkIQ CLI</text>
+          <rect x="498" y="432" width="72" height="30" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.2"/>
+          <text x="534" y="452" class="node-sub">File tools</text>
+          <rect x="548" y="400" width="62" height="36" rx="9" fill="rgba(15,23,42,.82)" stroke="rgba(56,189,248,.42)" stroke-width="1.2"/>
+          <text x="579" y="422" class="node-sub">Browser</text><text x="579" y="436" class="node-sub">tools</text>
         </svg>
       </section>
 
