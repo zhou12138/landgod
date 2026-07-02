@@ -303,7 +303,7 @@
     </div>
 
     <div class="footer-line"><b>第一性问题：</b>云上 Agent 要真正完成工作，必须有一个安全、可运维的执行 Harness，连接用户本地工具环境。</div>
-    <div class="slide-number">01 / 04</div>
+    <div class="slide-number">01 / 03</div>
   </section>
 
   <section class="slide">
@@ -373,75 +373,13 @@
     </div>
 
     <div class="footer-line"><b>最终定位：</b>LandGod / MCPHub Gateway 是个人生产力提效工具，也是 Agent Execution Harness 的个人场景落地。</div>
-    <div class="slide-number">02 / 04</div>
+    <div class="slide-number">02 / 03</div>
   </section>
 
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 3 · 技术实现与模块</div>
-        <h1>LandGod / MCPHub 如何实现这个 Harness？</h1>
-        <div class="subtitle">源码里的实现不是一个裸 WebSocket 转发器，而是“Gateway 控制面 + Worker 执行面 + 签名鉴权 + 凭据授权 + Activity 可见性”的组合，形成 Intent → Govern → Execute → Observe 的闭环。</div>
-      </div>
-      <div class="brand"><div class="name">Execution Harness</div><div class="tag">Gateway · Worker · Trust</div></div>
-    </header>
-
-    <div class="three-grid">
-      <article class="card">
-        <h2>1. Gateway 控制面</h2>
-        <p class="lead">云上 Agent 不直接打到个人设备，而是调用 Gateway 的 HTTP API。Gateway 是 Harness 的治理面：负责路由、授权、签名和可见性。</p>
-        <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span><b>HTTP API</b>：<code>/tool_call</code>、<code>/batch_tool_call</code>、<code>/agents/heartbeat</code>、<code>/tasks</code>、<code>/logs/tool-calls</code></span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>设备路由</b>：按 <code>clientName</code>、<code>connection_id</code>、labels 选择目标 Worker</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>任务管理</b>：同步执行、异步任务、队列、超时、traceId / taskId / requestId</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>控制策略</b>：Agent / Worker / Tool 可 enable / disable，WebUI 展示 Activity</span></div>
-        </div>
-        <div class="quote">Gateway 是 Harness 的控制面：不保存用户工作环境，但负责把意图安全送到正确设备。</div>
-      </article>
-
-      <article class="card">
-        <h2>2. Worker 执行面</h2>
-        <p class="lead">Worker 是 Harness 的执行面，跑在用户设备上，主动向 Gateway 建立 WebSocket 出站连接，因此个人设备不需要暴露端口。</p>
-        <div class="diagram">
-          <svg viewBox="0 0 640 210" role="img" aria-label="LandGod implementation workflow">
-            <defs><marker id="a3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s3" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
-            <path d="M142 74 L234 74" stroke="#64748b" stroke-width="3" marker-end="url(#a3)"/><path d="M386 74 L494 74" stroke="#64748b" stroke-width="3" marker-end="url(#a3)"/>
-            <rect x="16" y="30" width="128" height="88" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s3)"/><text x="80" y="66" class="node-title">Agent</text><text x="80" y="92" class="node-sub">tool_call</text>
-            <rect x="232" y="30" width="156" height="88" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s3)"/><text x="310" y="66" class="node-title">Gateway</text><text x="310" y="92" class="node-sub">govern · sign · grant</text>
-            <rect x="494" y="30" width="130" height="88" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s3)"/><text x="559" y="66" class="node-title">Worker</text><text x="559" y="92" class="node-sub">verify · execute</text>
-            <text x="320" y="158" class="node-sub">Worker 注册能力：本地 CLI、文件、浏览器、MCP 工具、permission profile</text>
-            <text x="320" y="184" class="cap">个人设备只出站连接；真正调用 workiq / az / copilot 发生在本地</text>
-          </svg>
-        </div>
-        <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>注册握手</b>：Worker 用 token 连接 Gateway，绑定 clientId / clientName / labels / session</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>本地执行</b>：Worker 验证请求后调用本机工具，并把结果回传给 Gateway</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>能力边界</b>：permission profile、approval mode、工具白名单限制本地可执行范围</span></div>
-        </div>
-      </article>
-
-      <article class="card">
-        <h2>3. 鉴权、签名与凭据</h2>
-        <p class="lead">Harness 的关键不是“能远程执行”，而是每一次执行都绑定设备、会话、工具、参数和短期授权。</p>
-        <div class="bullets">
-          <div class="bullet"><span class="dot amber"></span><span><b>Worker Token</b>：Worker 连接时通过 Bearer token 鉴权，可用服务端 token binding 绑定设备身份和 labels</span></div>
-          <div class="bullet"><span class="dot amber"></span><span><b>签名 tool_call</b>：Gateway 用 Ed25519 签名 requestId、session、connection、tool、arguments hash、iat/exp、nonce</span></div>
-          <div class="bullet"><span class="dot amber"></span><span><b>Worker 校验</b>：校验 user/client/connection/session/keyId、过期时间、body hash、签名和 replay nonce</span></div>
-          <div class="bullet"><span class="dot amber"></span><span><b>Credential Broker</b>：Agent 只传 <code>credential_ref</code>，Gateway 签发短期单次 grant，Worker 交换后本地注入 secret</span></div>
-          <div class="bullet"><span class="dot amber"></span><span><b>Activity / Audit</b>：traceId 串起 received、dispatch、grant、exchange、result、timeout、blocked</span></div>
-        </div>
-        <div class="decision">技术结论：LandGod 是 Agent Execution Harness 的个人实现，不是裸远控；安全边界在 Gateway + Worker 双侧共同完成。</div>
-      </article>
-    </div>
-
-    <div class="footer-line"><b>Harness 闭环：</b>Agent 发意图，Gateway 做治理和签名，Worker 在本地验证并执行，结果与 Activity 回到云上。</div>
-    <div class="slide-number">03 / 04</div>
-  </section>
-
-  <section class="slide">
-    <header>
-      <div>
-        <div class="eyebrow">Page 4 · 真实工作流：注册能力与调用能力</div>
+        <div class="eyebrow">Page 3 · 真实工作流：注册能力与调用能力</div>
         <h1>Agent 如何一步一步调用 Worker 的本地能力？</h1>
         <div class="subtitle">LandGod 的真实链路分两段：Worker 先通过 WebSocket 注册身份、包装并发布工具能力；Agent 后续通过 Skill/配置知道 Gateway，再用 HTTP <code>/tool_call</code> 触发一次受签名、可路由、可审计的本地执行。</div>
       </div>
@@ -534,8 +472,8 @@
       </article>
     </div>
 
-    <div class="footer-line"><b>真实端到端协议：</b>Agent 通过 Skill/配置知道 LandGod → HTTP(S) 调 Gateway；Worker 主动用 WS(S) 注册并 update_tools；Gateway 将 HTTP /tool_call 转成 WS tool_call 并返回结果。</div>
-    <div class="slide-number">04 / 04</div>
+    <div class="footer-line"><b>真实端到端协议：</b>Agent 通过 Skill/配置知道 LandGod → HTTP(S) 调 Gateway；Worker 主动用 WS(S) 注册并 update_tools；Gateway 将 HTTP /tool_call 转成 WS tool_call 并返回结果。<b>轻量 Harness：</b>Gateway governs, Worker executes, Activity proves.</div>
+    <div class="slide-number">03 / 03</div>
   </section>
 </body>
 </html>
