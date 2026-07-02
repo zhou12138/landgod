@@ -408,12 +408,12 @@
             <!-- Worker registration + capability publication flow -->
             <path d="M124 178 L214 178" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
             <path d="M392 178 L492 178" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
-            <path d="M594 216 C594 252 490 250 490 280" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
-            <path d="M370 306 C270 306 246 260 286 222" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M580 220 L580 256 L489 256 L489 288" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M370 319 L356 319" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
             <path d="M120 370 L244 414" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
             <path d="M120 468 L244 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
             <path d="M462 430 L558 430" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
-            <path d="M654 396 C704 344 680 264 610 216" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
+            <path d="M650 396 L650 250 L760 250 L760 116 L304 116 L304 136" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
 
             <rect x="24" y="136" width="102" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="75" y="168" class="node-title">Worker</text><text x="75" y="194" class="node-sub">outbound</text><text x="75" y="214" class="node-sub">Bearer token</text>
             <rect x="214" y="136" width="180" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="304" y="164" class="node-title">Gateway</text><text x="304" y="190" class="node-sub">Validate token</text><text x="304" y="212" class="node-sub">Create connectionId</text>
@@ -431,7 +431,7 @@
             <text x="224" y="386" class="proto">local</text><text x="224" y="472" class="proto">MCP listTools()</text>
 
             <rect x="558" y="396" width="184" height="66" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#rs4)"/><text x="650" y="420" class="cap">update_tools</text><text x="650" y="444" class="node-sub">getToolDefinitions()</text><text x="650" y="462" class="node-sub">name · desc · schema</text>
-            <text x="510" y="416" class="proto">local JSON</text><text x="706" y="322" class="proto">WS(S)</text>
+            <text x="510" y="416" class="proto">local JSON</text><text x="718" y="236" class="proto">WS(S)</text>
           </svg>
         </div>
         <div class="quote">Skill/config discovers Gateway. <code>toolRegistry</code> packages built-in + MCP tools. <code>update_tools</code> publishes them.</div>
@@ -447,9 +447,9 @@
             <path d="M128 68 L204 68" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
             <path d="M330 68 L430 68" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
             <path d="M566 68 L652 68" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M698 112 C698 160 492 152 492 198" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
+            <path d="M713 110 L713 156 L492 156 L492 198" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
             <path d="M492 256 L492 306" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M410 346 C282 354 208 284 170 236" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
+            <path d="M390 343 L328 343 L328 221 L280 221" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
 
             <rect x="18" y="26" width="112" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s4)"/><text x="74" y="56" class="node-title">Agent</text><text x="74" y="82" class="node-sub">Skill/config</text><text x="74" y="104" class="node-sub">Knows Gateway</text>
             <rect x="204" y="26" width="128" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s4)"/><text x="268" y="54" class="node-title">Gateway</text><text x="268" y="80" class="node-sub">POST /tool_call</text><text x="268" y="102" class="node-sub">Policy + Activity</text>
