@@ -420,115 +420,117 @@
 
     <div class="two-grid">
       <article class="card">
-        <h2>A. Worker Connects + Publishes Tools</h2>
-        <p class="lead">The local Worker connects outbound, proves identity, registers device metadata, then publishes the user-scoped tool catalog.</p>
+        <h2>A. Register + Publish User-Scoped Tools</h2>
+        <p class="lead">Worker connects outbound from the user computer, authenticates, then publishes local capabilities into the MCP Hub catalog.</p>
         <div class="diagram" style="padding: 14px 18px;">
-          <svg viewBox="0 0 800 520" style="height:400px" role="img" aria-label="LandGod worker registration and tool publication data flow">
-            <defs><marker id="r5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="rs5" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+          <svg viewBox="0 0 800 520" style="height:400px" role="img" aria-label="Register tools workflow over high-level MCPHub architecture">
+            <defs><marker id="pub" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker><marker id="pub2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="pubs" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
 
-            <!-- zones -->
-            <text x="110" y="34" class="proto">Agent Context</text>
-            <text x="398" y="34" class="proto">Gateway / MCPHub Service</text>
-            <text x="670" y="34" class="proto">User Computer</text>
-            <line x1="248" y1="54" x2="248" y2="486" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
+            <text x="100" y="34" class="proto">LLM Agents</text>
+            <text x="398" y="34" class="proto">Service</text>
+            <text x="668" y="34" class="proto">User Computers</text>
+            <line x1="250" y1="54" x2="250" y2="486" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
             <line x1="552" y1="54" x2="552" y2="486" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
 
-            <!-- core nodes -->
-            <path d="M52 118 C52 92 80 86 98 101 C113 76 154 85 160 112 C190 108 207 140 183 163 C190 192 147 203 126 181 C104 205 59 191 68 160 C50 153 43 134 52 118 Z" fill="rgba(251,113,133,.16)" stroke="rgba(251,113,133,.52)" stroke-width="2" filter="url(#rs5)"/>
-            <text x="126" y="136" class="cap">Agent</text><text x="126" y="160" class="node-sub">discovers Gateway</text>
+            <!-- agent side -->
+            <path d="M52 118 C52 92 80 86 98 101 C113 76 154 85 160 112 C190 108 207 140 183 163 C190 192 147 203 126 181 C104 205 59 191 68 160 C50 153 43 134 52 118 Z" fill="rgba(251,113,133,.16)" stroke="rgba(251,113,133,.52)" stroke-width="2" filter="url(#pubs)"/>
+            <text x="126" y="136" class="cap">Societas</text>
+            <rect x="52" y="304" width="150" height="64" rx="12" fill="rgba(34,197,94,.13)" stroke="rgba(34,197,94,.46)" stroke-width="2" filter="url(#pubs)"/>
+            <text x="127" y="330" class="cap">Other Agents</text><text x="127" y="352" class="node-sub">discover tools later</text>
 
-            <rect x="304" y="92" width="184" height="92" rx="22" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs5)"/>
-            <text x="396" y="124" class="node-title">Gateway</text><text x="396" y="150" class="node-sub">WS endpoint + token auth</text><text x="396" y="172" class="node-sub">connectionId / server key</text>
+            <!-- service -->
+            <path d="M298 194 C298 164 327 156 348 172 C366 142 412 152 418 184 C452 180 470 216 444 244 C452 276 404 288 380 264 C354 292 305 278 315 244 C296 238 287 214 298 194 Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#pubs)"/>
+            <text x="384" y="220" class="node-title">MCP Hub</text>
+            <text x="384" y="246" class="node-sub">Capability Registry</text>
+            <text x="440" y="288" class="proto">All tools are user-scoped</text>
 
-            <rect x="614" y="86" width="130" height="78" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs5)"/>
-            <text x="679" y="116" class="node-title">Worker</text><text x="679" y="142" class="node-sub">Outbound WS(S)</text>
-
-            <rect x="600" y="230" width="158" height="76" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#rs5)"/>
-            <text x="679" y="258" class="cap">register</text><text x="679" y="282" class="node-sub">clientName · labels</text><text x="679" y="302" class="node-sub">resources · capabilities</text>
-
-            <rect x="600" y="370" width="158" height="76" rx="18" fill="rgba(56,189,248,.12)" stroke="rgba(56,189,248,.48)" stroke-width="2" filter="url(#rs5)"/>
-            <text x="679" y="398" class="cap">Local Tools</text><text x="679" y="422" class="node-sub">built-ins · MCP</text><text x="679" y="442" class="node-sub">WorkIQ · files · browser</text>
-
-            <rect x="304" y="338" width="184" height="88" rx="22" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.56)" stroke-width="2" filter="url(#rs5)"/>
-            <text x="396" y="370" class="node-title">Capability Registry</text><text x="396" y="396" class="node-sub">update_tools</text><text x="396" y="418" class="node-sub">name · desc · schema</text>
+            <!-- user computer -->
+            <rect x="584" y="86" width="138" height="58" rx="14" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#pubs)"/>
+            <text x="653" y="121" class="cap">Computer 2</text>
+            <rect x="566" y="238" width="190" height="220" rx="30" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#pubs)"/>
+            <text x="650" y="267" class="cap">User Computer 1</text>
+            <rect x="640" y="288" width="86" height="46" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.5"/>
+            <text x="683" y="317" class="cap" fill="#0f172a">LandGod</text>
+            <rect x="586" y="370" width="86" height="38" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+            <text x="629" y="394" class="node-sub" fill="#0f172a">WorkIQ CLI</text>
+            <rect x="674" y="402" width="72" height="34" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+            <text x="710" y="424" class="node-sub" fill="#0f172a">File tools</text>
+            <rect x="704" y="352" width="72" height="36" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+            <text x="740" y="374" class="node-sub" fill="#0f172a">Browser</text>
+            <path d="M683 334 L629 370" stroke="#64748b" stroke-width="2" marker-end="url(#pub2)"/>
+            <path d="M690 334 L710 402" stroke="#64748b" stroke-width="2" marker-end="url(#pub2)"/>
+            <path d="M707 334 L740 352" stroke="#64748b" stroke-width="2" marker-end="url(#pub2)"/>
 
             <!-- numbered data flow -->
-            <path d="M614 124 L488 124" stroke="#64748b" stroke-width="3" marker-end="url(#r5)"/>
-            <text x="538" y="108" class="proto">1  WS(S) + Bearer token</text>
-            <path d="M488 152 L614 152" stroke="#64748b" stroke-width="3" marker-end="url(#r5)"/>
-            <text x="530" y="178" class="proto">2  session_opened(connectionId)</text>
-            <path d="M679 164 L679 230" stroke="#64748b" stroke-width="3" marker-end="url(#r5)"/>
-            <text x="696" y="200" class="proto">3</text>
-            <path d="M600 268 L488 156" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r5)"/>
-            <text x="508" y="236" class="proto">4  register JSON</text>
-            <path d="M679 306 L679 370" stroke="#64748b" stroke-width="3" marker-end="url(#r5)"/>
-            <text x="696" y="342" class="proto">5  buildBindings()</text>
-            <path d="M600 408 L488 390" stroke="#64748b" stroke-width="3" marker-end="url(#r5)"/>
-            <text x="505" y="425" class="proto">6  update_tools</text>
-            <path d="M304 382 L178 160" stroke="#64748b" stroke-width="2.5" fill="none" marker-end="url(#r5)" opacity=".75"/>
-            <text x="164" y="284" class="proto">7  user-scoped tool catalog</text>
+            <path d="M640 312 C552 292 500 270 444 236" stroke="#38bdf8" stroke-width="4.2" fill="none" marker-end="url(#pub)"/>
+            <text x="500" y="260" class="cap">1. WebSocket + AAD Auth</text>
+            <path d="M640 308 C548 322 496 314 430 254" stroke="#38bdf8" stroke-width="4.2" fill="none" marker-end="url(#pub)"/>
+            <text x="482" y="334" class="cap">2. Register Tools</text>
+            <path d="M356 252 C278 278 220 306 158 330" stroke="#38bdf8" stroke-width="4.2" fill="none" marker-end="url(#pub)"/>
+            <text x="182" y="290" class="cap">3. Publish catalog</text>
           </svg>
         </div>
-        <div class="quote">Worker-initiated outbound connection keeps personal devices private. Gateway stores device presence and a user-scoped capability catalog.</div>
+        <div class="quote">Registration flow: <code>session_opened</code> → <code>register</code> → <code>buildBindings()</code> → <code>update_tools</code>. Gateway exposes a user-scoped catalog to Agents.</div>
       </article>
 
       <article class="card">
-        <h2>B. Agent Calls + Worker Executes Locally</h2>
-        <p class="lead">Agent calls Gateway over HTTP. Gateway selects the Worker, signs the request, Worker validates and runs the local tool, then returns the result.</p>
+        <h2>B. Invoke + Forward + Execute</h2>
+        <p class="lead">Agent invokes a tool. MCP Hub locates the right computer, forwards a signed call to LandGod, and the Worker executes locally.</p>
         <div class="diagram" style="padding: 14px 18px;">
-          <svg viewBox="0 0 800 520" style="height:400px" role="img" aria-label="LandGod end-to-end tool call data flow">
-            <defs><marker id="e5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="es5" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+          <svg viewBox="0 0 800 520" style="height:400px" role="img" aria-label="Invoke forward and execute workflow over high-level MCPHub architecture">
+            <defs><marker id="inv" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker><marker id="inv2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="invs" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
 
-            <!-- zones -->
-            <text x="110" y="34" class="proto">Agent</text>
-            <text x="398" y="34" class="proto">Gateway / MCPHub Service</text>
-            <text x="670" y="34" class="proto">User Computer</text>
-            <line x1="248" y1="54" x2="248" y2="486" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
+            <text x="100" y="34" class="proto">LLM Agents</text>
+            <text x="398" y="34" class="proto">Service</text>
+            <text x="668" y="34" class="proto">User Computers</text>
+            <line x1="250" y1="54" x2="250" y2="486" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
             <line x1="552" y1="54" x2="552" y2="486" stroke="rgba(148,163,184,.58)" stroke-width="2" stroke-dasharray="2 8"/>
 
-            <!-- nodes -->
-            <path d="M52 118 C52 92 80 86 98 101 C113 76 154 85 160 112 C190 108 207 140 183 163 C190 192 147 203 126 181 C104 205 59 191 68 160 C50 153 43 134 52 118 Z" fill="rgba(251,113,133,.16)" stroke="rgba(251,113,133,.52)" stroke-width="2" filter="url(#es5)"/>
-            <text x="126" y="136" class="cap">Agent</text><text x="126" y="160" class="node-sub">tool intent</text>
+            <!-- agents -->
+            <path d="M52 118 C52 92 80 86 98 101 C113 76 154 85 160 112 C190 108 207 140 183 163 C190 192 147 203 126 181 C104 205 59 191 68 160 C50 153 43 134 52 118 Z" fill="rgba(251,113,133,.16)" stroke="rgba(251,113,133,.52)" stroke-width="2" filter="url(#invs)"/>
+            <text x="126" y="136" class="cap">Societas</text>
+            <rect x="52" y="304" width="150" height="64" rx="12" fill="rgba(34,197,94,.13)" stroke="rgba(34,197,94,.46)" stroke-width="2" filter="url(#invs)"/>
+            <text x="127" y="330" class="cap">Other Agents</text><text x="127" y="352" class="node-sub">online · query · run</text>
 
-            <rect x="298" y="86" width="196" height="92" rx="22" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#es5)"/>
-            <text x="396" y="118" class="node-title">Gateway</text><text x="396" y="144" class="node-sub">POST /tool_call</text><text x="396" y="166" class="node-sub">policy · routing · activity</text>
+            <!-- service -->
+            <path d="M298 194 C298 164 327 156 348 172 C366 142 412 152 418 184 C452 180 470 216 444 244 C452 276 404 288 380 264 C354 292 305 278 315 244 C296 238 287 214 298 194 Z" fill="rgba(245,224,119,.18)" stroke="rgba(245,224,119,.62)" stroke-width="2" filter="url(#invs)"/>
+            <text x="384" y="220" class="node-title">MCP Hub</text>
+            <text x="384" y="246" class="node-sub">route · sign · audit</text>
+            <text x="456" y="294" class="proto">WebSocket</text><text x="456" y="316" class="proto">AAD Auth</text>
 
-            <rect x="304" y="238" width="184" height="82" rx="20" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#es5)"/>
-            <text x="396" y="268" class="cap">sendToolCall</text><text x="396" y="292" class="node-sub">route + sign + grant</text><text x="396" y="312" class="node-sub">nonce · body hash · exp</text>
+            <!-- user computers -->
+            <rect x="584" y="86" width="138" height="58" rx="14" fill="rgba(167,139,250,.16)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#invs)"/>
+            <text x="653" y="121" class="cap">Computer 2</text>
+            <path d="M444 204 L584 116" stroke="#64748b" stroke-width="2.4" marker-end="url(#inv2)" opacity=".75"/>
+            <path d="M584 132 L444 226" stroke="#64748b" stroke-width="2.4" marker-end="url(#inv2)" opacity=".75"/>
 
-            <rect x="606" y="86" width="146" height="92" rx="22" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#es5)"/>
-            <text x="679" y="118" class="node-title">Worker</text><text x="679" y="144" class="node-sub">handleToolCall</text><text x="679" y="166" class="node-sub">validate + bind</text>
+            <rect x="566" y="238" width="190" height="220" rx="30" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#invs)"/>
+            <text x="650" y="267" class="cap">User Computer 1</text>
+            <rect x="640" y="288" width="86" height="46" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.5"/>
+            <text x="683" y="317" class="cap" fill="#0f172a">LandGod</text>
+            <rect x="586" y="370" width="86" height="38" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+            <text x="629" y="394" class="node-sub" fill="#0f172a">WorkIQ CLI</text>
+            <rect x="674" y="402" width="72" height="34" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+            <text x="710" y="424" class="node-sub" fill="#0f172a">File tools</text>
+            <rect x="704" y="352" width="72" height="36" rx="2" fill="rgba(248,250,252,.94)" stroke="rgba(15,23,42,.9)" stroke-width="1.2"/>
+            <text x="740" y="374" class="node-sub" fill="#0f172a">Browser</text>
+            <path d="M683 334 L629 370" stroke="#64748b" stroke-width="2" marker-end="url(#inv2)"/>
+            <path d="M690 334 L710 402" stroke="#64748b" stroke-width="2" marker-end="url(#inv2)"/>
+            <path d="M707 334 L740 352" stroke="#64748b" stroke-width="2" marker-end="url(#inv2)"/>
 
-            <rect x="596" y="250" width="166" height="78" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#es5)"/>
-            <text x="679" y="278" class="cap">toolRegistry.callTool</text><text x="679" y="302" class="node-sub">built-in or MCP tool</text><text x="679" y="322" class="node-sub">credential scoped</text>
-
-            <rect x="596" y="388" width="166" height="62" rx="18" fill="rgba(56,189,248,.12)" stroke="rgba(56,189,248,.48)" stroke-width="2" filter="url(#es5)"/>
-            <text x="679" y="414" class="cap">Local Device</text><text x="679" y="438" class="node-sub">WorkIQ · Office · CLI</text>
-
-            <rect x="52" y="366" width="150" height="70" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.42)" stroke-width="2" filter="url(#es5)"/>
-            <text x="127" y="394" class="cap">Tool Result</text><text x="127" y="418" class="node-sub">HTTP response</text>
-
-            <!-- flow -->
-            <path d="M184 132 L298 132" stroke="#64748b" stroke-width="3" marker-end="url(#e5)"/>
-            <text x="208" y="114" class="proto">1  HTTP(S) /tool_call</text>
-            <path d="M396 178 L396 238" stroke="#64748b" stroke-width="3" marker-end="url(#e5)"/>
-            <text x="414" y="212" class="proto">2  select Worker</text>
-            <path d="M488 278 L606 142" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#e5)"/>
-            <text x="514" y="206" class="proto">3  WS(S) signed tool_call</text>
-            <path d="M679 178 L679 250" stroke="#64748b" stroke-width="3" marker-end="url(#e5)"/>
-            <text x="696" y="220" class="proto">4  validate</text>
-            <path d="M679 328 L679 388" stroke="#64748b" stroke-width="3" marker-end="url(#e5)"/>
-            <text x="696" y="364" class="proto">5  local execution</text>
-            <path d="M596 418 L488 300" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#e5)"/>
-            <text x="504" y="384" class="proto">6  result / error</text>
-            <path d="M304 292 L202 402" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#e5)"/>
-            <text x="214" y="360" class="proto">7  WS → HTTP response</text>
+            <!-- main blue data flow matching screenshot style -->
+            <path d="M166 142 C230 170 276 198 324 216" stroke="#38bdf8" stroke-width="4.4" fill="none" marker-end="url(#inv)"/>
+            <text x="194" y="174" class="cap">1. Invoke</text>
+            <path d="M444 226 C506 250 572 284 640 310" stroke="#38bdf8" stroke-width="4.4" fill="none" marker-end="url(#inv)"/>
+            <text x="468" y="242" class="cap">2. Locate &amp; Forward</text>
+            <path d="M678 334 C658 348 642 358 628 370" stroke="#38bdf8" stroke-width="4.4" fill="none" marker-end="url(#inv)"/>
+            <text x="570" y="352" class="cap">3. Receive, Verify and Execute</text>
           </svg>
         </div>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>Route</b>: Gateway selects Worker by connectionId, clientName, or labels.</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Protect</b>: signed request, nonce, body hash, expiry, tool binding.</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>Execute</b>: Worker invokes <code>toolRegistry.callTool</code> on the local device.</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Gateway</b>: selects Worker by connectionId, clientName, or labels; signs request.</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Worker</b>: validates signature, nonce, body hash, expiry, and tool binding.</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Local</b>: invokes <code>toolRegistry.callTool</code> against WorkIQ / CLI / MCP tools.</span></div>
         </div>
       </article>
     </div>
