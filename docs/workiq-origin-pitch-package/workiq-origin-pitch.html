@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LandGod 起源：从 WorkIQ 集成到个人生产力工具</title>
+  <title>LandGod Origin: WorkIQ Bridge to Personal Tool Runtime</title>
   <style>
     :root {
       --text: #f8fafc;
@@ -253,74 +253,74 @@
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 1 · 真实问题与最初方案</div>
-        <h1>WorkIQ 没有 API，Societas 怎么调用用户电脑上的 CLI？</h1>
-        <div class="subtitle">这是云上 Agent 落地时最典型的“最后一公里”问题：Agent 能理解任务，但真正能完成任务的工具、登录态和网络环境，在用户自己的工作设备上。关键不是远控电脑，而是本地 Worker 主动出站连接。</div>
+        <div class="eyebrow">01 · Origin: WorkIQ Integration Gap</div>
+        <h1>WorkIQ had no API. The Agent needed local execution.</h1>
+        <div class="subtitle">Cloud reasoning was easy. Securely reaching the user’s local work environment was the hard part.</div>
       </div>
-      <div class="brand"><div class="name">LandGod</div><div class="tag">从 WorkIQ Bridge 开始</div></div>
+      <div class="brand"><div class="name">LandGod</div><div class="tag">WorkIQ Bridge Origin</div></div>
     </header>
 
     <div class="three-grid">
       <article class="card">
-        <h2>业务目标</h2>
-        <p class="lead">让 Societas 集成 WorkIQ，帮助用户查询状态、执行流程、生成总结，而不是让用户手动复制 CLI 输出。</p>
+        <h2>The Job</h2>
+        <p class="lead">Let Societas act through WorkIQ — without screenshots or CLI handoff.</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span>Societas 在云上，负责理解目标、规划任务、持续推理</span></div>
-          <div class="bullet"><span class="dot blue"></span><span>WorkIQ 能力在用户工作电脑上的 <b>workiq CLI</b></span></div>
-          <div class="bullet"><span class="dot blue"></span><span>用户期望“Agent 直接帮我完成”，不是再让我手动当中转站</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Cloud Agent owns reasoning</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>WorkIQ lived behind <b>workiq CLI</b></span></div>
+          <div class="bullet"><span class="dot blue"></span><span>User expects action, not relay work</span></div>
         </div>
-        <div class="quote">这不是远控，也不是把电脑暴露给云端；这是让云上 Agent 在安全边界内接触真实工作环境。</div>
+        <div class="quote">Not remote control. A governed bridge into the real work environment.</div>
       </article>
 
       <article class="card">
-        <h2>不可绕过的约束</h2>
-        <p class="lead">WorkIQ Case 暴露了 Local Computer Access 背后的真正难点。</p>
+        <h2>Non-Negotiables</h2>
+        <p class="lead">Preserve the user’s local trust boundary.</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot"></span><span>WorkIQ 当时没有标准 API，只有本地 CLI</span></div>
-          <div class="bullet"><span class="dot"></span><span>CLI 依赖本地登录态、配置、公司网络和用户设备环境</span></div>
-          <div class="bullet"><span class="dot"></span><span>个人设备不能外露端口：NAT、防火墙、公司安全策略都不允许</span></div>
-          <div class="bullet"><span class="dot"></span><span>AAD token、cookie、公司环境不能直接搬到云上 Agent</span></div>
+          <div class="bullet"><span class="dot"></span><span>No WorkIQ API; only a local CLI</span></div>
+          <div class="bullet"><span class="dot"></span><span>Depends on login state, config, VPN, device context</span></div>
+          <div class="bullet"><span class="dot"></span><span>No inbound ports on personal devices</span></div>
+          <div class="bullet"><span class="dot"></span><span>AAD tokens, cookies, corporate access stay local</span></div>
         </div>
-        <div class="quote">Agent 有脑子，但缺少一个能安全接触本地工具环境的执行 Harness。</div>
+        <div class="quote">Cloud intelligence needed a local execution runtime.</div>
       </article>
 
       <article class="card">
-        <h2>最初方案：后端桥 + 本地 Worker</h2>
-        <p class="lead">用户工作设备主动连接云端 Gateway。Societas 只发任务意图，Gateway 路由到本地 Worker，由 Worker 调用本机 WorkIQ CLI。</p>
+        <h2>First Bridge: Gateway + Local Worker</h2>
+        <p class="lead">Device connects outbound. Gateway routes intent to Worker.</p>
         <div class="diagram">
           <svg viewBox="0 0 640 240" role="img" aria-label="Societas Gateway Worker WorkIQ CLI">
             <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
             <path d="M142 82 L240 82" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M390 82 L492 82" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
-            <rect x="18" y="36" width="126" height="92" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="81" y="74" class="node-title">Societas</text><text x="81" y="100" class="node-sub">云上 Agent</text>
-            <rect x="238" y="36" width="154" height="92" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s)"/><text x="315" y="74" class="node-title">Gateway</text><text x="315" y="100" class="node-sub">后端桥 / 调度</text>
-            <rect x="492" y="36" width="130" height="92" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="557" y="74" class="node-title">Worker</text><text x="557" y="100" class="node-sub">主动出站连接</text>
-            <text x="320" y="166" class="node-sub">Worker 在本地调用 workiq CLI；AAD 登录态、凭据和网络环境留在用户设备</text>
-            <text x="320" y="194" class="cap">Cloud Agent → Gateway → Local Worker → Local CLI</text>
+            <rect x="18" y="36" width="126" height="92" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="81" y="74" class="node-title">Societas</text><text x="81" y="100" class="node-sub">Cloud Agent</text>
+            <rect x="238" y="36" width="154" height="92" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s)"/><text x="315" y="74" class="node-title">Gateway</text><text x="315" y="100" class="node-sub">Control + Routing</text>
+            <rect x="492" y="36" width="130" height="92" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="557" y="74" class="node-title">Worker</text><text x="557" y="100" class="node-sub">Outbound Worker</text>
+            <text x="320" y="166" class="node-sub">Worker calls workiq locally; identity and network context stay on device</text>
+            <text x="320" y="194" class="cap">Cloud Agent → Gateway → Worker → Local CLI</text>
           </svg>
         </div>
-        <div class="decision">第一性方案：不是让个人电脑暴露公网端口，而是让本地 Worker 主动连接云上 Harness。</div>
+        <div class="decision">Design principle: outbound only; no exposed personal device ports.</div>
       </article>
     </div>
 
-    <div class="footer-line"><b>第一性问题：</b>云上 Agent 要真正完成工作，必须有一个安全、可运维的执行 Harness，连接用户本地工具环境。</div>
+    <div class="footer-line"><b>First principle:</b> Cloud Agents need a secure bridge into local tool environments.</div>
     <div class="slide-number">01 / 03</div>
   </section>
 
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 2 · 从单点集成到产品机会</div>
-        <h1>后来发现：这不是 WorkIQ 专属问题，而是个人生产力入口</h1>
-        <div class="subtitle">Gateway 出现后，我们发现这座桥可以泛化：让任意云上 Agent 使用用户个人设备上已经配置好的 CLI、文件、浏览器和工作环境。这就是个人版 Execution Harness 的入口。</div>
+        <div class="eyebrow">02 · Product Insight: Local Tools Are the Real Runtime</div>
+        <h1>Not WorkIQ-specific — a personal local-tool runtime.</h1>
+        <div class="subtitle">A reusable bridge for cloud Agents to use configured tools across personal devices.</div>
       </div>
       <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Personal Execution Harness</div></div>
     </header>
 
     <div class="productivity">
       <article class="tall-panel">
-        <h2>用户真正的工具箱</h2>
-        <div class="big">“让我的 Agent 用我的工具箱。”</div>
-        <p>高价值生产力资产，已经沉淀在用户自己的设备上：登录态、CLI、repo、脚本、VPN、公司 Portal。</p>
+        <h2>The User’s Real Toolbox</h2>
+        <div class="big">“Let my Agent use my tools.”</div>
+        <p>The highest-value work context is already local.</p>
         <div class="tool-grid">
           <div class="tool">workiq</div>
           <div class="tool">az</div>
@@ -331,11 +331,11 @@
           <div class="tool">Portal</div>
           <div class="tool">local repo</div>
         </div>
-        <div class="quote">用户价值：少复制、少截图、少切机器，Agent 可以直接使用我已经配置好的工作环境。</div>
+        <div class="quote">Value: fewer handoffs, more real actions.</div>
       </article>
 
       <section class="center-diagram">
-        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub Gateway 个人多设备工具入口">
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub Gateway personal multi-device tool entrypoint">
           <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
           <path d="M310 70 L310 122" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
           <path d="M310 220 L310 268" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
@@ -346,50 +346,50 @@
 
           <rect x="66" y="16" width="488" height="58" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="52" class="node-title">Societas / Cloud Agent</text>
           <rect x="90" y="124" width="440" height="98" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="158" class="node-title">MCPHub Gateway</text><text x="310" y="184" class="node-sub">AAD Identity · Permission · Operation Boundary</text><text x="310" y="208" class="node-sub">Device Routing · Capability Registry · Activity History</text>
-          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">用户个人设备工具箱</text><text x="310" y="333" class="node-sub">同一 AAD 用户下的多台可信设备主动连接 Gateway</text>
+          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">Personal Device Toolbox</text><text x="310" y="333" class="node-sub">Trusted devices under the same AAD user connect outbound</text>
 
-          <rect x="32" y="430" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="105" y="454" class="cap">台式机</text><text x="105" y="478" class="node-sub">WorkIQ / Portal</text>
-          <rect x="190" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="250" y="454" class="cap">笔记本</text><text x="250" y="478" class="node-sub">repo / browser</text>
-          <rect x="330" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="390" y="454" class="cap">云上 VM</text><text x="390" y="478" class="node-sub">az / deploy</text>
+          <rect x="32" y="430" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="105" y="454" class="cap">Desktop</text><text x="105" y="478" class="node-sub">WorkIQ / Portal</text>
+          <rect x="190" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="250" y="454" class="cap">Laptop</text><text x="250" y="478" class="node-sub">repo / browser</text>
+          <rect x="330" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="390" y="454" class="cap">Cloud VM</text><text x="390" y="478" class="node-sub">az / deploy</text>
           <rect x="462" y="430" width="126" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="525" y="454" class="cap">DevBox</text><text x="525" y="478" class="node-sub">kubectl / build</text>
         </svg>
       </section>
 
       <article class="tall-panel">
-        <h2>从单点集成到通用入口</h2>
-        <div class="big">从一次集成，变成可复制的入口。</div>
-        <p>WorkIQ Case 验证的是一类更大的需求：云上 Agent 要落地，必须连接用户已有的本地工具生态。</p>
+        <h2>From One Bridge to a Reusable Entry Point</h2>
+        <div class="big">One integration revealed the pattern.</div>
+        <p>Agents need the user’s existing local tool ecosystem.</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>可泛化</b>：不只 WorkIQ，所有本地 CLI / Portal / 文件环境都能接入</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>个人边界</b>：AAD 身份、设备归属和操作权限决定 Agent 能调用什么</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>差异化</b>：不是再做一个 Agent，而是补齐 Agent 的本地 Execution Harness</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>安全边界</b>：凭据留在设备，Gateway 只做授权、路由和可见性</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Generalizable</b>: CLI · Portal · Files · Browser · Repo</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Identity-bound</b>: AAD · Device · Permission</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Differentiated</b>: not another Agent — the runtime layer</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Safe by design</b>: credentials local; Gateway governs</span></div>
         </div>
         <div class="metric-row">
-          <div class="metric"><b>Less manual work</b><span>少复制、少截图、少手动执行</span></div>
-          <div class="metric"><b>More real actions</b><span>Agent 从建议者变成执行者</span></div>
+          <div class="metric"><b>Less manual work</b><span>Less copy/paste and manual handoff</span></div>
+          <div class="metric"><b>More real actions</b><span>Agents move from suggestions to execution</span></div>
         </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>最终定位：</b>LandGod / MCPHub Gateway 是个人生产力提效工具，也是 Agent Execution Harness 的个人场景落地。</div>
+    <div class="footer-line"><b>Positioning:</b> Turn personal devices into secure local tool runtimes for cloud Agents.</div>
     <div class="slide-number">02 / 03</div>
   </section>
 
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 3 · 可信落地：Agent 如何安全调用本地能力</div>
-        <h1>HTTP 进 Gateway，WebSocket 到 Worker，本地工具执行</h1>
-        <div class="subtitle">LandGod 的真实链路分两段：Worker 先通过 WebSocket 注册身份、包装并发布工具能力；Agent 后续通过 Skill/配置知道 Gateway，再用 HTTP <code>/tool_call</code> 触发一次受签名、可路由、可审计的本地执行。</div>
+        <div class="eyebrow">03 · Trusted Execution: How Agents Call Local Capabilities</div>
+        <h1>HTTP to Gateway. WebSocket to Worker. Local tools execute.</h1>
+        <div class="subtitle">Workers publish capabilities over WebSocket. Agents call Gateway over HTTP. Gateway routes signed tool calls.</div>
       </div>
       <div class="brand"><div class="name">Real Workflow</div><div class="tag">Register · Publish · Call</div></div>
     </header>
 
     <div class="two-grid">
       <article class="card">
-        <h2>A. Agent 发现入口，Worker 注册并发布能力</h2>
-        <p class="lead">上方是 Agent 如何知道 LandGod/MCPHub；下方是 Worker 如何把本地内置 tools 和 MCP tools 包装并发布给 Gateway。</p>
+        <h2>A. Discover + Publish Capabilities</h2>
+        <p class="lead">Agent finds Gateway. Worker publishes local capabilities.</p>
         <div class="diagram" style="padding: 18px;">
           <svg viewBox="0 0 800 500" style="height:500px" role="img" aria-label="Agent discovery and LandGod worker registration workflow">
             <defs><marker id="r4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="rs4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
@@ -397,13 +397,13 @@
             <!-- Agent discovery flow -->
             <path d="M128 58 L216 58" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
             <path d="M396 58 L492 58" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
-            <rect x="22" y="22" width="108" height="72" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#rs4)"/><text x="76" y="50" class="node-title">Agent</text><text x="76" y="74" class="node-sub">悟空 / main</text>
-            <rect x="216" y="22" width="182" height="72" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="307" y="48" class="node-title">Skill + config</text><text x="307" y="74" class="node-sub">landgod/SKILL.md · TOOLS.md</text>
+            <rect x="22" y="22" width="108" height="72" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#rs4)"/><text x="76" y="50" class="node-title">Agent</text><text x="76" y="74" class="node-sub">OpenClaw Agent</text>
+            <rect x="216" y="22" width="182" height="72" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="307" y="48" class="node-title">Skill + config</text><text x="307" y="74" class="node-sub">Skill + local config</text>
             <rect x="492" y="22" width="204" height="72" rx="18" fill="rgba(245,158,11,.15)" stroke="rgba(245,158,11,.56)" stroke-width="2" filter="url(#rs4)"/><text x="594" y="48" class="node-title">Gateway HTTP API</text><text x="594" y="74" class="node-sub">heartbeat · clients · tool_call</text>
             <text x="172" y="46" class="proto">local read</text><text x="445" y="46" class="proto">HTTP(S)</text>
 
             <line x1="30" y1="124" x2="770" y2="124" stroke="rgba(148,163,184,.22)" stroke-width="2"/>
-            <text x="396" y="114" class="proto">Agent knows the entry; Worker publishes the capability catalog below</text>
+            <text x="396" y="114" class="proto">Agent finds entrypoint; Worker publishes capabilities</text>
 
             <!-- Worker registration + capability publication flow -->
             <path d="M124 178 L214 178" stroke="#64748b" stroke-width="3" marker-end="url(#r4)"/>
@@ -416,30 +416,30 @@
             <path d="M654 396 C704 344 680 264 610 216" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#r4)"/>
 
             <rect x="24" y="136" width="102" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="75" y="168" class="node-title">Worker</text><text x="75" y="194" class="node-sub">outbound</text><text x="75" y="214" class="node-sub">Bearer token</text>
-            <rect x="214" y="136" width="180" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="304" y="164" class="node-title">Gateway</text><text x="304" y="190" class="node-sub">validate token</text><text x="304" y="212" class="node-sub">create connectionId</text>
-            <rect x="492" y="136" width="176" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#rs4)"/><text x="580" y="164" class="node-title">session_opened</text><text x="580" y="192" class="node-sub">connection_id</text><text x="580" y="212" class="node-sub">Gateway → Worker</text>
+            <rect x="214" y="136" width="180" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#rs4)"/><text x="304" y="164" class="node-title">Gateway</text><text x="304" y="190" class="node-sub">Validate token</text><text x="304" y="212" class="node-sub">Create connectionId</text>
+            <rect x="492" y="136" width="176" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#rs4)"/><text x="580" y="164" class="node-title">session_opened</text><text x="580" y="192" class="node-sub">connectionId</text><text x="580" y="212" class="node-sub">Gateway → Worker</text>
             <text x="168" y="164" class="proto">WS(S)</text><text x="444" y="164" class="proto">WS event</text>
 
-            <rect x="370" y="288" width="238" height="62" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#rs4)"/><text x="489" y="312" class="cap">register</text><text x="489" y="336" class="node-sub">client_id · client_name · labels · resources</text>
+            <rect x="370" y="288" width="238" height="62" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#rs4)"/><text x="489" y="312" class="cap">register</text><text x="489" y="336" class="node-sub">clientId · clientName · labels · resources</text>
             <rect x="94" y="264" width="262" height="72" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.42)" stroke-width="2" filter="url(#rs4)"/><text x="225" y="292" class="cap">binding response</text><text x="225" y="316" class="node-sub">userId · sessionId · serverKeyId · public key</text>
             <text x="378" y="272" class="proto">WS req/res JSON</text>
 
             <rect x="28" y="348" width="158" height="62" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#rs4)"/><text x="107" y="374" class="node-title">Built-in tools</text><text x="107" y="398" class="node-sub">shell / file / browser</text>
-            <rect x="28" y="442" width="158" height="44" rx="16" fill="rgba(56,189,248,.12)" stroke="rgba(56,189,248,.46)" stroke-width="2" filter="url(#rs4)"/><text x="107" y="468" class="node-title">MCP tools</text>
+            <rect x="28" y="442" width="158" height="44" rx="16" fill="rgba(56,189,248,.12)" stroke="rgba(56,189,248,.46)" stroke-width="2" filter="url(#rs4)"/><text x="107" y="468" class="node-title">MCP Tools</text>
 
-            <rect x="244" y="398" width="218" height="64" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.58)" stroke-width="2" filter="url(#rs4)"/><text x="353" y="422" class="cap">ManagedClientMcpToolRegistry</text><text x="353" y="446" class="node-sub">buildBindings(): advertisedName → upstreamName</text>
+            <rect x="244" y="398" width="218" height="64" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.58)" stroke-width="2" filter="url(#rs4)"/><text x="353" y="422" class="cap">ManagedClientMcpToolRegistry</text><text x="353" y="446" class="node-sub">buildBindings(): advertised → upstream</text>
             <text x="224" y="386" class="proto">local</text><text x="224" y="472" class="proto">MCP listTools()</text>
 
-            <rect x="558" y="396" width="184" height="66" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#rs4)"/><text x="650" y="420" class="cap">update_tools</text><text x="650" y="444" class="node-sub">getToolDefinitions()</text><text x="650" y="462" class="node-sub">name · desc · input_schema</text>
+            <rect x="558" y="396" width="184" height="66" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#rs4)"/><text x="650" y="420" class="cap">update_tools</text><text x="650" y="444" class="node-sub">getToolDefinitions()</text><text x="650" y="462" class="node-sub">name · desc · schema</text>
             <text x="510" y="416" class="proto">local JSON</text><text x="706" y="322" class="proto">WS(S)</text>
           </svg>
         </div>
-        <div class="quote">真实点：Agent 通过 Skill/config 知道 Gateway；Worker 把内置工具 + MCP tools 包装进 <code>toolRegistry</code> 后，通过 <code>update_tools</code> 发布能力目录。</div>
+        <div class="quote">Skill/config discovers Gateway. <code>toolRegistry</code> packages built-in + MCP tools. <code>update_tools</code> publishes them.</div>
       </article>
 
       <article class="card">
-        <h2>B. Agent 发起 tool_call 后的真实路径</h2>
-        <p class="lead">以我作为 Agent 调用某个 Worker 的能力为例：我通过 Skill/配置知道 Gateway，然后用 HTTP API 进入这条链。</p>
+        <h2>B. Route + Execute Tool Calls</h2>
+        <p class="lead">HTTP request in. Gateway routes and signs. Worker executes locally.</p>
         <div class="diagram" style="padding: 18px;">
           <svg viewBox="0 0 800 450" style="height:450px" role="img" aria-label="LandGod actual Agent tool call workflow with protocols">
             <defs><marker id="a4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
@@ -451,9 +451,9 @@
             <path d="M492 256 L492 306" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
             <path d="M410 346 C282 354 208 284 170 236" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
 
-            <rect x="18" y="26" width="112" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s4)"/><text x="74" y="56" class="node-title">Agent</text><text x="74" y="82" class="node-sub">Skill/config</text><text x="74" y="104" class="node-sub">knows Gateway</text>
-            <rect x="204" y="26" width="128" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s4)"/><text x="268" y="54" class="node-title">Gateway</text><text x="268" y="80" class="node-sub">POST /tool_call</text><text x="268" y="102" class="node-sub">policy + Activity</text>
-            <rect x="430" y="26" width="138" height="84" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#s4)"/><text x="499" y="54" class="node-title">sendToolCall</text><text x="499" y="80" class="node-sub">route + sign</text><text x="499" y="102" class="node-sub">grant optional</text>
+            <rect x="18" y="26" width="112" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s4)"/><text x="74" y="56" class="node-title">Agent</text><text x="74" y="82" class="node-sub">Skill/config</text><text x="74" y="104" class="node-sub">Knows Gateway</text>
+            <rect x="204" y="26" width="128" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s4)"/><text x="268" y="54" class="node-title">Gateway</text><text x="268" y="80" class="node-sub">POST /tool_call</text><text x="268" y="102" class="node-sub">Policy + Activity</text>
+            <rect x="430" y="26" width="138" height="84" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#s4)"/><text x="499" y="54" class="node-title">sendToolCall</text><text x="499" y="80" class="node-sub">Route + sign</text><text x="499" y="102" class="node-sub">Optional grant</text>
             <rect x="652" y="26" width="122" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="713" y="58" class="node-title">Worker</text><text x="713" y="84" class="node-sub">handleToolCall</text>
             <text x="166" y="54" class="proto">HTTP(S)</text><text x="382" y="54" class="proto">in-process</text><text x="610" y="54" class="proto">WS(S)</text>
 
@@ -465,14 +465,14 @@
           </svg>
         </div>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>入口</b>：Agent 通过 LandGod Skill / 配置知道 Gateway 地址和 <code>/tool_call</code> API。</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>路由</b>：Gateway 按 <code>connection_id</code>、<code>clientName</code>、labels 查找在线 Worker。</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>执行</b>：Worker 校验签名和 tool binding 后调用 <code>toolRegistry.callTool</code>。</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Entry</b>: Skill/config provides Gateway + <code>/tool_call</code>.</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Routing</b>: Select Worker by connectionId, clientName, or labels.</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>Execution</b>: Validate, then <code>toolRegistry.callTool</code>.</span></div>
         </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>真实端到端协议：</b>Agent 通过 Skill/配置知道 LandGod → HTTP(S) 调 Gateway；Worker 主动用 WS(S) 注册并 update_tools；Gateway 将 HTTP /tool_call 转成 WS tool_call 并返回结果。<b>轻量 Harness：</b>Gateway governs, Worker executes, Activity proves.</div>
+    <div class="footer-line"><b>Protocol:</b> Agent → HTTP(S) Gateway; Worker → WS(S); Gateway converts HTTP /tool_call into WS tool_call. <b>Harness:</b> Gateway governs, Worker executes, Activity proves.</div>
     <div class="slide-number">03 / 03</div>
   </section>
 </body>
