@@ -328,23 +328,65 @@
       </article>
 
       <section class="center-diagram">
-        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub high-level architecture">
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub layered high-level architecture">
           <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
-          <path d="M310 70 L310 122" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M310 226 L310 270" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M310 352 L106 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M310 352 L250 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M310 352 L390 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
-          <path d="M310 352 L525 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
 
-          <rect x="66" y="16" width="488" height="58" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="52" class="node-title">Cloud Agents / Societas / OpenClaw</text>
-          <rect x="84" y="124" width="452" height="102" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="158" class="node-title">MCPHub Gateway</text><text x="310" y="184" class="node-sub">Auth · Policy · Routing · Capability Registry</text><text x="310" y="208" class="node-sub">Credential Broker · Activity History · Audit Trail</text>
-          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">Local Worker Runtime</text><text x="310" y="333" class="node-sub">Outbound WS(S), device-bound capabilities, local execution</text>
+          <!-- connectors behind nodes -->
+          <path d="M310 76 L310 112" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M310 252 L310 288" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M158 396 L108 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M255 396 L245 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M365 396 L388 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+          <path d="M464 396 L515 438" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
 
-          <rect x="32" y="430" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="105" y="454" class="cap">Desktop</text><text x="105" y="478" class="node-sub">Office / Portal</text>
-          <rect x="190" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="250" y="454" class="cap">Laptop</text><text x="250" y="478" class="node-sub">repo / browser</text>
-          <rect x="330" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="390" y="454" class="cap">Cloud VM</text><text x="390" y="478" class="node-sub">az / deploy</text>
-          <rect x="462" y="430" width="126" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="525" y="454" class="cap">DevBox</text><text x="525" y="478" class="node-sub">kubectl / build</text>
+          <!-- layer labels -->
+          <text x="36" y="44" class="proto">Agent Layer</text>
+          <text x="36" y="154" class="proto">Control Plane</text>
+          <text x="36" y="322" class="proto">Execution Plane</text>
+          <text x="36" y="470" class="proto">Local Tools</text>
+
+          <!-- Agent layer -->
+          <rect x="84" y="20" width="452" height="56" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/>
+          <text x="310" y="43" class="node-title">Cloud Agents</text>
+          <text x="310" y="64" class="node-sub">Societas · OpenClaw · Claude · Cursor</text>
+          <text x="333" y="100" class="proto">HTTP(S) / MCP-compatible calls</text>
+
+          <!-- Gateway control plane -->
+          <rect x="78" y="116" width="464" height="136" rx="24" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/>
+          <text x="310" y="144" class="node-title">MCPHub Gateway</text>
+          <rect x="102" y="164" width="112" height="44" rx="13" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
+          <text x="158" y="182" class="cap">Auth</text><text x="158" y="201" class="node-sub">agent · user</text>
+          <rect x="224" y="164" width="112" height="44" rx="13" fill="rgba(15,23,42,.72)" stroke="rgba(245,158,11,.42)" stroke-width="1.5"/>
+          <text x="280" y="182" class="cap">Policy</text><text x="280" y="201" class="node-sub">permission</text>
+          <rect x="346" y="164" width="112" height="44" rx="13" fill="rgba(15,23,42,.72)" stroke="rgba(34,197,94,.42)" stroke-width="1.5"/>
+          <text x="402" y="182" class="cap">Routing</text><text x="402" y="201" class="node-sub">device select</text>
+          <rect x="132" y="214" width="112" height="30" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(251,113,133,.42)" stroke-width="1.5"/>
+          <text x="188" y="234" class="node-sub">Credential Broker</text>
+          <rect x="254" y="214" width="112" height="30" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
+          <text x="310" y="234" class="node-sub">Capability Registry</text>
+          <rect x="376" y="214" width="112" height="30" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(148,163,184,.42)" stroke-width="1.5"/>
+          <text x="432" y="234" class="node-sub">Activity History</text>
+
+          <!-- Worker execution plane -->
+          <text x="334" y="276" class="proto">outbound WS(S), signed tool calls</text>
+          <rect x="86" y="292" width="448" height="104" rx="24" fill="rgba(34,197,94,.13)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/>
+          <text x="310" y="320" class="node-title">Local Worker Runtime</text>
+          <rect x="112" y="340" width="126" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(34,197,94,.42)" stroke-width="1.5"/>
+          <text x="175" y="361" class="node-sub">Tool Registry</text>
+          <rect x="248" y="340" width="126" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.42)" stroke-width="1.5"/>
+          <text x="311" y="361" class="node-sub">MCP / Built-ins</text>
+          <rect x="384" y="340" width="126" height="34" rx="12" fill="rgba(15,23,42,.72)" stroke="rgba(245,158,11,.42)" stroke-width="1.5"/>
+          <text x="447" y="361" class="node-sub">Local Execution</text>
+
+          <!-- device / tool layer -->
+          <rect x="32" y="438" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
+          <text x="105" y="462" class="cap">Desktop</text><text x="105" y="486" class="node-sub">Office / Portal</text>
+          <rect x="190" y="438" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
+          <text x="250" y="462" class="cap">Laptop</text><text x="250" y="486" class="node-sub">repo / browser</text>
+          <rect x="330" y="438" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
+          <text x="390" y="462" class="cap">Cloud VM</text><text x="390" y="486" class="node-sub">az / deploy</text>
+          <rect x="462" y="438" width="126" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/>
+          <text x="525" y="462" class="cap">DevBox</text><text x="525" y="486" class="node-sub">kubectl / build</text>
         </svg>
       </section>
 
