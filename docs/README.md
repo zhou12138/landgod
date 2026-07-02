@@ -43,6 +43,7 @@ Read in order — each document builds on the previous one.
 | — | [Credential Broker MVP](15-credential-broker-mvp.md) | Gateway-managed credentials with task-scoped grants | 02, 03, 12 |
 | — | [Enterprise Pitch Script](16-enterprise-pitch-script.md) | Enterprise sales pitch: story, pain points, architecture, security, ROI, demo, objections | 12, 14, 15 |
 | — | [Product / Business / Enterprise Review](17-product-business-enterprise-review.md) | Product verdict, business model, ICP, enterprise user views, maturity, risks, roadmap | 14, 15, 16 |
+| 18 | [Technical Architecture Review](18-technical-architecture-review.md) | Professional architecture review with ASCII topology/system diagrams, Gateway/Worker/Credential/Agent/WebUI/security analysis, risks, and roadmap | 12, 14, 15, 16, 17, 19 |
 | — | [Latest Enterprise Pitch + Architecture](18-latest-enterprise-pitch-and-architecture.md) | Current pitch script, Finance Monthly Report scenario, deployment topology, and system architecture | 12, 15, 16, 17 |
 | — | [Enterprise Architecture Diagrams](landgod-enterprise-architecture-diagrams.html) | Standalone HTML/SVG deployment topology and system architecture diagrams | 18 |
 | — | [Agent Injection Defense & Credential Boundary](18-agent-injection-defense-and-credential-boundary.md) | Prompt-injection defense, Worker trust boundaries, Credential Broker hardening, and P0 security checklist | 12, 15 |
