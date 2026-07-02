@@ -474,8 +474,8 @@
 
     <div class="two-grid">
       <article class="card">
-        <h2>A. Worker Connects + Publishes Tools</h2>
-        <p class="lead">Worker-initiated outbound connection keeps personal devices private while publishing a user-scoped capability catalog.</p>
+        <h2>A. MCPHub Client Connects + Publishes Tools</h2>
+        <p class="lead">Client-initiated outbound connection keeps personal devices private while publishing a user-scoped capability catalog.</p>
         <div class="diagram" style="padding: 12px 14px;">
           <svg viewBox="0 0 800 440" style="height:340px" role="img" aria-label="Worker outbound registration and tool publication workflow">
             <defs>
@@ -509,7 +509,8 @@
             <rect x="586" y="166" width="168" height="170" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#regS)"/>
             <text x="670" y="192" class="cap">Workshop</text>
             <rect x="610" y="210" width="120" height="34" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
-            <text x="670" y="232" class="node-sub">LandGod Worker</text>
+            <text x="670" y="226" class="node-sub">MCPHub Client</text>
+            <text x="670" y="240" class="node-sub">Worker Runtime</text>
             <rect x="610" y="260" width="120" height="32" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
             <text x="670" y="281" class="node-sub">Local Tool Registry</text>
             <path d="M670 244 L670 260" stroke="#64748b" stroke-width="2" marker-end="url(#regG)"/>
@@ -524,17 +525,18 @@
             <text x="470" y="206" class="cap">1. WS connect</text>
             <text x="474" y="226" class="proto">token auth + session_opened</text>
             <path d="M610 276 C548 292 510 292 468 284" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#regA)"/>
-            <text x="484" y="312" class="cap">2. register binding + update_tools</text>
+            <text x="484" y="306" class="cap">2. register binding</text>
+            <text x="484" y="326" class="proto">session + server key · update_tools</text>
             <path d="M318 284 C264 276 224 236 178 206" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#regA)"/>
             <text x="190" y="260" class="cap">3. publish catalog</text>
           </svg>
         </div>
-        <div class="workflow-note"><b>Protect:</b> no inbound port on personal devices. Worker registers binding, then publishes a user-scoped capability catalog.</div>
+        <div class="workflow-note"><b>Protect:</b> no inbound port on personal devices. Client establishes session + server-key binding, then publishes a user-scoped capability catalog.</div>
       </article>
 
       <article class="card">
-        <h2>B. Agent Calls + Worker Executes Locally</h2>
-        <p class="lead">Agent calls Gateway over HTTP. Gateway selects the Worker, signs the request, and the Worker executes on the local tool runtime.</p>
+        <h2>B. Agent Calls + Client Executes Locally</h2>
+        <p class="lead">Agent calls Gateway over HTTP. Gateway selects the MCPHub Client, signs the request, and the Client executes on the local tool runtime.</p>
         <div class="diagram" style="padding: 12px 14px;">
           <svg viewBox="0 0 800 440" style="height:340px" role="img" aria-label="Agent invocation routed through Gateway to local Worker execution">
             <defs>
@@ -565,19 +567,21 @@
             <text x="390" y="154" class="node-sub">route · sign · audit</text>
             <rect x="304" y="238" width="168" height="68" rx="17" fill="rgba(15,23,42,.84)" stroke="rgba(251,113,133,.44)" stroke-width="1.5" filter="url(#callS)"/>
             <text x="388" y="262" class="cap">signed tool_call</text>
-            <text x="388" y="283" class="node-sub">Ed25519 · nonce</text>
-            <text x="388" y="301" class="node-sub">body hash · exp</text>
+            <text x="388" y="283" class="node-sub">sig · body hash</text>
+            <text x="388" y="301" class="node-sub">nonce · exp · binding</text>
             <rect x="316" y="326" width="144" height="34" rx="13" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.44)" stroke-width="1.2"/>
             <text x="388" y="348" class="node-sub">Response + Activity</text>
 
             <rect x="584" y="96" width="172" height="226" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#callS)"/>
-            <text x="670" y="122" class="cap">Worker</text>
-            <rect x="610" y="146" width="120" height="34" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
-            <text x="670" y="168" class="node-sub">verify request</text>
-            <rect x="610" y="202" width="120" height="34" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
-            <text x="670" y="224" class="node-sub">Tool Registry</text>
-            <path d="M670 180 L670 202" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
-            <path d="M670 236 L670 268" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
+            <text x="670" y="116" class="cap">MCPHub Client</text>
+            <text x="670" y="134" class="proto">Worker Runtime</text>
+            <rect x="602" y="148" width="136" height="52" rx="12" fill="rgba(15,23,42,.84)" stroke="rgba(56,189,248,.48)" stroke-width="1.4"/>
+            <text x="670" y="168" class="node-sub">verify signed meta</text>
+            <text x="670" y="186" class="node-sub">hash · replay · expiry</text>
+            <rect x="610" y="216" width="120" height="34" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
+            <text x="670" y="238" class="node-sub">Tool Registry</text>
+            <path d="M670 200 L670 216" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
+            <path d="M670 250 L670 268" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
             <rect x="596" y="268" width="50" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.1"/>
             <text x="621" y="286" class="node-sub">WorkIQ</text>
             <rect x="652" y="268" width="44" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.1"/>
@@ -588,7 +592,7 @@
 
             <path d="M212 170 C252 160 282 152 320 148" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
             <text x="230" y="112" class="cap">1. HTTP /tool_call</text>
-            <path d="M472 278 C520 248 560 184 610 164" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
+            <path d="M472 278 C520 248 560 188 602 174" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
             <text x="500" y="224" class="cap">2. signed WS call</text>
             <path d="M620 294 C560 340 504 350 460 344" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#callA)" opacity=".9"/>
             <text x="500" y="358" class="cap">3a. result</text>
@@ -596,11 +600,11 @@
             <text x="238" y="368" class="cap">3b. return to Agent</text>
           </svg>
         </div>
-        <div class="workflow-note"><b>Route / Execute:</b> Gateway selects Worker by connectionId, clientName, or labels; Worker verifies and invokes <code>toolRegistry.callTool</code>.</div>
+        <div class="workflow-note"><b>Route / Execute:</b> Gateway selects Client by connectionId, clientName, or labels; Client verifies signed meta, then invokes <code>toolRegistry.callTool</code>.</div>
       </article>
     </div>
 
-    <div class="footer-line" style="font-size:22px"><b>Product Flow:</b> Workers publish capabilities first; Agents invoke later through Gateway; results return through Gateway with Activity trace.</div>
+    <div class="footer-line" style="font-size:22px"><b>Product Flow:</b> Clients publish capabilities first; Agents invoke later through Gateway; results return through Gateway with Activity trace.</div>
     <div class="slide-number">03 / 03</div>
   </section>
 </body>

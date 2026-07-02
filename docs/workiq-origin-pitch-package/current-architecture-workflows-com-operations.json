@@ -11,8 +11,8 @@
   "notes": [
     "Win32 PowerPoint COM operation plan for the current WorkIQ origin deck diagrams.",
     "Slide 1 represents the latest page-2 MCPHub architecture diagram.",
-    "Slide 2 represents page-3 left workflow: Worker connects outbound, register binding, update_tools, publish catalog.",
-    "Slide 3 represents page-3 right workflow: Agent Runtime request/result loop, Gateway cloud route/sign/audit, Worker verify/execute, result returns through Gateway.",
+    "Slide 2 represents page-3 left workflow: MCPHub Client connects outbound, establishes session/server-key binding, update_tools, publish catalog.",
+    "Slide 3 represents page-3 right workflow: Agent Runtime request/result loop, Gateway cloud route/sign/audit, signed tool_call, MCPHub Client verifies signed meta and executes locally, result returns through Gateway.",
     "Expected executor mapping: shapeType=cloud => msoShapeCloud; roundRect => msoShapeRoundedRectangle; addPicture => Shapes.AddPicture; addConnector supports begin/end and optional elbow points."
   ],
   "theme": {
@@ -1066,7 +1066,7 @@
         {
           "op": "addTextBox",
           "name": "worker.runtime.label",
-          "text": "LandGod Worker",
+          "text": "MCPHub Client\nWorker Runtime",
           "x": 724,
           "y": 373,
           "w": 138,
@@ -1315,7 +1315,7 @@
         {
           "op": "addTextBox",
           "name": "slide.title",
-          "text": "Worker Connects + Publishes Tools",
+          "text": "MCPHub Client Connects + Publishes Tools",
           "x": 40,
           "y": 44,
           "w": 620,
@@ -1333,7 +1333,7 @@
         {
           "op": "addTextBox",
           "name": "slide.subtitle",
-          "text": "Worker-initiated outbound connection; Gateway stores binding and capability catalog.",
+          "text": "Client-initiated outbound connection; Gateway stores session/server-key binding and capability catalog.",
           "x": 40,
           "y": 66,
           "w": 760,
@@ -1733,7 +1733,7 @@
         {
           "op": "addTextBox",
           "name": "reg.worker.label",
-          "text": "LandGod Worker",
+          "text": "MCPHub Client\nWorker Runtime",
           "x": 734,
           "y": 260,
           "w": 114,
@@ -2008,7 +2008,7 @@
         {
           "op": "addTextBox",
           "name": "reg.flow.update_tools.label",
-          "text": "2. register binding + update_tools",
+          "text": "2. register binding\nsession + server key · update_tools",
           "x": 510,
           "y": 350,
           "w": 180,
@@ -2073,7 +2073,7 @@
         {
           "op": "addTextBox",
           "name": "reg.footer",
-          "text": "Protect: no inbound port on personal devices. Worker registers binding, then publishes a user-scoped capability catalog.",
+          "text": "Protect: no inbound port on personal devices. Client establishes session + server-key binding, then publishes a user-scoped capability catalog.",
           "x": 40,
           "y": 505,
           "w": 880,
@@ -2122,7 +2122,7 @@
         {
           "op": "addTextBox",
           "name": "slide.title",
-          "text": "Agent Calls + Worker Executes Locally",
+          "text": "Agent Calls + Client Executes Locally",
           "x": 40,
           "y": 44,
           "w": 620,
@@ -2468,7 +2468,7 @@
         {
           "op": "addTextBox",
           "name": "call.gateway.signed.meta",
-          "text": "Ed25519 · nonce\nbody hash · exp",
+          "text": "sig · body hash\nnonce · exp · binding",
           "x": 360,
           "y": 274,
           "w": 152,
@@ -2540,7 +2540,7 @@
         {
           "op": "addTextBox",
           "name": "call.worker.title",
-          "text": "Worker",
+          "text": "MCPHub Client\nWorker Runtime",
           "x": 728,
           "y": 130,
           "w": 124,
@@ -2576,7 +2576,7 @@
         {
           "op": "addTextBox",
           "name": "call.worker.verify.label",
-          "text": "verify request",
+          "text": "verify signed meta\nhash · replay · expiry",
           "x": 736,
           "y": 176,
           "w": 110,
@@ -2982,7 +2982,7 @@
         {
           "op": "addTextBox",
           "name": "call.footer",
-          "text": "Route / Execute: Gateway selects Worker by connectionId, clientName, or labels; Worker verifies and invokes toolRegistry.callTool.",
+          "text": "Route / Execute: Gateway selects Client by connectionId, clientName, or labels; Client verifies signed meta, then invokes toolRegistry.callTool.",
           "x": 40,
           "y": 505,
           "w": 880,
