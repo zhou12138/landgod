@@ -97,6 +97,62 @@ Credential audit
 
 #### Enterprise Deployment Topology Diagram
 
+ASCII version:
+
+```text
+                         Agent / Workflow Zone
+        +------------------------------------------------------+
+        |  OpenClaw / Claude / ChatGPT / LangGraph / 自研 Agent |
+        +--------------------------+---------------------------+
+                                   |
+                                   |  HTTP / MCP / SDK
+                                   v
+        +------------------------------------------------------+
+        |        Private Cloud / DMZ / Gateway Zone             |
+        |                                                      |
+        |  +-------------------+      +----------------------+  |
+        |  | Gateway WebUI     | ---> | LandGod Gateway      |  |
+        |  | Governance Console|      | MCPHub Control Plane |  |
+        |  +-------------------+      +----+------+-----+----+  |
+        |                                  |      |     |       |
+        |                  +---------------+      |     +----------------+
+        |                  |                      |                      |
+        |          +-------v--------+     +-------v--------+     +-------v-------+
+        |          | Policy /       |     | Credential     |     | Gateway       |
+        |          | Approval       |     | Broker         |     | Central Audit |
+        |          +-------+--------+     +-------+--------+     +-------+-------+
+        +------------------|----------------------|----------------------|--------+
+                           |                      |                      |
+                           | future               | future               | export
+                           v                      v                      v
+                  +----------------+      +----------------+      +---------------+
+                  | SSO/OIDC/RBAC  |      | Vault / KMS    |      | SIEM / Logs   |
+                  +----------------+      +----------------+      +---------------+
+
+        Worker nodes connect OUTBOUND to Gateway. Gateway does not need
+        inbound access to enterprise machines.
+
+        +----------------------+      outbound WebSocket       +------------------+
+        | Finance LAN          | ----------------------------> | LandGod Gateway  |
+        |  Finance Worker      |                               |                  |
+        |   -> ERP / Finance   |                               |                  |
+        |   -> Excel / PPT     |                               |                  |
+        +----------------------+                               |                  |
+                                                               |                  |
+        +----------------------+      outbound WebSocket       |                  |
+        | Ops / Production Net | ----------------------------> |                  |
+        |  Ops Worker          |                               |                  |
+        |   -> Internal Systems|                               |                  |
+        +----------------------+                               |                  |
+                                                               |                  |
+        +----------------------+      outbound WebSocket       |                  |
+        | Branch / Remote Site | ----------------------------> |                  |
+        |  Site Worker         |                               |                  |
+        |   -> Local Apps      |                               |                  |
+        |   -> Files / Browser |                               |                  |
+        +----------------------+                               +------------------+
+```
+
 ```mermaid
 flowchart LR
   subgraph AgentZone[Agent / Workflow Zone]
@@ -157,6 +213,82 @@ Windows/Linux]
 
 
 #### System Architecture Diagram
+
+ASCII version:
+
+```text
++---------------------------+
+| Agent Layer - swappable   |
+| OpenAI / Claude / OpenClaw|
+| LangGraph / Dify / 自研   |
++-------------+-------------+
+              |
+              | tool_call + agent_id + credential_ref + arguments
+              v
++-------------+-----------------------------------------------------+
+| LandGod Gateway / MCPHub Control Plane                            |
+|                                                                   |
+|  +-------------------+      +-------------------+                  |
+|  | Agent API         | ---> | Policy Engine     | ----------------+|
+|  | /tool_call        |      | Effective Access  |                 ||
+|  +---------+---------+      +---------+---------+                 ||
+|            |                          |                           ||
+|            |                          v                           ||
+|            |                +---------+---------+                 ||
+|            |                | Worker + Tool     |                 ||
+|            |                | Registry          |                 ||
+|            |                +---------+---------+                 ||
+|            |                          |                           ||
+|            |                          v                           ||
+|            |                +---------+---------+                 ||
+|            |                | Credential Broker |                 ||
+|            |                | ref -> grant      |                 ||
+|            |                | grant -> exchange |                 ||
+|            |                +---------+---------+                 ||
+|            |                          |                           ||
+|            v                          v                           ||
+|  +---------+---------+      +---------+---------+                 ||
+|  | Gateway WebUI     |      | Approval Engine   | future          ||
+|  | Governance Console|      +-------------------+                 ||
+|  +---------+---------+                                            ||
+|            |                                                      ||
+|            v                                                      ||
+|  +---------+---------+                                            ||
+|  | Gateway Central  | <-------------------------------------------+|
+|  | Audit            |                                             |
+|  +------------------+                                             |
++-------------+-----------------------------------------------------+
+              |
+              | signed tool_call / credential_grant
+              | outbound Worker WebSocket channel
+              v
++-------------+-----------------------------------------------------+
+| Worker Execution Plane                                            |
+|                                                                   |
+|  +-------------------+      +-------------------+                  |
+|  | Managed Worker    | ---> | Local Enforcement |                  |
+|  | Runtime           |      | final veto        |                  |
+|  +---------+---------+      +---------+---------+                  |
+|            |                          |                            |
+|            |                          v                            |
+|            |                +---------+---------+                  |
+|            |                | MCP Tool Runtime  |                  |
+|            |                +---------+---------+                  |
+|            |                          |                            |
+|            v                          v                            |
+|  +---------+---------+      +---------+-------------------------+  |
+|  | Worker Local     |      | Trusted Tools / MCP               |  |
+|  | Audit            |      | Finance Report / Office / Browser |  |
+|  +---------+---------+      +---------+-------------------------+  |
++------------|--------------------------|----------------------------+
+             |                          |
+             | audit backup             | local execution
+             v                          v
++------------+-----------+   +----------+----------------------------+
+| Gateway Central Audit  |   | Enterprise Resources                  |
+| Credential Audit       |   | ERP / Finance / Files / Office / UKey |
++------------------------+   +---------------------------------------+
+```
 
 ```mermaid
 flowchart TB
