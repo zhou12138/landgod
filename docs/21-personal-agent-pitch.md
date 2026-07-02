@@ -1,149 +1,252 @@
-# LandGod Personal User Pitch — Cloud Agent, Local Hands
+# LandGod 个人用户 Pitch — 云上 Agent，本地工具
 
 ## Topic
 
-**Cloud Agent, Local Hands**
+**Cloud Agent, Local Tools**  
+**云上 Agent，本地工具**
 
-**One-liner:** LandGod gives your cloud agent secure hands on your own devices.
+**一句话：** LandGod 让云上 Agent 安全使用你个人设备上已经配置好的工具、文件、浏览器登录态和工作环境。
 
-This pitch intentionally narrows LandGod from an enterprise-wide execution/control plane to a personal productivity product for advanced agent users.
+这版 pitch 故意把 LandGod 从“企业级控制面 / 审计平台”收缩为面向个人高级 Agent 用户的 productivity 产品。
 
----
+个人版 LandGod 的核心不是中央审计，而是：
 
-## Target user
-
-**Power agent users** who already know how to use ChatGPT, Claude, Cursor, Codex, OpenClaw, Societas, or other cloud agents.
-
-They are not asking, “Why use agents?”
-
-They are asking:
-
-> Why can’t my agent actually reach the files, portals, browser sessions, and devices where my work happens?
+> 把用户自己的电脑变成云上 Agent 的安全本地工具运行时。
 
 ---
 
-## Core problem
+## 架构图
 
-Cloud agents are powerful, but they are stuck in the cloud.
+![LandGod 个人设备工具桥架构图](./assets/landgod-personal-local-tools-architecture.png)
 
-They cannot access:
-
-- files on the user’s laptop or work computer;
-- logged-in browser portals;
-- company VPN / intranet pages;
-- desktop apps and local tools;
-- another office device that has the right environment, certificate, software, or login state.
-
-So the user becomes the bridge:
-
-- copying files;
-- uploading documents;
-- taking screenshots;
-- switching machines;
-- manually logging into portals;
-- executing the steps the agent already knows how to plan.
-
-The bottleneck is no longer reasoning. The bottleneck is **execution access**.
+HTML 版本： [landgod-personal-local-tools-architecture.html](./landgod-personal-local-tools-architecture.html)
 
 ---
 
-## Three personal-use cases
+## 目标用户
 
-### 1. Cloud agent cannot reach local or work-only data
+**熟练使用 Agent 的个人用户 / 高级办公用户。**
 
-A user wants a cloud agent to analyze or summarize something, but the data lives on a local computer, work laptop, VPN-only page, or already-logged-in portal.
+他们已经会用：
 
-Examples:
+- ChatGPT / Claude / Cursor / Codex；
+- OpenClaw / Societas / 云上 Agent；
+- GitHub Copilot CLI / Azure CLI / 内部 CLI；
+- 各种本地脚本、浏览器登录态、VPN、SSH 配置。
 
-- local PDFs / Excel / downloads;
-- company portal data;
-- browser sessions that are already authenticated;
-- internal dashboards;
-- documents that cannot be uploaded to a third-party cloud agent.
+他们的问题不是“不知道 Agent 有什么用”，而是：
 
-### 2. User has multiple work devices, but only one is nearby
-
-A user may have:
-
-- a home Mac;
-- an office Windows machine;
-- a Linux dev box;
-- a work laptop behind VPN;
-- a device that has the right app, certificate, browser login, or environment.
-
-The user may be on one device, but the needed data or capability is on another.
-
-### 3. Advanced agent users hit the “last mile” wall
-
-The user is already fluent with agents. They can ask an agent to plan, write, summarize, analyze, and automate.
-
-But the agent still cannot:
-
-- open the right local file;
-- use the logged-in browser;
-- run on the right machine;
-- operate a desktop app;
-- collect data from a work portal;
-- return evidence and results without manual copy/paste.
+> Agent 很聪明，但它够不到我真正工作的那台电脑和那些本地工具。
 
 ---
 
-## Product positioning
+## 核心问题
 
-LandGod is a **personal execution bridge** between cloud agents and the user’s trusted devices.
+云上 Agent 很强，但它被困在云上。
+
+用户真正的工作能力往往在自己的设备上：
+
+- 本地文件、下载目录、PDF、Excel、代码仓库；
+- 已登录的浏览器页面和公司 Portal；
+- 公司 VPN、内网页面、内部 dashboard；
+- 已经配置好的 CLI 工具，例如 `workiq`、`az`、`gh`、`copilot`、`kubectl`、`ssh`；
+- 某台办公电脑上的证书、登录态、环境变量、私有脚本和本地软件。
+
+但云上 Agent 默认访问不到这些东西。
+
+于是用户自己变成了“桥”：
+
+- 复制命令输出；
+- 上传文件；
+- 截图给 Agent；
+- 在多台设备之间切换；
+- 手动登录 Portal；
+- 手动执行 Agent 已经规划好的步骤。
+
+新的瓶颈不是 Agent 的推理能力，而是 **本地执行访问能力**。
+
+---
+
+## 三个个人用户高频场景
+
+### 1. 云上 Agent 访问不到用户自己电脑的数据
+
+用户希望 Agent 帮忙分析、总结、整理，但数据在：
+
+- 本地文件夹；
+- 工作电脑；
+- 公司 VPN 页面；
+- 已登录的浏览器 Portal；
+- 不能上传到第三方云 Agent 的敏感文件。
+
+今天的做法是用户手动复制、上传、截图。
+
+LandGod 的做法是让 Agent 在用户授权下，通过本地 Worker 去读取指定文件、页面或工具输出。
+
+---
+
+### 2. 用户有多台办公设备，但手边只有一台
+
+一个高级用户可能同时拥有：
+
+- 家里的 Mac；
+- 公司 Windows PC；
+- Linux dev box；
+- 带 VPN 的工作笔记本；
+- 某台已经登录 Portal 的办公机；
+- 某台装了特定 CLI / SDK / 证书的机器。
+
+问题是：用户当前手边的设备，不一定是拥有正确环境的设备。
+
+LandGod 让云上 Agent 能把任务路由到“真正有环境”的那台设备上执行。
+
+---
+
+### 3. 熟练 Agent 用户遇到最后一公里问题
+
+用户已经非常会用 Agent：
+
+- 会让 Agent 规划任务；
+- 会让 Agent 写代码；
+- 会让 Agent 总结和分析；
+- 会让 Agent 生成命令和操作步骤。
+
+但最后仍然卡在：
+
+- Agent 不能打开本地文件；
+- Agent 不能使用本地登录态；
+- Agent 不能直接调用本机 CLI；
+- Agent 不能在另一台办公电脑执行命令；
+- Agent 不能从公司 Portal 里取数。
+
+所以用户仍然要手动充当执行层。
+
+---
+
+## 新 Mission
+
+**把个人设备变成云上 Agent 的安全本地工具运行时。**
+
+英文口径：
+
+> Turn personal devices into secure local tool runtimes for cloud agents.
+
+LandGod 把云上 Agent 的智能，连接到用户自己设备上已经配置好的：
+
+- CLI 工具；
+- 本地文件；
+- 浏览器登录态；
+- VPN / 内网环境；
+- 证书和 SSH 配置；
+- 本地脚本和软件。
+
+---
+
+## 产品定位
+
+LandGod 是 **云上 Agent 到个人设备工具环境的安全桥**。
 
 ```text
-Cloud Agent
+云上 Agent
     ↓
-LandGod Gateway
+LandGod Bridge
     ↓
-Trusted Personal Devices
+用户可信设备
     ↓
-Files / Browser / Apps / Shell / Local Data
+CLI / 文件 / 浏览器 / Portal / Shell / 本地环境
 ```
 
-A lightweight Worker runs on the user’s devices. The cloud agent connects through LandGod and can execute only what the user authorizes.
+它不是企业中央审计平台，也不是传统远控软件。
+
+它更像：
+
+> 给云上 Agent 接上一条受控的本地工具通道。
 
 ---
 
-## What LandGod enables
+## 典型工具场景
 
-With LandGod, a user can let their agent:
+### WorkIQ CLI
 
-- read selected local files;
-- use local tools;
-- operate logged-in browser sessions;
-- run commands on the right machine;
-- collect data from work portals;
-- use a device that has the right VPN/app/certificate/session;
-- return results back to the agent.
+```text
+Societas → LandGod → 公司电脑 → workiq status → 结果回传给 Agent
+```
 
-The agent thinks in the cloud. LandGod executes on the user’s devices. The user stays in control.
+### Azure CLI
+
+```text
+Claude → LandGod → Dev Machine → az resource list → Agent 分析资源状态
+```
+
+### Copilot CLI / 本地代码仓库
+
+```text
+Codex → LandGod → MacBook repo → copilot / test / build → 返回修复建议
+```
+
+### 公司 Portal
+
+```text
+OpenClaw → LandGod → Windows 办公机 → 已登录 Portal → 抽取表格 → 生成报告
+```
 
 ---
 
-## Suggested pitch language
+## 个人版卖点
 
-### Short version
+### 1. 使用你已经配置好的工具
 
-Cloud agents are smart, but they are trapped in the cloud.
+不需要把 `az login`、`gh auth`、`workiq login`、SSH key、kubectl config、浏览器 cookie 重新搬到云上。
 
-Your files, browser sessions, company portals, VPN pages, desktop apps, and work machines live outside the agent.
+你的电脑已经配置好了。LandGod 让 Agent 在授权范围内使用它。
 
-Today, you become the bridge: copy, upload, screenshot, switch devices, and manually execute steps.
+### 2. 凭据留在本地
 
-LandGod gives your cloud agent secure hands on your own devices. A lightweight Worker runs on each trusted device, so your agent can read selected files, use local tools, operate logged-in sessions, and run tasks on the machine that actually has the right context.
+Agent 不需要拿走 token、证书、SSH key、浏览器 cookie。
+
+它只发送任务意图，真正执行发生在你的设备上。
+
+### 3. 云上智能 + 本地执行
+
+```text
+Cloud Agent = 大脑
+LandGod = 桥
+Your Device = 手 + 工具 + 凭据 + 环境
+```
+
+### 4. 多设备协同
+
+哪台机器有正确环境，就在哪台机器执行。
+
+用户不再因为“那台电脑不在手边”而卡住。
+
+---
+
+## 推荐 Pitch 话术
+
+### 简短版
+
+云上 Agent 很强，但它用不了你电脑上已经配置好的工具。
+
+你的 `workiq`、Azure CLI、Copilot CLI、GitHub CLI、SSH 配置、浏览器登录态、VPN 页面、本地文件和代码仓库，都在你的个人设备上。
+
+今天，你只能自己复制输出、上传文件、截图、切换设备、手动执行命令。
+
+LandGod 把你的个人设备变成云上 Agent 的安全本地工具运行时。Agent 在云上思考，LandGod 把任务路由到正确设备，本地 Worker 调用已有工具并把结果回传。凭据留在本地，执行过程可见、可撤销，控制权在你手里。
 
 ### Slide tagline
 
-**Your agent thinks in the cloud. LandGod executes on your devices. You stay in control.**
+**云上 Agent 负责思考，LandGod 连接设备，本地工具负责执行。**
+
+或者：
+
+**Cloud intelligence. Local tools. Credentials stay on your device.**
 
 ---
 
-## Recommended slide title
+## 两页 PPT
 
-**Cloud Agent, Local Hands**
+HTML 版本： [landgod-personal-agent-pitch.html](./landgod-personal-agent-pitch.html)
 
-Subtitle:
-
-**Let your cloud agent securely work across your own devices.**
+- Slide 1：云上 Agent，本地工具 — 为什么熟练用户仍然卡住
+- Slide 2：把个人设备变成云上 Agent 的本地工具运行时
