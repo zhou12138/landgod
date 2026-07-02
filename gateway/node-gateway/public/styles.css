@@ -240,7 +240,15 @@ textarea { resize: vertical; min-height: 84px; }
 .audit-filter-row { grid-template-columns: 1.4fr 1fr 1fr 150px 150px auto auto; }
 .audit-central-panel { margin-bottom: 18px; }
 .audit-list, .log-list { max-height: 680px; overflow: auto; padding-right: 4px; }
-.log-card { display: grid; gap: 10px; }
+.log-card { display: grid; gap: 12px; }
+.log-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.log-summary-grid > div { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: rgba(2, 6, 23, 0.28); min-width: 0; }
+.log-summary-grid span { display: block; font-size: 11px; margin-bottom: 4px; }
+.log-summary-grid strong { display: block; overflow-wrap: anywhere; font-size: 13px; }
+.log-timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.log-timeline li { display: grid; grid-template-columns: 210px minmax(180px, 1fr) 120px; gap: 10px; align-items: center; border-left: 3px solid rgba(56, 189, 248, 0.38); padding: 8px 10px; border-radius: 10px; background: rgba(15, 23, 42, 0.42); }
+.log-timeline time, .log-timeline span { color: var(--muted); font-size: 12px; }
+.log-timeline strong { color: #dbeafe; font-size: 13px; }
 .log-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .log-columns details { min-width: 0; border: 1px solid var(--border); border-radius: 14px; padding: 10px; background: rgba(2, 6, 23, 0.32); }
 .log-columns pre { max-height: 320px; overflow: auto; margin-top: 10px; }
@@ -262,7 +270,8 @@ textarea { resize: vertical; min-height: 84px; }
   .app-shell { grid-template-columns: 1fr; }
   .sidebar { position: relative; height: auto; }
   .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .metric-grid, .two-column, .two-column.wide-left, .demo-flow, .log-columns { grid-template-columns: 1fr; }
+  .metric-grid, .two-column, .two-column.wide-left, .demo-flow, .log-columns, .log-summary-grid { grid-template-columns: 1fr; }
+  .log-timeline li { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .demo-hero { flex-direction: column; }
 }

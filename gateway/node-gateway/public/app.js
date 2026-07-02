@@ -9,6 +9,7 @@ const state = {
   financeDemoResult: null,
   auditFilters: { query: '', tool: '', credential: '', source: 'all', decision: 'all' },
   logFilters: { query: '', tool: '', agent: '', worker: '', status: 'all' },
+  toolCallLogs: [],
   gatewayAudit: [],
   credentialAudit: [],
   workerAudit: [],
@@ -107,9 +108,10 @@ async function refreshData({ quiet = false } = {}) {
     api('/credentials/audit?limit=80'),
     api('/audit?limit=50'),
     api('/control/policy'),
+    api('/logs/tool-calls?limit=120'),
   ]);
 
-  const [health, clients, agents, tools, credentials, tasks, gatewayAudit, credentialAudit, workerAudit, controlPolicy] = results;
+  const [health, clients, agents, tools, credentials, tasks, gatewayAudit, credentialAudit, workerAudit, controlPolicy, toolCallLogs] = results;
   if (health.status === 'fulfilled') state.health = health.value;
   if (clients.status === 'fulfilled') state.clients = clients.value.clients || [];
   if (agents.status === 'fulfilled') state.agents = agents.value.agents || [];
@@ -123,6 +125,7 @@ async function refreshData({ quiet = false } = {}) {
   if (credentialAudit.status === 'fulfilled') state.credentialAudit = credentialAudit.value.entries || [];
   if (workerAudit.status === 'fulfilled') state.workerAudit = workerAudit.value.audit || [];
   if (controlPolicy.status === 'fulfilled') state.controlPolicy = controlPolicy.value.policy || { workers: {}, tools: {}, agents: {} };
+  if (toolCallLogs.status === 'fulfilled') state.toolCallLogs = toolCallLogs.value.logs || [];
 
   render();
 
@@ -444,42 +447,65 @@ function logMatches(log) {
   return true;
 }
 
+function eventLabel(entry) {
+  const event = entry.event || entry.action || 'event';
+  return String(event).replaceAll('_', ' ');
+}
+
+function renderLogTimeline(events) {
+  return `<ol class="log-timeline">${(events || []).map((entry) => `
+    <li>
+      <time>${escapeHtml(eventTime(entry) || '—')}</time>
+      <strong>${escapeHtml(eventLabel(entry))}</strong>
+      <span>${escapeHtml(entry.source || 'gateway')}</span>
+    </li>
+  `).join('')}</ol>`;
+}
+
 function renderToolCallLog(log) {
-  const tone = log.status === 'completed' ? 'good' : log.status === 'failed' || log.status === 'timeout' ? 'bad' : 'warn';
-  const requestEvents = log.all.filter((entry) => String(entry.event || entry.action || '').includes('received') || String(entry.event || '').includes('dispatched'));
-  const responseEvents = log.all.filter((entry) => String(entry.event || entry.action || '').includes('result') || String(entry.event || entry.action || '').includes('response') || String(entry.event || entry.action || '').includes('completed') || String(entry.event || '').includes('error') || String(entry.event || '').includes('timeout'));
+  const tone = log.status === 'completed' ? 'good' : log.status === 'failed' || log.status === 'timeout' || log.status === 'denied' ? 'bad' : 'warn';
+  const events = log.events || log.all || [];
+  const requestEvents = events.filter((entry) => String(entry.event || entry.action || '').includes('request') || String(entry.event || entry.action || '').includes('received') || String(entry.event || '').includes('dispatched'));
+  const responseEvents = events.filter((entry) => String(entry.event || entry.action || '').includes('result') || String(entry.event || entry.action || '').includes('response') || String(entry.event || entry.action || '').includes('completed') || String(entry.event || '').includes('error') || String(entry.event || '').includes('timeout'));
   return `<div class="card-row log-card">
     <div class="card-row-head">
-      <span class="card-title">${escapeHtml(log.toolName || 'tool_call')}</span>
-      ${statusPill(log.status, tone)}
+      <span class="card-title">${escapeHtml(log.agentId || 'agent')} → ${escapeHtml(log.clientName || 'worker')} → ${escapeHtml(log.toolName || 'tool_call')}</span>
+      ${statusPill(log.status, tone)} ${statusPill(log.policyDecision || 'audit', log.policyDecision === 'allow' ? 'good' : log.policyDecision === 'deny' ? 'bad' : '')}
     </div>
     <div class="card-meta">
       <span>${escapeHtml(log.startedAt || '—')}</span>
-      <span>duration ${escapeHtml(formatDuration(log.startedAt, log.endedAt))}</span>
-      <span>agent ${escapeHtml(log.agentId || '—')}</span>
-      <span>worker ${escapeHtml(log.clientName || '—')}</span>
-      <span>request ${escapeHtml(log.requestId || '—')}</span>
+      <span>duration ${escapeHtml(log.durationMs != null ? `${log.durationMs}ms` : formatDuration(log.startedAt, log.endedAt))}</span>
+      <span>trace ${escapeHtml(log.traceId || '—')}</span>
+      ${log.requestId ? `<span>request ${escapeHtml(log.requestId)}</span>` : ''}
       ${log.taskId ? `<span>task ${escapeHtml(log.taskId)}</span>` : ''}
+      ${log.credentialRef ? `<span>credential ${escapeHtml(log.credentialRef)}</span>` : ''}
     </div>
+    <div class="log-summary-grid">
+      <div><span class="muted">Agent</span><strong>${escapeHtml(log.agentId || '—')}</strong></div>
+      <div><span class="muted">Worker</span><strong>${escapeHtml(log.clientName || log.connectionId || '—')}</strong></div>
+      <div><span class="muted">Tool</span><strong>${escapeHtml(log.toolName || '—')}</strong></div>
+      <div><span class="muted">Credential</span><strong>${escapeHtml(log.credentialRef || '—')}${log.credentialScope ? ` / ${escapeHtml(log.credentialScope)}` : ''}</strong></div>
+    </div>
+    ${renderLogTimeline(events)}
     <div class="log-columns">
-      <details open>
-        <summary>Request / dispatch (${requestEvents.length || log.events.length})</summary>
-        <pre class="pre-wrap">${json(requestEvents.length ? requestEvents : log.events)}</pre>
+      <details>
+        <summary>Request / dispatch evidence (${requestEvents.length})</summary>
+        <pre class="pre-wrap">${json(requestEvents)}</pre>
       </details>
-      <details open>
-        <summary>Response / result (${responseEvents.length})</summary>
+      <details>
+        <summary>Response / result evidence (${responseEvents.length})</summary>
         <pre class="pre-wrap">${json(responseEvents)}</pre>
       </details>
     </div>
     <details class="compact-details">
-      <summary>Worker local audit (${log.workerEvents.length}) + full timeline (${log.all.length})</summary>
-      <pre class="pre-wrap">${json(log.all)}</pre>
+      <summary>Full raw evidence (${events.length})</summary>
+      <pre class="pre-wrap">${json(events)}</pre>
     </details>
   </div>`;
 }
 
 function renderLogs() {
-  const logs = buildToolCallLogs();
+  const logs = state.toolCallLogs.length ? state.toolCallLogs : buildToolCallLogs();
   const filtered = logs.filter(logMatches);
   const node = $('#logsFilterSummary');
   if (node) {

@@ -30,6 +30,8 @@ const REQUIRE_ADMIN_AUTH = ADMIN_TOKEN.length > 0;
 const AGENT_TOKEN = process.env.LANDGOD_AGENT_TOKEN || '';
 const REQUIRE_AGENT_AUTH = AGENT_TOKEN.length > 0;
 const WORKER_TOKEN_BINDINGS_JSON = process.env.LANDGOD_WORKER_TOKEN_BINDINGS_JSON || '';
+const LOG_RESPONSE_PREVIEW = String(process.env.LANDGOD_LOG_RESPONSE_PREVIEW || 'true').toLowerCase() !== 'false';
+const LOG_PREVIEW_BYTES = Math.max(0, parseInt(process.env.LANDGOD_LOG_PREVIEW_BYTES || '4096', 10) || 0);
 
 // ========================
 // 生成 Ed25519 密钥对
@@ -333,7 +335,7 @@ const connectedClients = new Map(); // connectionId -> { client, binding }
 
 // Async task store + task queue
 const tasks = new Map(); // taskId -> { status, result, error, createdAt, completedAt, request }
-const taskQueue = []; // { taskId, clientName, labels, tool_name, arguments, timeout, createdAt }
+const taskQueue = []; // { traceId, taskId, clientName, labels, tool_name, arguments, timeout, createdAt }
 const TASK_TTL = 3600000; // 1 hour, auto-cleanup
 
 function createTask(request) {
@@ -404,12 +406,22 @@ function redactGatewayAuditValue(value) {
     return result;
 }
 
+function redactTextPreview(text) {
+    if (typeof text !== 'string') return undefined;
+    return text
+        .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s"']+/ig, '$1***REDACTED***')
+        .replace(/((?:api[_-]?key|token|secret|password|passwd)\s*[=:]\s*)[^\s,"'}]+/ig, '$1***REDACTED***')
+        .replace(/-----BEGIN [^-]+PRIVATE KEY-----[\s\S]*?-----END [^-]+PRIVATE KEY-----/g, '***REDACTED_PRIVATE_KEY***');
+}
+
 function summarizeGatewayToolMessage(message) {
     if (!message || typeof message !== 'object') return message;
     const payload = message.payload && typeof message.payload === 'object' ? message.payload : {};
     const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
     const text = typeof data.text === 'string' ? data.text : undefined;
-    const previewLimit = 12000;
+    const preview = LOG_RESPONSE_PREVIEW && typeof text === 'string' && LOG_PREVIEW_BYTES > 0
+        ? redactTextPreview(text.slice(0, LOG_PREVIEW_BYTES))
+        : undefined;
     return {
         type: message.type,
         event: message.event,
@@ -420,8 +432,9 @@ function summarizeGatewayToolMessage(message) {
         payload: redactGatewayAuditValue({ ...payload, data: undefined }),
         data: redactGatewayAuditValue({ ...data, text: undefined }),
         dataTextBytes: typeof text === 'string' ? Buffer.byteLength(text, 'utf-8') : undefined,
-        dataTextPreview: typeof text === 'string' ? text.slice(0, previewLimit) : undefined,
-        dataTextTruncated: typeof text === 'string' ? text.length > previewLimit : undefined,
+        dataTextPreview: preview,
+        dataTextTruncated: typeof text === 'string' ? Buffer.byteLength(text, 'utf-8') > LOG_PREVIEW_BYTES : undefined,
+        dataTextPreviewEnabled: LOG_RESPONSE_PREVIEW,
     };
 }
 
@@ -528,6 +541,8 @@ function recordAgentActivity(req, params = {}) {
         toolName: params.toolName || null,
         credentialRef: params.credentialRef || null,
         workerKey: params.workerKey || params.clientName || params.connectionId || null,
+        traceId: params.traceId || null,
+        requestId: params.requestId || null,
         taskId: params.taskId || null,
         identityProof: params.identityProof || null,
     }, ...(current.recentOperations || [])].slice(0, 50);
@@ -540,6 +555,8 @@ function recordAgentActivity(req, params = {}) {
         toolName: params.toolName || null,
         credentialRef: params.credentialRef || null,
         workerKey: params.workerKey || params.clientName || params.connectionId || null,
+        traceId: params.traceId || null,
+        requestId: params.requestId || null,
         taskId: params.taskId || null,
     });
     return current;
@@ -547,6 +564,88 @@ function recordAgentActivity(req, params = {}) {
 
 function listAgentActivity() {
     return Object.values(agentActivity).sort((a, b) => String(b.lastSeenAt || '').localeCompare(String(a.lastSeenAt || '')));
+}
+
+function eventTime(entry) {
+    return entry?.timestamp || entry?.ts || entry?.time || '';
+}
+
+function toolCallStatusFor(events) {
+    const names = events.map((entry) => String(entry.event || entry.action || ''));
+    if (names.some((name) => name.includes('timeout'))) return 'timeout';
+    if (names.some((name) => name.includes('blocked') || name.includes('deny'))) return 'denied';
+    if (names.some((name) => name.includes('error') || name.includes('failed'))) return 'failed';
+    if (names.some((name) => name.includes('result_received') || name.includes('response_received') || name.includes('completed'))) return 'completed';
+    if (names.some((name) => name.includes('queued'))) return 'queued';
+    return 'pending';
+}
+
+function isToolCallLogEvent(entry) {
+    const event = String(entry.event || entry.action || '');
+    return event.includes('tool_call') || event.includes('batch_tool_call');
+}
+
+function buildToolCallLogs({ limit = 100, agentId, toolName, worker, status, query, from, to } = {}) {
+    const groups = new Map();
+    const put = (key, entry, source = 'gateway') => {
+        const safeKey = key || `event:${entry.eventId || entry.id || eventTime(entry) || randomUUID()}`;
+        if (!groups.has(safeKey)) groups.set(safeKey, { traceId: safeKey, events: [] });
+        groups.get(safeKey).events.push({ ...entry, source });
+    };
+
+    for (const entry of readGatewayAudit(1000)) {
+        if (!isToolCallLogEvent(entry) && !(entry.event === 'agent_activity_observed' && isToolCallLogEvent(entry))) continue;
+        const key = entry.traceId || entry.requestId || entry.request_id || entry.taskId || entry.task_id || entry.eventId;
+        put(key, entry, 'gateway');
+    }
+
+    for (const agent of Object.values(agentActivity || {})) {
+        for (const op of agent.recentOperations || []) {
+            if (!isToolCallLogEvent(op)) continue;
+            const key = op.traceId || op.requestId || op.request_id || op.taskId || op.task_id || `${agent.agentId}:${op.timestamp}:${op.action}:${op.toolName}`;
+            put(key, { ...op, agentId: agent.agentId, event: op.action }, 'agent_activity');
+        }
+    }
+
+    let logs = Array.from(groups.values()).map((group) => {
+        const events = group.events.sort((a, b) => Date.parse(eventTime(a) || 0) - Date.parse(eventTime(b) || 0));
+        const primary = events.find((entry) => entry.toolName || entry.tool_name || entry.requestId || entry.taskId) || events[0] || {};
+        const response = [...events].reverse().find((entry) => entry.response || String(entry.event || '').includes('result') || String(entry.event || '').includes('response')) || null;
+        const decision = events.find((entry) => String(entry.event || '').includes('blocked')) ? 'deny' : 'allow';
+        return {
+            traceId: primary.traceId || group.traceId,
+            requestId: primary.requestId || primary.request_id || '',
+            taskId: primary.taskId || primary.task_id || '',
+            agentId: primary.agentId || primary.agent_id || '',
+            toolName: primary.toolName || primary.tool_name || primary.tool || '',
+            clientName: primary.clientName || primary.workerKey || '',
+            connectionId: primary.connectionId || primary.connection_id || '',
+            credentialRef: primary.credentialRef || primary.credential_ref || '',
+            credentialScope: primary.credentialScope || primary.credential_scope || '',
+            status: toolCallStatusFor(events),
+            policyDecision: decision,
+            startedAt: eventTime(events[0]),
+            endedAt: eventTime(events[events.length - 1]),
+            durationMs: events.length > 1 ? Math.max(0, Date.parse(eventTime(events[events.length - 1])) - Date.parse(eventTime(events[0]))) : null,
+            responseSummary: response?.response || null,
+            events,
+        };
+    });
+
+    const q = query ? String(query).toLowerCase() : '';
+    logs = logs.filter((log) => {
+        const text = JSON.stringify(log).toLowerCase();
+        if (agentId && !String(log.agentId).toLowerCase().includes(String(agentId).toLowerCase())) return false;
+        if (toolName && !String(log.toolName).toLowerCase().includes(String(toolName).toLowerCase())) return false;
+        if (worker && !String(log.clientName).toLowerCase().includes(String(worker).toLowerCase()) && !String(log.connectionId).toLowerCase().includes(String(worker).toLowerCase())) return false;
+        if (status && status !== 'all' && log.status !== status) return false;
+        if (from && Date.parse(log.startedAt || 0) < Date.parse(from)) return false;
+        if (to && Date.parse(log.startedAt || 0) > Date.parse(to)) return false;
+        if (q && !text.includes(q)) return false;
+        return true;
+    });
+    logs.sort((a, b) => Date.parse(b.startedAt || 0) - Date.parse(a.startedAt || 0));
+    return logs.slice(0, limit);
 }
 
 // Drain queued tasks for a newly-registered worker
@@ -570,6 +669,7 @@ async function drainQueue(connectionId, clientName, workerLabels) {
                         credentialScope: queued.credential_scope || null,
                         agentId: queued.agent_id || 'default-agent',
                         taskId: queued.taskId,
+                        traceId: queued.traceId || queued.taskId,
                     });
                     completeTask(queued.taskId, result);
                     console.log(`[queue] Drained task ${queued.taskId} → ${clientName}`);
@@ -853,8 +953,9 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {
             return reject(err);
         }
 
-        const requestId = `tool_call-${randomUUID()}`;
+        const requestId = options.requestId || `tool_call-${randomUUID()}`;
         const taskId = options.taskId || `task-${randomUUID()}`;
+        const traceId = options.traceId || taskId || requestId;
         const meta = signToolCall(requestId, toolName, args, binding);
         let credentialGrant = null;
         if (options.credentialRef) {
@@ -887,6 +988,7 @@ function sendToolCall(connectionId, toolName, args, timeout = 30000, options = {
         };
 
         const auditContext = {
+            traceId,
             requestId,
             taskId,
             agentId: options.agentId || 'default-agent',
@@ -1101,6 +1203,26 @@ const httpServer = http.createServer(async (req, res) => {
         if (!requireAdmin(req, res, 'agents:read')) return;
         res.writeHead(200);
         res.end(JSON.stringify({ agents: listAgentActivity() }));
+        return;
+    }
+
+    // Normalized tool call logs for WebUI and audit review.
+    if (req.method === 'GET' && req.url.startsWith('/logs/tool-calls')) {
+        if (!requireAdmin(req, res, 'logs:read')) return;
+        const urlObj = new URL(req.url, `http://${req.headers.host}`);
+        const limit = Math.min(500, Math.max(1, parseInt(urlObj.searchParams.get('limit') || '100', 10) || 100));
+        const logs = buildToolCallLogs({
+            limit,
+            agentId: urlObj.searchParams.get('agentId') || '',
+            toolName: urlObj.searchParams.get('tool') || '',
+            worker: urlObj.searchParams.get('worker') || '',
+            status: urlObj.searchParams.get('status') || 'all',
+            query: urlObj.searchParams.get('query') || '',
+            from: urlObj.searchParams.get('from') || '',
+            to: urlObj.searchParams.get('to') || '',
+        });
+        res.writeHead(200);
+        res.end(JSON.stringify({ logs, limit }));
         return;
     }
 
@@ -1322,17 +1444,19 @@ const httpServer = http.createServer(async (req, res) => {
                 const credentialRef = typeof parsed.credential_ref === 'string' ? parsed.credential_ref : (typeof parsed.credentialRef === 'string' ? parsed.credentialRef : null);
                 const credentialScope = typeof parsed.credential_scope === 'string' ? parsed.credential_scope : (typeof parsed.credentialScope === 'string' ? parsed.credentialScope : null);
                 const agentId = typeof parsed.agent_id === 'string' ? parsed.agent_id : (typeof parsed.agentId === 'string' ? parsed.agentId : getRequestAgentId(req, parsed));
+                const traceId = typeof parsed.trace_id === 'string' ? parsed.trace_id : (typeof parsed.traceId === 'string' ? parsed.traceId : `trace-${randomUUID()}`);
                 const clientName = parsed.clientName || parsed.client_name || (parsed.target && parsed.target.clientName);
                 const agentControl = getAgentControl(agentId);
                 if (agentControl.enabled === false) {
-                    recordAgentActivity(req, { agentId, action: 'tool_call_blocked_by_agent_policy', status: 'blocked', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
-                    appendGatewayAudit('tool_call_blocked_by_agent_policy', { agentId, control: agentControl, toolName: tool_name, clientName, connectionId: connection_id || null });
+                    recordAgentActivity(req, { agentId, traceId, action: 'tool_call_blocked_by_agent_policy', status: 'blocked', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
+                    appendGatewayAudit('tool_call_blocked_by_agent_policy', { traceId, agentId, control: agentControl, toolName: tool_name, clientName, connectionId: connection_id || null });
                     res.writeHead(403);
                     res.end(JSON.stringify({ error: 'agent_disabled_by_gateway_policy', agentId, control: agentControl }));
                     return;
                 }
-                recordAgentActivity(req, { agentId, action: 'tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
+                recordAgentActivity(req, { agentId, traceId, action: 'tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
                 appendGatewayAudit('tool_call_request_received', {
+                    traceId,
                     agentId,
                     clientName,
                     connectionId: connection_id || null,
@@ -1364,9 +1488,9 @@ const httpServer = http.createServer(async (req, res) => {
                     }
                     if (!targetConnId) {
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
-                            recordAgentActivity(req, { agentId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, clientName, taskId, body: parsed });
+                            const taskId = createTask({ traceId, clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                            taskQueue.push({ traceId, taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
+                            recordAgentActivity(req, { agentId, traceId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, clientName, taskId, body: parsed });
                             console.log(`[queue] Task ${taskId} queued for ${clientName}`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -1390,9 +1514,9 @@ const httpServer = http.createServer(async (req, res) => {
                     }
                     if (!targetConnId) {
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
-                            recordAgentActivity(req, { agentId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, workerKey: JSON.stringify(labels), taskId, body: parsed });
+                            const taskId = createTask({ traceId, clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                            taskQueue.push({ traceId, taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
+                            recordAgentActivity(req, { agentId, traceId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, workerKey: JSON.stringify(labels), taskId, body: parsed });
                             console.log(`[queue] Task ${taskId} queued for labels ${JSON.stringify(labels)}`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -1414,9 +1538,9 @@ const httpServer = http.createServer(async (req, res) => {
                     if (!firstEntry) {
                         // Queue mode: store task for later execution
                         if (isQueue) {
-                            const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
-                            taskQueue.push({ taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
-                            recordAgentActivity(req, { agentId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, taskId, body: parsed });
+                            const taskId = createTask({ traceId, clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                            taskQueue.push({ traceId, taskId, clientName, labels, tool_name, arguments: args, timeout: timeout || 30000, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId, createdAt: new Date().toISOString() });
+                            recordAgentActivity(req, { agentId, traceId, action: 'tool_call_queued', status: 'queued', toolName: tool_name, credentialRef, taskId, body: parsed });
                             console.log(`[queue] Task ${taskId} queued (no clients online)`);
                             res.writeHead(202);
                             res.end(JSON.stringify({ taskId, status: 'queued' }));
@@ -1431,19 +1555,19 @@ const httpServer = http.createServer(async (req, res) => {
 
                 // Async mode: return task_id immediately, execute in background
                 if (isAsync) {
-                    const taskId = createTask({ clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
-                    recordAgentActivity(req, { agentId, action: 'tool_call_async_started', status: 'pending', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, taskId, body: parsed });
+                    const taskId = createTask({ traceId, clientName, labels, tool_name, arguments: args, timeout, credential_ref: credentialRef, credential_scope: credentialScope, agent_id: agentId });
+                    recordAgentActivity(req, { agentId, traceId, action: 'tool_call_async_started', status: 'pending', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, taskId, body: parsed });
                     res.writeHead(202);
                     res.end(JSON.stringify({ taskId, status: 'pending' }));
                     // Execute in background
-                    sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, credentialScope, agentId, taskId })
+                    sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, credentialScope, agentId, taskId, traceId })
                         .then(result => completeTask(taskId, result))
                         .catch(err => failTask(taskId, err.message));
                     return;
                 }
 
-                const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, credentialScope, agentId });
-                recordAgentActivity(req, { agentId, action: 'tool_call_completed', status: 'completed', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: parsed });
+                const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || 30000, { credentialRef, credentialScope, agentId, traceId });
+                recordAgentActivity(req, { agentId, traceId, action: 'tool_call_completed', status: 'completed', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: parsed });
                 res.writeHead(200);
                 res.end(JSON.stringify(result));
             } catch (err) {
@@ -1478,16 +1602,18 @@ const httpServer = http.createServer(async (req, res) => {
                         const credentialRef = typeof call.credential_ref === 'string' ? call.credential_ref : (typeof call.credentialRef === 'string' ? call.credentialRef : null);
                         const credentialScope = typeof call.credential_scope === 'string' ? call.credential_scope : (typeof call.credentialScope === 'string' ? call.credentialScope : null);
                         const agentId = typeof call.agent_id === 'string' ? call.agent_id : (typeof call.agentId === 'string' ? call.agentId : getRequestAgentId(req, call));
+                        const traceId = typeof call.trace_id === 'string' ? call.trace_id : (typeof call.traceId === 'string' ? call.traceId : `trace-${randomUUID()}`);
                         const clientName = call.clientName || call.client_name;
                         let targetConnId = call.connection_id;
                         const agentControl = getAgentControl(agentId);
                         if (agentControl.enabled === false) {
-                            recordAgentActivity(req, { agentId, action: 'batch_tool_call_blocked_by_agent_policy', status: 'blocked', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
-                            appendGatewayAudit('batch_tool_call_blocked_by_agent_policy', { index, agentId, control: agentControl, toolName: tool_name, clientName, connectionId: targetConnId || null });
+                            recordAgentActivity(req, { agentId, traceId, action: 'batch_tool_call_blocked_by_agent_policy', status: 'blocked', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
+                            appendGatewayAudit('batch_tool_call_blocked_by_agent_policy', { traceId, index, agentId, control: agentControl, toolName: tool_name, clientName, connectionId: targetConnId || null });
                             return { index, clientName, tool_name, error: 'agent_disabled_by_gateway_policy', agentId, control: agentControl };
                         }
-                        recordAgentActivity(req, { agentId, action: 'batch_tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
+                        recordAgentActivity(req, { agentId, traceId, action: 'batch_tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
                         appendGatewayAudit('batch_tool_call_request_received', {
+                            traceId,
                             index,
                             agentId,
                             clientName,
@@ -1537,8 +1663,8 @@ const httpServer = http.createServer(async (req, res) => {
                         }
 
                         const taskId = typeof call.task_id === 'string' ? call.task_id : (typeof call.taskId === 'string' ? call.taskId : undefined);
-                        const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || globalTimeout || 30000, { credentialRef, credentialScope, agentId, taskId });
-                        recordAgentActivity(req, { agentId, action: 'batch_tool_call_completed', status: 'completed', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, taskId, body: call });
+                        const result = await sendToolCall(targetConnId, tool_name, args || {}, timeout || globalTimeout || 30000, { credentialRef, credentialScope, agentId, taskId, traceId });
+                        recordAgentActivity(req, { agentId, traceId, action: 'batch_tool_call_completed', status: 'completed', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, taskId, body: call });
                         return { index, clientName, tool_name, credential_ref: credentialRef, credential_scope: credentialScope, result };
                     } catch (err) {
                         return { index, clientName: call.clientName || call.client_name, error: err.message };
