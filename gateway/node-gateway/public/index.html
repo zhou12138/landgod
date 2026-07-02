@@ -35,6 +35,7 @@
           </div>
         </div>
         <button class="nav-item" data-view="tasks">Tasks</button>
+        <button class="nav-item" data-view="logs">Logs</button>
         <button class="nav-item" data-view="audit">Audit</button>
         <button class="nav-item" data-view="access">Effective Access</button>
       </nav>
@@ -269,6 +270,43 @@
             </div>
           </div>
           <div class="table-wrap"><table id="tasksTable"></table></div>
+        </article>
+      </section>
+
+      <section id="view-logs" class="view">
+        <article class="panel audit-filter-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Tool Call Logs</h2>
+              <p class="panel-desc">Every observed tool call exchange: request received, dispatch to Worker, response/error/timeout, and Worker-side local audit when available.</p>
+            </div>
+          </div>
+          <form id="logsFilterForm" class="form-row audit-filter-row">
+            <input name="query" placeholder="Search request / response / task / worker" />
+            <input name="tool" placeholder="Tool name" />
+            <input name="agent" placeholder="Agent ID" />
+            <input name="worker" placeholder="Worker / client" />
+            <select name="status">
+              <option value="all">Any status</option>
+              <option value="completed">completed</option>
+              <option value="pending">pending</option>
+              <option value="failed">failed</option>
+              <option value="timeout">timeout</option>
+            </select>
+            <button class="primary-button" type="submit">Filter</button>
+            <button class="ghost-button" id="logsFilterClearBtn" type="button">Clear</button>
+          </form>
+          <div id="logsFilterSummary" class="muted">No filters applied.</div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Tool call exchanges</h2>
+              <p class="panel-desc">Gateway audit is the source of truth for dispatch/response; Worker audit adds local execution evidence.</p>
+            </div>
+          </div>
+          <div id="toolCallLogs" class="stack log-list"></div>
         </article>
       </section>
 

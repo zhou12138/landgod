@@ -399,16 +399,21 @@ function redactGatewayAuditValue(value) {
 function summarizeGatewayToolMessage(message) {
     if (!message || typeof message !== 'object') return message;
     const payload = message.payload && typeof message.payload === 'object' ? message.payload : {};
-    const text = payload.data && typeof payload.data === 'object' && typeof payload.data.text === 'string'
-        ? payload.data.text
-        : undefined;
+    const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
+    const text = typeof data.text === 'string' ? data.text : undefined;
+    const previewLimit = 12000;
     return {
         type: message.type,
         event: message.event,
+        ok: message.ok,
         request_id: payload.request_id,
         is_final: payload.is_final,
         error: payload.error ? redactGatewayAuditValue(payload.error) : undefined,
+        payload: redactGatewayAuditValue({ ...payload, data: undefined }),
+        data: redactGatewayAuditValue({ ...data, text: undefined }),
         dataTextBytes: typeof text === 'string' ? Buffer.byteLength(text, 'utf-8') : undefined,
+        dataTextPreview: typeof text === 'string' ? text.slice(0, previewLimit) : undefined,
+        dataTextTruncated: typeof text === 'string' ? text.length > previewLimit : undefined,
     };
 }
 
@@ -1283,6 +1288,21 @@ const httpServer = http.createServer(async (req, res) => {
                 const agentId = typeof parsed.agent_id === 'string' ? parsed.agent_id : (typeof parsed.agentId === 'string' ? parsed.agentId : getRequestAgentId(req, parsed));
                 const clientName = parsed.clientName || parsed.client_name || (parsed.target && parsed.target.clientName);
                 recordAgentActivity(req, { agentId, action: 'tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: connection_id, body: parsed });
+                appendGatewayAudit('tool_call_request_received', {
+                    agentId,
+                    clientName,
+                    connectionId: connection_id || null,
+                    labels: labels || null,
+                    toolName: tool_name,
+                    arguments: args || {},
+                    timeout,
+                    credentialRef,
+                    credentialScope,
+                    async: isAsync,
+                    queue: isQueue,
+                    remoteAddress: getRequestRemoteAddress(req),
+                    userAgent: req.headers['user-agent'] || '',
+                });
 
                 if (!tool_name) {
                     res.writeHead(400);
@@ -1417,6 +1437,19 @@ const httpServer = http.createServer(async (req, res) => {
                         const clientName = call.clientName || call.client_name;
                         let targetConnId = call.connection_id;
                         recordAgentActivity(req, { agentId, action: 'batch_tool_call_received', status: 'received', toolName: tool_name, credentialRef, clientName, connectionId: targetConnId, body: call });
+                        appendGatewayAudit('batch_tool_call_request_received', {
+                            index,
+                            agentId,
+                            clientName,
+                            connectionId: targetConnId || null,
+                            toolName: tool_name,
+                            arguments: args || {},
+                            timeout: timeout || globalTimeout || null,
+                            credentialRef,
+                            credentialScope,
+                            remoteAddress: getRequestRemoteAddress(req),
+                            userAgent: req.headers['user-agent'] || '',
+                        });
 
                         if (!tool_name) {
                             return { index, clientName, error: "Missing tool_name" };

@@ -239,7 +239,11 @@ textarea { resize: vertical; min-height: 84px; }
 .audit-filter-panel { margin-bottom: 18px; }
 .audit-filter-row { grid-template-columns: 1.4fr 1fr 1fr 150px 150px auto auto; }
 .audit-central-panel { margin-bottom: 18px; }
-.audit-list { max-height: 680px; overflow: auto; padding-right: 4px; }
+.audit-list, .log-list { max-height: 680px; overflow: auto; padding-right: 4px; }
+.log-card { display: grid; gap: 10px; }
+.log-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.log-columns details { min-width: 0; border: 1px solid var(--border); border-radius: 14px; padding: 10px; background: rgba(2, 6, 23, 0.32); }
+.log-columns pre { max-height: 320px; overflow: auto; margin-top: 10px; }
 .code-block, .decision-box {
   margin-top: 12px;
   padding: 14px;
@@ -258,7 +262,7 @@ textarea { resize: vertical; min-height: 84px; }
   .app-shell { grid-template-columns: 1fr; }
   .sidebar { position: relative; height: auto; }
   .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .metric-grid, .two-column, .two-column.wide-left, .demo-flow { grid-template-columns: 1fr; }
+  .metric-grid, .two-column, .two-column.wide-left, .demo-flow, .log-columns { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .demo-hero { flex-direction: column; }
 }

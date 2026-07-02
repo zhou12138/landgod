@@ -8,6 +8,7 @@ const state = {
   queued: [],
   financeDemoResult: null,
   auditFilters: { query: '', tool: '', credential: '', source: 'all', decision: 'all' },
+  logFilters: { query: '', tool: '', agent: '', worker: '', status: 'all' },
   gatewayAudit: [],
   credentialAudit: [],
   workerAudit: [],
@@ -23,6 +24,7 @@ const titles = {
   credentials: ['Credentials', 'Gateway-managed credential metadata and policy. Secrets are never displayed.'],
   'finance-demo': ['Scenarios', 'Scenario templates and demos. Current scenario: Finance Monthly Report — Agent → Gateway → Worker → MCP → Credential Broker → Audit.'],
   tasks: ['Tasks', 'Recent async tasks and queued tool calls.'],
+  logs: ['Logs', 'Tool call request/dispatch/response exchanges and Worker-side execution evidence.'],
   audit: ['Audit', 'Credential Broker audit and Worker audit_read aggregation.'],
   access: ['Effective Access', 'Explain whether a tool call can use a credential across Gateway, Worker, and Tool layers.'],
 };
@@ -342,6 +344,136 @@ function renderTasks() {
   }), 'No tasks yet.');
 }
 
+function eventTime(entry) {
+  return entry?.timestamp || entry?.ts || entry?.time || '';
+}
+
+function toolCallStatusFor(events) {
+  const names = events.map((entry) => entry.event || entry.action || '');
+  if (names.some((name) => name.includes('timeout'))) return 'timeout';
+  if (names.some((name) => name.includes('error') || name.includes('failed'))) return 'failed';
+  if (names.some((name) => name.includes('result_received') || name.includes('response_received') || name.includes('completed'))) return 'completed';
+  if (names.some((name) => name.includes('queued'))) return 'queued';
+  return 'pending';
+}
+
+function isToolCallAuditEvent(entry) {
+  const event = String(entry.event || entry.action || '');
+  return event.includes('tool_call') || event.includes('batch_tool_call');
+}
+
+function workerAuditLooksLikeToolCall(entry) {
+  const text = JSON.stringify(entry || {});
+  return text.includes('tool_call') || text.includes('[managed-client-mcp-ws] tool_call');
+}
+
+function buildToolCallLogs() {
+  const groups = new Map();
+  const put = (key, kind, entry, extra = {}) => {
+    if (!key) key = `event:${entry.eventId || entry.id || eventTime(entry) || Math.random()}`;
+    if (!groups.has(key)) groups.set(key, { key, events: [], workerEvents: [] });
+    groups.get(key)[kind].push({ ...entry, ...extra });
+  };
+
+  for (const entry of state.gatewayAudit || []) {
+    if (!isToolCallAuditEvent(entry) && !(entry.event === 'agent_activity_observed' && isToolCallAuditEvent(entry))) continue;
+    const key = entry.requestId || entry.request_id || entry.taskId || entry.task_id || entry.eventId;
+    put(key, 'events', entry, { source: 'gateway' });
+  }
+
+  for (const agent of state.agents || []) {
+    for (const op of agent.recentOperations || []) {
+      if (!isToolCallAuditEvent(op)) continue;
+      const key = op.requestId || op.request_id || op.taskId || op.task_id || `${agent.agentId}:${op.timestamp}:${op.action}:${op.toolName}`;
+      put(key, 'events', { ...op, agentId: agent.agentId, event: op.action }, { source: 'agent_activity' });
+    }
+  }
+
+  for (const group of state.workerAudit || []) {
+    for (const entry of group.entries || []) {
+      if (!workerAuditLooksLikeToolCall(entry)) continue;
+      const text = JSON.stringify(entry || {});
+      const requestId = text.match(/tool_call-[0-9a-f-]+/i)?.[0];
+      put(requestId || entry.id, 'workerEvents', entry, { source: 'worker', clientName: group.clientName, connectionId: group.connectionId });
+    }
+  }
+
+  return Array.from(groups.values()).map((log) => {
+    const all = [...log.events, ...log.workerEvents].sort((a, b) => Date.parse(eventTime(a) || 0) - Date.parse(eventTime(b) || 0));
+    const primary = all.find((entry) => entry.toolName || entry.tool_name || entry.requestId || entry.taskId) || all[0] || {};
+    return {
+      ...log,
+      all,
+      requestId: primary.requestId || primary.request_id || log.key,
+      taskId: primary.taskId || primary.task_id || '',
+      toolName: primary.toolName || primary.tool_name || primary.tool || '',
+      agentId: primary.agentId || primary.agent_id || '',
+      clientName: primary.clientName || primary.workerKey || '',
+      status: toolCallStatusFor(all),
+      startedAt: eventTime(all[0]),
+      endedAt: eventTime(all[all.length - 1]),
+    };
+  }).sort((a, b) => Date.parse(b.startedAt || 0) - Date.parse(a.startedAt || 0));
+}
+
+function logMatches(log) {
+  const filters = state.logFilters;
+  const text = JSON.stringify(log || {}).toLowerCase();
+  if (filters.query && !text.includes(filters.query.toLowerCase())) return false;
+  if (filters.tool && !String(log.toolName || '').toLowerCase().includes(filters.tool.toLowerCase()) && !text.includes(filters.tool.toLowerCase())) return false;
+  if (filters.agent && !String(log.agentId || '').toLowerCase().includes(filters.agent.toLowerCase()) && !text.includes(filters.agent.toLowerCase())) return false;
+  if (filters.worker && !String(log.clientName || '').toLowerCase().includes(filters.worker.toLowerCase()) && !text.includes(filters.worker.toLowerCase())) return false;
+  if (filters.status !== 'all' && log.status !== filters.status) return false;
+  return true;
+}
+
+function renderToolCallLog(log) {
+  const tone = log.status === 'completed' ? 'good' : log.status === 'failed' || log.status === 'timeout' ? 'bad' : 'warn';
+  const requestEvents = log.all.filter((entry) => String(entry.event || entry.action || '').includes('received') || String(entry.event || '').includes('dispatched'));
+  const responseEvents = log.all.filter((entry) => String(entry.event || entry.action || '').includes('result') || String(entry.event || entry.action || '').includes('response') || String(entry.event || entry.action || '').includes('completed') || String(entry.event || '').includes('error') || String(entry.event || '').includes('timeout'));
+  return `<div class="card-row log-card">
+    <div class="card-row-head">
+      <span class="card-title">${escapeHtml(log.toolName || 'tool_call')}</span>
+      ${statusPill(log.status, tone)}
+    </div>
+    <div class="card-meta">
+      <span>${escapeHtml(log.startedAt || '—')}</span>
+      <span>duration ${escapeHtml(formatDuration(log.startedAt, log.endedAt))}</span>
+      <span>agent ${escapeHtml(log.agentId || '—')}</span>
+      <span>worker ${escapeHtml(log.clientName || '—')}</span>
+      <span>request ${escapeHtml(log.requestId || '—')}</span>
+      ${log.taskId ? `<span>task ${escapeHtml(log.taskId)}</span>` : ''}
+    </div>
+    <div class="log-columns">
+      <details open>
+        <summary>Request / dispatch (${requestEvents.length || log.events.length})</summary>
+        <pre class="pre-wrap">${json(requestEvents.length ? requestEvents : log.events)}</pre>
+      </details>
+      <details open>
+        <summary>Response / result (${responseEvents.length})</summary>
+        <pre class="pre-wrap">${json(responseEvents)}</pre>
+      </details>
+    </div>
+    <details class="compact-details">
+      <summary>Worker local audit (${log.workerEvents.length}) + full timeline (${log.all.length})</summary>
+      <pre class="pre-wrap">${json(log.all)}</pre>
+    </details>
+  </div>`;
+}
+
+function renderLogs() {
+  const logs = buildToolCallLogs();
+  const filtered = logs.filter(logMatches);
+  const node = $('#logsFilterSummary');
+  if (node) {
+    const active = Object.entries(state.logFilters).filter(([, value]) => value && value !== 'all');
+    node.textContent = active.length
+      ? `Filters: ${active.map(([key, value]) => `${key}=${value}`).join(', ')} · Showing ${filtered.length} of ${logs.length} tool call exchanges`
+      : `No filters applied. Showing ${filtered.length} tool call exchanges.`;
+  }
+  $('#toolCallLogs').innerHTML = filtered.length ? filtered.slice(0, 80).map(renderToolCallLog).join('') : '<div class="card-row muted">No tool call logs match filters.</div>';
+}
+
 function renderAuditCard(entry) {
   const event = entry.event || entry.type || entry.message || 'event';
   const tone = entry.decision === 'deny' ? 'bad' : entry.decision === 'allow' ? 'good' : '';
@@ -650,6 +782,7 @@ function render() {
   renderCredentials();
   renderFinanceDemo();
   renderTasks();
+  renderLogs();
   renderAudit();
   renderAccessOptions();
 }
@@ -728,6 +861,25 @@ function bindEvents() {
       showToast(`${enabled ? 'Enabled' : 'Disabled'} Tool: ${toolName}`);
       await refreshData({ quiet: true });
     } catch (err) { showToast(err.message, true); }
+  });
+
+  $('#logsFilterForm')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    state.logFilters = {
+      query: data.get('query')?.trim() || '',
+      tool: data.get('tool')?.trim() || '',
+      agent: data.get('agent')?.trim() || '',
+      worker: data.get('worker')?.trim() || '',
+      status: data.get('status') || 'all',
+    };
+    renderLogs();
+  });
+
+  $('#logsFilterClearBtn')?.addEventListener('click', () => {
+    state.logFilters = { query: '', tool: '', agent: '', worker: '', status: 'all' };
+    $('#logsFilterForm')?.reset();
+    renderLogs();
   });
 
   $('#auditFilterForm')?.addEventListener('submit', (event) => {
