@@ -1,129 +1,195 @@
-# LandGod / MCPHub Gateway — 3-Minute Pitch Script
+# LandGod / MCPHub Gateway — Speaker Script
 
 ## Opening
 
-This deck tells the origin story of LandGod / MCPHub Gateway.
+Today I want to explain the product idea behind LandGod and MCPHub Gateway.
 
-The core message is simple:
+The short version is:
 
-> Cloud Agents can reason in the cloud, but real work often depends on tools, identity, and network context on the user’s own device.
+> Cloud agents are becoming very good at reasoning, but real work still happens in the user’s local environment.
 
-LandGod bridges that gap.
+That local environment includes CLI tools, browser sessions, files, repositories, VPN access, enterprise identity, and device-specific configuration.
 
-It is not remote control. It is not exposing a personal computer to the internet. It is a governed execution bridge from cloud Agents to local tools.
-
----
-
-## Slide 1 — WorkIQ Integration Gap
-
-The initial problem came from a WorkIQ integration.
-
-Societas was running in the cloud as the reasoning Agent. But WorkIQ did not expose a clean API. The usable entrypoint was a local `workiq` CLI already configured on the user’s work machine.
-
-That created a hard boundary:
-
-- the Agent was in the cloud;
-- the tool was local;
-- the CLI depended on local login state, VPN, and device context;
-- AAD tokens, cookies, and corporate access could not be moved to the cloud;
-- personal devices could not expose inbound ports.
-
-So the design principle became:
-
-> outbound Worker, no exposed personal device ports.
-
-The first bridge was:
-
-```text
-Cloud Agent → Gateway → Local Worker → Local CLI
-```
-
-The insight was that the Agent had intelligence, but it lacked a safe local execution runtime.
+LandGod is the bridge between those two worlds: cloud intelligence and local execution.
 
 ---
 
-## Slide 2 — Product Insight
+## Slide 1 — Problem → Generalized Product Pattern
 
-After WorkIQ, we realized this was not WorkIQ-specific.
+We started with a concrete WorkIQ problem.
 
-The user’s real productivity context already lives on their own devices:
+Societas, as a cloud Agent, needed to operate WorkIQ for the user. But the useful WorkIQ capability was not exposed as a clean cloud API. It lived behind a local `workiq` CLI on the user’s computer.
+
+So the first problem looked simple:
+
+> How can a cloud Agent call a local CLI safely?
+
+But the real boundary was larger than WorkIQ.
+
+The valuable execution context was local:
+
+- local CLI tools;
+- browser login state;
+- AAD tokens and cookies;
+- VPN and internal network access;
+- local repositories and files;
+- device-specific configuration.
+
+Moving all of that into the cloud would be risky, fragile, and often impossible.
+
+So we generalized the problem directly:
+
+> WorkIQ is just one example. The real product category is Local Computer Access for cloud Agents.
+
+The pattern is:
 
 ```text
-workiq, az, copilot, gh, kubectl, ssh, Portal, local repo
+Cloud Agent → Gateway → Local Worker → User Tools
 ```
 
-These tools are valuable because they are already configured with identity, permissions, repos, browser state, VPN, and internal access.
+The Agent keeps reasoning in the cloud. The actual execution happens on the user’s own trusted device.
 
-So the product opportunity is broader:
+That is the thesis of the product:
 
-> Let cloud Agents use the user’s existing local tool ecosystem safely.
+> Cloud intelligence, local execution.
 
-MCPHub Gateway becomes a personal local-tool runtime across trusted devices:
+---
 
-```text
-Desktop, Laptop, Cloud VM, DevBox
-```
+## Slide 2 — Product Architecture + Demo Placeholder
 
-The Gateway provides:
+This slide shows the product architecture.
 
-- AAD identity and permission boundary;
-- device routing;
-- capability registry;
+On the left, we have Agent producers:
+
+- OpenClaw;
+- Societas;
+- GitHub Copilot;
+- and other Agents.
+
+They all call one governed service: MCPHub Gateway.
+
+The Gateway is the cloud control plane. It provides:
+
+- Agent and MCP-compatible APIs;
+- authentication and policy;
+- routing and capability registry;
+- credential broker;
 - activity history.
 
-This is not another Agent. It is the runtime layer that lets Agents move from suggestions to real actions.
+On the right, we have the user execution plane.
+
+That can be a laptop, VM, DevBox, or workshop machine. Each device runs a LandGod Worker. The Worker exposes a local tool registry, which can include:
+
+- WorkIQ CLI;
+- file tools;
+- browser tools;
+- company CLI tools;
+- local MCP tools.
+
+The important architecture point is this:
+
+> Agents do not directly connect to personal devices.
+
+Instead, Workers connect outbound to the Gateway. The Gateway governs and routes. The Worker executes locally.
+
+This gives us a clean separation:
+
+```text
+Gateway = control plane
+Worker  = local execution plane
+```
+
+The demo slot on the right is where we can show one real end-to-end action:
+
+```text
+Agent → MCPHub → Worker → Local Tool → Result + Activity trace
+```
+
+For example, a cloud Agent can call `workiq`, a local CLI, or a browser tool, and the result returns through the Gateway with an activity record.
 
 ---
 
-## Slide 3 — Trusted Execution Workflow
+## Slide 3 — Product Workflow: Register, Invoke, Execute
 
-The actual workflow has two parts.
+The product flow has two phases.
 
-First, capability publishing.
+### Phase A — Worker connects and publishes tools
 
-The Agent discovers the Gateway through Skill and local configuration. Separately, the Worker connects outbound to the Gateway over WebSocket.
+First, the user’s Worker connects outbound to the Gateway.
 
-The Worker registers itself, establishes a binding, and publishes its capability catalog.
-
-Local capabilities come from two sources:
-
-- built-in tools, such as shell, file, and browser tools;
-- MCP tools, discovered through MCP `listTools()`.
-
-The Worker packages those into `toolRegistry`, then publishes tool definitions through `update_tools`.
-
-Second, tool execution.
-
-When the Agent wants to act, it calls the Gateway over HTTP:
+The sequence is:
 
 ```text
-POST /tool_call
+1. WS connect
+2. token auth + session_opened
+3. register binding + update_tools
+4. publish catalog
 ```
 
-The Gateway applies policy, records activity, selects a Worker by connection ID, client name, or labels, then signs and dispatches the request over WebSocket.
+This is important because the user device does not need to expose an inbound port.
 
-The Worker validates the request, checks the tool binding, runs approval or credential logic if needed, and finally calls:
+After the Worker connects, the Gateway establishes the device binding. Then the Worker publishes its local capabilities through `update_tools`.
+
+Those capabilities become a user-scoped catalog.
+
+So from the Agent’s point of view, local tools appear as available tools. But physically, the tools still live and execute on the user’s device.
+
+### Phase B — Agent calls and Worker executes locally
+
+Second, the Agent invokes a tool.
+
+The request starts inside the Agent Runtime:
+
+```text
+HTTP /tool_call
+```
+
+The Gateway receives the call, then performs its control-plane responsibilities:
+
+```text
+route · sign · audit
+```
+
+It selects the right Worker by connection ID, client name, or labels. Then it sends a signed WebSocket call to that Worker.
+
+On the Worker side, the request is verified before execution. The Worker checks the signed request, nonce, body hash, expiration, and tool binding.
+
+Only then does it invoke the local tool runtime:
 
 ```text
 toolRegistry.callTool()
 ```
 
-The result goes back over WebSocket to the Gateway, then back as an HTTP response to the Agent.
+The result comes back through the same governed path:
 
-In one sentence:
+```text
+Local Tool → Worker → Gateway → Agent Runtime
+```
 
-> HTTP to Gateway. WebSocket to Worker. Local tools execute.
+And the Gateway records the response and activity trace.
+
+So the complete product workflow is:
+
+```text
+Register capabilities first.
+Invoke later through Gateway.
+Execute locally on the Worker.
+Return results through Gateway.
+Record Activity for proof.
+```
 
 ---
 
 ## Closing
 
-LandGod / MCPHub Gateway turns personal devices into secure local tool runtimes for cloud Agents.
+LandGod / MCPHub Gateway turns personal or enterprise devices into governed local execution runtimes for cloud Agents.
 
-The operating model is:
+The core operating model is:
 
 ```text
 Gateway governs.
 Worker executes.
 Activity proves.
 ```
+
+That is how cloud Agents move from suggestions to real actions, without moving local identity, secrets, or device context into the cloud.
