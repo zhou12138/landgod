@@ -48,6 +48,7 @@ Read in order — each document builds on the previous one.
 | — | [Enterprise Architecture Diagrams](landgod-enterprise-architecture-diagrams.html) | Standalone HTML/SVG deployment topology and system architecture diagrams | 18 |
 | — | [Agent Injection Defense & Credential Boundary](18-agent-injection-defense-and-credential-boundary.md) | Prompt-injection defense, Worker trust boundaries, Credential Broker hardening, and P0 security checklist | 12, 15 |
 | — | [Technical Architecture, Harness, and Design Review](19-technical-architecture-harness-and-design-review.md) | Architecture review, Enterprise Execution Harness design philosophy, technical highlights, risks, and roadmap | 12, 14, 15, 16, 18 |
+| 20 | [Local Browser vs LandGod MCPHub Desktop](20-local-browser-vs-landgod-mcphub-desktop.md) | Comparison of browser/web execution surface vs LandGod enterprise machine/desktop execution surface | 12, 13, 18, 19 |
 | — | [GUI vs Headless](gui-vs-headless.md) | Worker run mode comparison | 06 |
 
 ## Additional Resources
