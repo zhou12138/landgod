@@ -435,54 +435,61 @@
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 4 · 能力注册与调用工作流</div>
-        <h1>Worker 如何暴露本地能力？Agent 如何路由并调用？</h1>
-        <div class="subtitle">LandGod 的工作流是：Worker 注册本地能力，Gateway 维护能力目录；Agent 发送 query / tool_call，Gateway 根据身份、权限、设备标签和能力匹配路由到具体 Worker。</div>
+        <div class="eyebrow">Page 4 · 真实工作流：注册能力与调用能力</div>
+        <h1>Agent 如何一步一步调用 Worker 的本地能力？</h1>
+        <div class="subtitle">LandGod 的真实链路分两段：Worker 先通过 WebSocket 注册身份和工具能力；Agent 后续通过 Gateway 的 <code>/tool_call</code> 触发一次受签名、可路由、可审计的本地执行。</div>
       </div>
-      <div class="brand"><div class="name">Workflow</div><div class="tag">Register · Route · Execute</div></div>
+      <div class="brand"><div class="name">Real Workflow</div><div class="tag">Register · Publish · Call</div></div>
     </header>
 
     <div class="two-grid">
       <article class="card">
-        <h2>Worker 能力注册</h2>
-        <p class="lead">Worker 启动后主动连接 Gateway，并把“我是谁、我在哪台设备、我能做什么”注册成可路由能力。</p>
+        <h2>A. Worker 先注册本地能力</h2>
+        <p class="lead">这部分发生在 Worker 启动和连接 Gateway 时，是真实源码里的握手顺序。</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span><b>身份绑定</b>：token → clientId / clientName / labels / user scope</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>设备画像</b>：desktop、laptop、cloud-vm、devbox、office-pc 等标签</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>能力目录</b>：内置工具 + MCP tools + 本地 CLI wrapper + 文件/浏览器能力</span></div>
-          <div class="bullet"><span class="dot blue"></span><span><b>权限边界</b>：permission profile、approval mode、tool allowlist、credential policy</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>1. 出站连接</b>：Worker 用 <code>Authorization: Bearer token</code> 主动连 Gateway WebSocket；个人设备不暴露端口。</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>2. session_opened</b>：Gateway 校验 token 后创建 <code>connectionId</code>，给 Worker 发送 <code>session_opened</code>。</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>3. register</b>：Worker 发送 <code>client_id</code>、<code>client_name</code>、labels、resources；Gateway 生成 <code>userId/sessionId/serverKeyId</code> 并保存连接。</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>4. binding 建立</b>：Worker 保存 Gateway 返回的 server public key、sessionId、connectionId，用于后续校验签名 tool_call。</span></div>
+          <div class="bullet"><span class="dot blue"></span><span><b>5. update_tools</b>：Worker 调用 <code>toolRegistry.getToolDefinitions()</code>，把本地工具定义发布给 Gateway；Gateway 存到当前连接的 <code>ci.tools</code>。</span></div>
         </div>
-        <div class="quote">Worker 不是暴露整台电脑，而是把本地能力声明成可被授权调用的 capability。</div>
+        <div class="quote">真实点：能力不是 Agent 临时猜出来的，是 Worker 启动后通过 <code>update_tools</code> 发布到 Gateway 的。</div>
       </article>
 
       <article class="card">
-        <h2>Query → Route → Execute</h2>
-        <p class="lead">Agent 不关心工具在哪台机器上，只表达意图和约束；Gateway 负责把请求变成一次受控的本地能力调用。</p>
+        <h2>B. Agent 发起 tool_call 后的真实路径</h2>
+        <p class="lead">以我作为 Agent 调用某个 Worker 的能力为例，实际步骤是下面这条链。</p>
         <div class="diagram" style="padding: 18px;">
-          <svg viewBox="0 0 780 390" style="height:390px" role="img" aria-label="LandGod workflow flowchart">
+          <svg viewBox="0 0 800 390" style="height:390px" role="img" aria-label="LandGod actual tool call workflow">
             <defs><marker id="a4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s4" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
-            <path d="M118 72 L215 72" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M350 72 L455 72" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M590 72 L675 72" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M690 118 C690 170 395 160 395 205" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
-            <path d="M395 252 L395 304" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
-            <path d="M300 335 C200 335 158 270 158 232" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
 
-            <rect x="20" y="28" width="100" height="88" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s4)"/><text x="70" y="62" class="node-title">Agent</text><text x="70" y="88" class="node-sub">query / intent</text>
-            <rect x="214" y="28" width="138" height="88" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s4)"/><text x="283" y="58" class="node-title">Gateway</text><text x="283" y="84" class="node-sub">auth · policy</text><text x="283" y="106" class="node-sub">capability match</text>
-            <rect x="454" y="28" width="138" height="88" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="523" y="58" class="node-title">Route</text><text x="523" y="84" class="node-sub">device labels</text><text x="523" y="106" class="node-sub">tool capability</text>
-            <rect x="672" y="28" width="88" height="88" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s4)"/><text x="716" y="62" class="node-title">Worker</text><text x="716" y="88" class="node-sub">target</text>
+            <path d="M115 70 L198 70" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
+            <path d="M337 70 L430 70" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
+            <path d="M565 70 L650 70" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
+            <path d="M695 112 C695 158 492 148 492 190" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
+            <path d="M492 236 L492 282" stroke="#64748b" stroke-width="3" marker-end="url(#a4)"/>
+            <path d="M410 318 C280 326 208 260 170 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a4)"/>
 
-            <rect x="300" y="202" width="190" height="54" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#s4)"/><text x="395" y="225" class="cap">signed tool_call + optional grant</text><text x="395" y="247" class="node-sub">requestId · traceId · nonce · exp</text>
-            <rect x="304" y="304" width="182" height="58" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="395" y="328" class="cap">local execution</text><text x="395" y="352" class="node-sub">workiq / az / copilot / portal</text>
-            <rect x="70" y="188" width="176" height="58" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.42)" stroke-width="2" filter="url(#s4)"/><text x="158" y="212" class="cap">result + activity</text><text x="158" y="236" class="node-sub">Agent continues reasoning</text>
+            <rect x="18" y="28" width="100" height="84" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s4)"/><text x="68" y="60" class="node-title">Agent</text><text x="68" y="86" class="node-sub">POST /tool_call</text>
+            <rect x="196" y="28" width="142" height="84" rx="18" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s4)"/><text x="267" y="56" class="node-title">Gateway</text><text x="267" y="82" class="node-sub">policy + route</text><text x="267" y="104" class="node-sub">clientName / labels</text>
+            <rect x="430" y="28" width="138" height="84" rx="18" fill="rgba(251,113,133,.12)" stroke="rgba(251,113,133,.46)" stroke-width="2" filter="url(#s4)"/><text x="499" y="56" class="node-title">sendToolCall</text><text x="499" y="82" class="node-sub">sign meta</text><text x="499" y="104" class="node-sub">optional grant</text>
+            <rect x="650" y="28" width="122" height="84" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="711" y="60" class="node-title">Worker</text><text x="711" y="86" class="node-sub">handleToolCall</text>
+
+            <rect x="388" y="188" width="208" height="54" rx="18" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s4)"/><text x="492" y="211" class="cap">validate + bind + approve</text><text x="492" y="233" class="node-sub">signature · body hash · nonce · tool binding</text>
+            <rect x="400" y="282" width="184" height="58" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s4)"/><text x="492" y="306" class="cap">toolRegistry.callTool</text><text x="492" y="330" class="node-sub">workiq / az / copilot / MCP</text>
+            <rect x="70" y="176" width="202" height="66" rx="18" fill="rgba(56,189,248,.10)" stroke="rgba(56,189,248,.42)" stroke-width="2" filter="url(#s4)"/><text x="171" y="202" class="cap">response to Agent</text><text x="171" y="226" class="node-sub">tool_result / tool_error + Activity</text>
           </svg>
         </div>
-        <div class="decision">工作流闭环：Register capability → Match query → Route worker → Sign request → Execute local tool → Return result。</div>
+        <div class="bullets">
+          <div class="bullet"><span class="dot green"></span><span><b>请求</b>：Agent 发送 <code>agent_id</code>、<code>tool_name</code>、arguments、<code>clientName</code>/<code>labels</code>，可带 <code>credential_ref</code>。</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>路由</b>：Gateway 按 <code>connection_id</code>、<code>clientName</code>、labels 查找在线 Worker；找不到可 queue。</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>执行</b>：Worker 校验签名和 tool binding，通过 defense / approval / credential grant 后调用 <code>toolRegistry.callTool</code>。</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>返回</b>：Worker 发 <code>tool_result</code> 或 <code>tool_error</code>，Gateway 解析 pending request 并把结果回给 Agent。</span></div>
+        </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>机制总结：</b>LandGod 把个人设备上的本地能力变成可发现、可授权、可路由、可验证执行的 Agent 工具。</div>
+    <div class="footer-line"><b>真实工作流：</b>Worker 先 register + update_tools 发布能力；Agent 后续通过 /tool_call 让 Gateway 路由、签名并触发本地 toolRegistry.callTool。</div>
     <div class="slide-number">04 / 04</div>
   </section>
 </body>
