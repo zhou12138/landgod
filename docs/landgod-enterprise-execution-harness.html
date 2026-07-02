@@ -1,15 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LandGod: Enterprise Execution Harness</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --panel: #111c33;
-      --panel-2: #17223a;
-      --line: #334155;
       --text: #f8fafc;
       --muted: #94a3b8;
       --muted-2: #cbd5e1;
@@ -28,7 +24,7 @@
       display: grid;
       place-items: center;
       background: #020617;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color: var(--text);
     }
 
@@ -38,7 +34,7 @@
       background: radial-gradient(circle at 18% 8%, rgba(56,189,248,.14), transparent 28%),
                   radial-gradient(circle at 88% 12%, rgba(167,139,250,.16), transparent 30%),
                   linear-gradient(135deg, #0f172a 0%, #111827 52%, #08111f 100%);
-      padding: 58px 72px 46px;
+      padding: 48px 72px 42px;
       position: relative;
       overflow: hidden;
     }
@@ -58,40 +54,40 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 32px;
-      margin-bottom: 38px;
+      gap: 30px;
+      margin-bottom: 24px;
     }
 
     .eyebrow {
       color: var(--agent);
-      font-size: 22px;
+      font-size: 21px;
       letter-spacing: .12em;
       text-transform: uppercase;
-      font-weight: 700;
+      font-weight: 750;
       margin-bottom: 10px;
     }
 
     h1 {
       margin: 0;
-      font-size: 64px;
-      line-height: 1.03;
+      font-size: 54px;
+      line-height: 1.04;
       letter-spacing: -0.045em;
       font-weight: 850;
     }
 
     .subtitle {
-      margin-top: 16px;
-      font-size: 27px;
-      line-height: 1.36;
+      margin-top: 15px;
+      font-size: 23px;
+      line-height: 1.32;
       color: var(--muted-2);
-      max-width: 980px;
+      max-width: 1040px;
       font-weight: 500;
     }
 
     .brand {
       flex: 0 0 auto;
-      min-width: 220px;
-      padding: 18px 22px;
+      width: 236px;
+      padding: 18px 20px;
       border: 1px solid rgba(56,189,248,.3);
       border-radius: 22px;
       background: rgba(15,23,42,.62);
@@ -99,56 +95,59 @@
     }
 
     .brand .name {
-      font-size: 36px;
+      font-size: 34px;
       font-weight: 850;
       letter-spacing: -0.03em;
     }
 
     .brand .tag {
-      margin-top: 6px;
+      margin-top: 7px;
       color: var(--muted);
-      font-size: 18px;
+      font-size: 17px;
+      line-height: 1.35;
     }
 
     .main {
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: 410px 1fr;
-      gap: 34px;
-      height: 640px;
+      grid-template-columns: 430px 1fr;
+      gap: 32px;
+      height: 540px;
     }
 
     .problem {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 16px;
+      min-width: 0;
     }
 
     .card {
       background: rgba(15,23,42,.72);
       border: 1px solid rgba(148,163,184,.18);
       border-radius: 24px;
-      padding: 24px 26px;
+      padding: 22px 24px;
       box-shadow: 0 18px 50px rgba(0,0,0,.20);
     }
 
     .card h2 {
-      margin: 0 0 14px;
-      font-size: 28px;
+      margin: 0 0 13px;
+      font-size: 27px;
+      line-height: 1.16;
       letter-spacing: -0.02em;
     }
 
     .card p {
       margin: 0;
       color: var(--muted-2);
-      font-size: 20px;
-      line-height: 1.55;
+      font-size: 18.5px;
+      line-height: 1.48;
     }
 
     .bullets {
       display: grid;
-      gap: 12px;
+      gap: 10px;
       margin-top: 14px;
     }
 
@@ -157,14 +156,14 @@
       gap: 11px;
       align-items: flex-start;
       color: var(--muted-2);
-      font-size: 20px;
-      line-height: 1.38;
+      font-size: 18.5px;
+      line-height: 1.33;
     }
 
     .dot {
-      width: 9px;
-      height: 9px;
-      margin-top: 10px;
+      width: 8px;
+      height: 8px;
+      margin-top: 8px;
       border-radius: 50%;
       background: var(--danger);
       flex: 0 0 auto;
@@ -176,38 +175,42 @@
       border-color: rgba(34,197,94,.32);
     }
 
-    .value strong {
-      color: #86efac;
-    }
+    .value strong { color: #86efac; }
 
     .diagram {
       position: relative;
       background: rgba(2,6,23,.38);
       border: 1px solid rgba(148,163,184,.16);
       border-radius: 28px;
-      padding: 28px 30px 24px;
+      padding: 24px 28px 20px;
       overflow: hidden;
+      min-width: 0;
     }
 
     .diagram-title {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      gap: 18px;
+      margin-bottom: 16px;
     }
 
     .diagram-title h2 {
       margin: 0;
-      font-size: 30px;
+      font-size: 27px;
+      line-height: 1.18;
       letter-spacing: -0.02em;
+      white-space: nowrap;
     }
 
     .legend {
       display: flex;
-      gap: 14px;
+      gap: 11px;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 14px;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .legend span { display: inline-flex; gap: 6px; align-items: center; }
@@ -215,52 +218,53 @@
 
     svg {
       width: 100%;
-      height: 508px;
+      height: 438px;
       display: block;
     }
 
+    .node-label,
+    .node-sub,
+    .cap-text {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      text-anchor: middle;
+    }
+
     .node-label {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
       fill: #f8fafc;
       font-weight: 760;
-      font-size: 22px;
-      text-anchor: middle;
+      font-size: 21px;
     }
 
     .node-sub {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
       fill: #cbd5e1;
       font-weight: 500;
-      font-size: 16px;
-      text-anchor: middle;
+      font-size: 15px;
     }
 
     .cap-text {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
       fill: #e2e8f0;
       font-weight: 650;
-      font-size: 16px;
-      text-anchor: middle;
+      font-size: 15.5px;
     }
 
     .footer {
       position: absolute;
       left: 72px;
       right: 72px;
-      bottom: 32px;
+      bottom: 30px;
       z-index: 2;
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: 1fr 490px;
       gap: 24px;
       align-items: center;
-      padding-top: 18px;
+      padding-top: 16px;
       border-top: 1px solid rgba(148,163,184,.16);
     }
 
     .slogan {
-      font-size: 25px;
+      font-size: 21.5px;
       color: var(--muted-2);
-      line-height: 1.35;
+      line-height: 1.34;
       font-weight: 600;
     }
 
@@ -268,19 +272,18 @@
 
     .chips {
       display: flex;
-      gap: 10px;
+      gap: 9px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: 560px;
     }
 
     .chip {
       border: 1px solid rgba(148,163,184,.22);
       background: rgba(15,23,42,.72);
       border-radius: 999px;
-      padding: 8px 13px;
+      padding: 8px 12px;
       color: #dbeafe;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 650;
       white-space: nowrap;
     }
@@ -296,8 +299,8 @@
     <header>
       <div>
         <div class="eyebrow">Enterprise Execution Harness</div>
-        <h1>LandGod：企业级受控执行框架</h1>
-        <div class="subtitle">让 OpenClaw、Hermes、Claude、Cursor、Codex 或云上 Agent，安全接入企业本地、内网与遗留系统。</div>
+        <h1>LandGod: Enterprise Execution Harness</h1>
+        <div class="subtitle">Controlled execution for OpenClaw, Hermes, Claude, Cursor, Codex, and cloud agents across local, on-prem, and legacy enterprise systems.</div>
       </div>
       <div class="brand">
         <div class="name">LandGod</div>
@@ -308,34 +311,34 @@
     <main class="main">
       <aside class="problem">
         <div class="card">
-          <h2>企业真实世界不是全 API 化</h2>
-          <p>大量关键业务系统仍运行在单机、内网、Windows 桌面或专有客户端中。</p>
+          <h2>Enterprise reality is not fully API-first</h2>
+          <p>Many business-critical workflows still live on local machines, intranets, desktops, or proprietary clients.</p>
           <div class="bullets">
-            <div class="bullet"><span class="dot"></span><span>老 ERP / 财务软件 / 工控客户端</span></div>
-            <div class="bullet"><span class="dot"></span><span>浏览器后台、办公电脑、内网服务器</span></div>
-            <div class="bullet"><span class="dot"></span><span>没有标准 API，不能上云，不能暴露外网</span></div>
-            <div class="bullet"><span class="dot"></span><span>AI 想做事，但企业需要边界、权限与审计</span></div>
+            <div class="bullet"><span class="dot"></span><span>Legacy ERP, finance tools, industrial clients</span></div>
+            <div class="bullet"><span class="dot"></span><span>Browser back offices, office PCs, intranet servers</span></div>
+            <div class="bullet"><span class="dot"></span><span>No standard API; cannot move to cloud or expose publicly</span></div>
+            <div class="bullet"><span class="dot"></span><span>Agents need execution; enterprises need policy and audit</span></div>
           </div>
         </div>
 
         <div class="card value">
-          <h2>LandGod 的定位</h2>
-          <p><strong>不是替代 Agent，</strong>而是给任意 Agent 提供一条企业可控的执行通道。</p>
+          <h2>Where LandGod fits</h2>
+          <p><strong>LandGod does not replace agents.</strong> It gives any agent a controlled path to execute inside enterprise boundaries.</p>
         </div>
       </aside>
 
       <section class="diagram">
         <div class="diagram-title">
-          <h2>任意 Agent → 统一控制面 → 本地执行面</h2>
+          <h2>Any Agent → Control Plane → Local Execution</h2>
           <div class="legend">
             <span><i style="background:var(--agent)"></i>Agent</span>
             <span><i style="background:var(--control)"></i>Control Plane</span>
             <span><i style="background:var(--worker)"></i>Worker</span>
-            <span><i style="background:var(--legacy)"></i>Legacy Systems</span>
+            <span><i style="background:var(--legacy)"></i>Legacy</span>
           </div>
         </div>
 
-        <svg viewBox="0 0 1010 508" role="img" aria-label="LandGod architecture diagram">
+        <svg viewBox="0 0 1010 510" role="img" aria-label="LandGod architecture diagram">
           <defs>
             <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
               <path d="M0,0 L0,6 L8,3 z" fill="#64748b" />
@@ -355,47 +358,47 @@
           <path d="M833 398 L833 432" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrow)" />
 
           <!-- agent layer -->
-          <rect x="135" y="18" width="740" height="74" rx="20" fill="rgba(56,189,248,.13)" stroke="rgba(56,189,248,.55)" stroke-width="2" filter="url(#shadow)" />
-          <text x="505" y="50" class="node-label">Agent 接入层</text>
-          <text x="505" y="75" class="node-sub">OpenClaw · Hermes · Claude · Cursor · Codex · 云上 Agent</text>
+          <rect x="115" y="18" width="780" height="74" rx="20" fill="rgba(56,189,248,.13)" stroke="rgba(56,189,248,.55)" stroke-width="2" filter="url(#shadow)" />
+          <text x="505" y="50" class="node-label">Agent Layer</text>
+          <text x="505" y="75" class="node-sub">OpenClaw · Hermes · Claude · Cursor · Codex · Cloud Agents</text>
 
           <!-- gateway -->
-          <rect x="190" y="144" width="630" height="108" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2.5" filter="url(#shadow)" />
-          <text x="505" y="180" class="node-label">LandGod Gateway 控制面</text>
+          <rect x="175" y="144" width="660" height="108" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2.5" filter="url(#shadow)" />
+          <text x="505" y="180" class="node-label">LandGod Gateway Control Plane</text>
           <text x="505" y="209" class="node-sub">Auth / Policy / Routing / Queue / State / Audit / Observability</text>
-          <text x="505" y="235" class="node-sub">统一授权、调度、审计；Agent 不直接碰企业机器</text>
+          <text x="505" y="235" class="node-sub">Unified control; agents never touch enterprise machines directly</text>
 
           <!-- workers -->
           <g>
-            <rect x="67" y="318" width="220" height="80" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
-            <text x="177" y="350" class="node-label">Worker 执行面</text>
-            <text x="177" y="376" class="node-sub">ERP 机器 / 财务机</text>
+            <rect x="57" y="318" width="240" height="80" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
+            <text x="177" y="350" class="node-label">Worker Runtime</text>
+            <text x="177" y="376" class="node-sub">ERP / Finance Machine</text>
           </g>
           <g>
-            <rect x="395" y="318" width="220" height="80" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
-            <text x="505" y="350" class="node-label">Worker 执行面</text>
-            <text x="505" y="376" class="node-sub">办公电脑 / Windows</text>
+            <rect x="385" y="318" width="240" height="80" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
+            <text x="505" y="350" class="node-label">Worker Runtime</text>
+            <text x="505" y="376" class="node-sub">Office PC / Windows</text>
           </g>
           <g>
-            <rect x="723" y="318" width="220" height="80" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
-            <text x="833" y="350" class="node-label">Worker 执行面</text>
-            <text x="833" y="376" class="node-sub">内网服务器 / GPU</text>
+            <rect x="713" y="318" width="240" height="80" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#shadow)" />
+            <text x="833" y="350" class="node-label">Worker Runtime</text>
+            <text x="833" y="376" class="node-sub">Intranet / GPU Node</text>
           </g>
 
           <!-- capability boxes -->
           <g>
-            <rect x="56" y="432" width="242" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
-            <text x="177" y="456" class="cap-text">老 ERP · 财务软件</text>
-            <text x="177" y="479" class="node-sub">桌面操作 / 文件读写 / OCR</text>
+            <rect x="46" y="432" width="262" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
+            <text x="177" y="456" class="cap-text">Legacy ERP · Finance Apps</text>
+            <text x="177" y="479" class="node-sub">Desktop / Files / OCR</text>
           </g>
           <g>
-            <rect x="384" y="432" width="242" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
-            <text x="505" y="456" class="cap-text">浏览器后台 · 单机软件</text>
+            <rect x="374" y="432" width="262" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
+            <text x="505" y="456" class="cap-text">Web Back Office · Local Apps</text>
             <text x="505" y="479" class="node-sub">RPA / GUI / Screenshot</text>
           </g>
           <g>
-            <rect x="712" y="432" width="242" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
-            <text x="833" y="456" class="cap-text">内网系统 · 本地命令</text>
+            <rect x="702" y="432" width="262" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" />
+            <text x="833" y="456" class="cap-text">Intranet Systems · Commands</text>
             <text x="833" y="479" class="node-sub">Shell / MCP / Compute</text>
           </g>
         </svg>
@@ -403,7 +406,7 @@
     </main>
 
     <footer class="footer">
-      <div class="slogan"><b>Agent 负责思考，LandGod 负责受控连接，Worker 负责就地执行。</b><br/>让 AI 能操作真实企业系统，但所有动作都在企业授权、可观测、可审计边界内完成。</div>
+      <div class="slogan"><b>Agents think. LandGod controls access. Workers execute locally.</b><br/>AI can operate real enterprise systems while every action stays authorized, observable, and auditable.</div>
       <div class="chips">
         <span class="chip">Bring Your Own Agent</span>
         <span class="chip">On-prem Execution</span>
