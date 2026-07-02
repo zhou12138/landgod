@@ -554,7 +554,7 @@
             <text x="388" y="283" class="node-sub">Ed25519 · nonce</text>
             <text x="388" y="301" class="node-sub">body hash · exp</text>
             <rect x="316" y="326" width="144" height="34" rx="13" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.44)" stroke-width="1.2"/>
-            <text x="388" y="348" class="node-sub">Activity record</text>
+            <text x="388" y="348" class="node-sub">Response + Activity</text>
 
             <rect x="584" y="96" width="172" height="226" rx="28" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.46)" stroke-width="2" filter="url(#callS)"/>
             <text x="670" y="122" class="cap">Worker</text>
@@ -563,6 +563,7 @@
             <rect x="610" y="202" width="120" height="34" rx="11" fill="rgba(15,23,42,.80)" stroke="rgba(167,139,250,.42)" stroke-width="1.3"/>
             <text x="670" y="224" class="node-sub">Tool Registry</text>
             <path d="M670 180 L670 202" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
+            <path d="M670 236 L670 268" stroke="#64748b" stroke-width="2" marker-end="url(#callG)"/>
             <rect x="596" y="268" width="50" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(245,158,11,.42)" stroke-width="1.1"/>
             <text x="621" y="286" class="node-sub">WorkIQ</text>
             <rect x="652" y="268" width="44" height="28" rx="8" fill="rgba(15,23,42,.82)" stroke="rgba(34,197,94,.42)" stroke-width="1.1"/>
@@ -573,14 +574,12 @@
 
             <path d="M212 170 C252 160 282 152 320 148" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
             <text x="230" y="112" class="cap">1. HTTP /tool_call</text>
-            <path d="M450 148 C500 148 552 154 610 164" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
-            <text x="482" y="118" class="cap">2. route by worker</text>
-            <path d="M472 278 C520 258 562 228 610 218" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
-            <text x="492" y="292" class="cap">3. signed WS call</text>
+            <path d="M472 278 C520 248 560 184 610 164" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#callA)"/>
+            <text x="500" y="224" class="cap">2. signed WS call</text>
             <path d="M620 294 C560 340 504 350 460 344" stroke="#38bdf8" stroke-width="3.4" fill="none" marker-end="url(#callA)" opacity=".9"/>
-            <text x="500" y="358" class="cap">4a. result</text>
+            <text x="500" y="358" class="cap">3a. result</text>
             <path d="M316 344 C272 346 242 338 212 322" stroke="#38bdf8" stroke-width="3.2" fill="none" marker-end="url(#callA)" opacity=".9"/>
-            <text x="238" y="368" class="cap">4b. return to Agent</text>
+            <text x="238" y="368" class="cap">3b. return to Agent</text>
           </svg>
         </div>
         <div class="workflow-note"><b>Route / Execute:</b> Gateway selects Worker by connectionId, clientName, or labels; Worker verifies and invokes <code>toolRegistry.callTool</code>.</div>
