@@ -308,39 +308,44 @@
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 2 · 个人身份、权限与多设备</div>
-        <h1>这不是单台电脑访问，而是个人身份下的多设备工具入口</h1>
-        <div class="subtitle">Societas 接入 AAD 鉴权 token 后，LandGod / MCPHub Gateway 可以把“这个用户是谁、能访问什么、哪台设备有能力”串起来，形成个人版 Execution Harness。</div>
+        <div class="eyebrow">Page 2 · 从单点集成到产品机会</div>
+        <h1>后来发现：这不是 WorkIQ 专属问题，而是个人生产力入口</h1>
+        <div class="subtitle">Gateway 出现后，我们发现这座桥可以泛化：让任意云上 Agent 使用用户个人设备上已经配置好的 CLI、文件、浏览器和工作环境。这就是个人版 Execution Harness 的入口。</div>
       </div>
-      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Identity · Devices · Tools</div></div>
+      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Personal Execution Harness</div></div>
     </header>
 
     <div class="productivity">
       <article class="tall-panel">
-        <h2>个人用户维度</h2>
-        <div class="big">一个用户，多个工作现场。</div>
-        <p>用户不是只有一台电脑，而是拥有一组带不同登录态、网络和工具能力的个人设备。</p>
-        <div class="bullets">
-          <div class="bullet"><span class="dot blue"></span><span><b>AAD token</b> 证明 Societas 当前代表哪个用户发起请求</span></div>
-          <div class="bullet"><span class="dot blue"></span><span>Gateway 以用户身份为边界，管理设备、能力和授权范围</span></div>
-          <div class="bullet"><span class="dot blue"></span><span>不同设备可暴露不同 capability：WorkIQ、Azure CLI、repo、Portal、DevBox</span></div>
+        <h2>用户真正的工具箱</h2>
+        <div class="big">“让我的 Agent 用我的工具箱。”</div>
+        <p>高价值生产力资产，已经沉淀在用户自己的设备上：登录态、CLI、repo、脚本、VPN、公司 Portal。</p>
+        <div class="tool-grid">
+          <div class="tool">workiq</div>
+          <div class="tool">az</div>
+          <div class="tool">copilot</div>
+          <div class="tool">gh</div>
+          <div class="tool">kubectl</div>
+          <div class="tool">ssh</div>
+          <div class="tool">Portal</div>
+          <div class="tool">local repo</div>
         </div>
-        <div class="quote">用户价值：Agent 不只是访问“这台电脑”，而是使用“我的工作环境”。</div>
+        <div class="quote">用户价值：少复制、少截图、少切机器，Agent 可以直接使用我已经配置好的工作环境。</div>
       </article>
 
       <section class="center-diagram">
-        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub Gateway personal devices">
+        <svg viewBox="0 0 620 520" role="img" aria-label="MCPHub Gateway 个人多设备工具入口">
           <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.24"/></filter></defs>
           <path d="M310 70 L310 122" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
-          <path d="M310 218 L310 268" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
+          <path d="M310 220 L310 268" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/>
           <path d="M310 352 C132 352 106 390 106 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
           <path d="M310 352 C245 368 230 394 230 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
           <path d="M310 352 C375 368 390 394 390 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
           <path d="M310 352 C488 352 514 390 514 430" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
 
           <rect x="66" y="16" width="488" height="58" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="52" class="node-title">Societas / Cloud Agent</text>
-          <rect x="90" y="124" width="440" height="96" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="160" class="node-title">MCPHub Gateway</text><text x="310" y="188" class="node-sub">AAD Identity · Permission · Device Routing · Capability Registry</text><text x="310" y="210" class="node-sub">以个人身份组织多台设备上的工具能力</text>
-          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">User Device Fleet</text><text x="310" y="333" class="node-sub">同一个用户的多台可信设备主动连接 Gateway</text>
+          <rect x="90" y="124" width="440" height="98" rx="24" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="310" y="158" class="node-title">MCPHub Gateway</text><text x="310" y="184" class="node-sub">AAD Identity · Permission · Operation Boundary</text><text x="310" y="208" class="node-sub">Device Routing · Capability Registry · Activity History</text>
+          <rect x="90" y="270" width="440" height="84" rx="24" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s2)"/><text x="310" y="306" class="node-title">用户个人设备工具箱</text><text x="310" y="333" class="node-sub">同一 AAD 用户下的多台可信设备主动连接 Gateway</text>
 
           <rect x="32" y="430" width="146" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="105" y="454" class="cap">台式机</text><text x="105" y="478" class="node-sub">WorkIQ / Portal</text>
           <rect x="190" y="430" width="120" height="58" rx="17" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="250" y="454" class="cap">笔记本</text><text x="250" y="478" class="node-sub">repo / browser</text>
@@ -350,23 +355,23 @@
       </section>
 
       <article class="tall-panel">
-        <h2>权限与操作边界</h2>
-        <div class="big">身份决定范围，能力决定路由。</div>
-        <p>LandGod 不把设备简单暴露给 Agent，而是把可执行能力注册成受控工具。</p>
+        <h2>从单点集成到通用入口</h2>
+        <div class="big">从一次集成，变成可复制的入口。</div>
+        <p>WorkIQ Case 验证的是一类更大的需求：云上 Agent 要落地，必须连接用户已有的本地工具生态。</p>
         <div class="bullets">
-          <div class="bullet"><span class="dot green"></span><span><b>身份</b>：AAD token / agent_id 绑定请求来源和用户上下文</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>权限</b>：哪些 Agent、哪些工具、哪些设备、哪些 credential_ref 可以使用</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>操作</b>：读文件、跑 CLI、访问 Portal、调用 MCP 工具都变成显式 capability</span></div>
-          <div class="bullet"><span class="dot green"></span><span><b>可见性</b>：Activity History 记录谁在什么设备上调用了什么能力</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>可泛化</b>：不只 WorkIQ，所有本地 CLI / Portal / 文件环境都能接入</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>个人边界</b>：AAD 身份、设备归属和操作权限决定 Agent 能调用什么</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>差异化</b>：不是再做一个 Agent，而是补齐 Agent 的本地 Execution Harness</span></div>
+          <div class="bullet"><span class="dot green"></span><span><b>安全边界</b>：凭据留在设备，Gateway 只做授权、路由和可见性</span></div>
         </div>
         <div class="metric-row">
-          <div class="metric"><b>Personal Scope</b><span>围绕单个用户的设备和权限组织</span></div>
-          <div class="metric"><b>Safe Actions</b><span>每次执行都有身份、路由和能力边界</span></div>
+          <div class="metric"><b>Less manual work</b><span>少复制、少截图、少手动执行</span></div>
+          <div class="metric"><b>More real actions</b><span>Agent 从建议者变成执行者</span></div>
         </div>
       </article>
     </div>
 
-    <div class="footer-line"><b>个人维度：</b>Local Computer Access 不是裸访问电脑，而是以用户身份组织多设备、多能力和可控操作。</div>
+    <div class="footer-line"><b>最终定位：</b>LandGod / MCPHub Gateway 是个人生产力提效工具，也是 Agent Execution Harness 的个人场景落地。</div>
     <div class="slide-number">02 / 04</div>
   </section>
 
