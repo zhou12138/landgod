@@ -1,0 +1,3003 @@
+{
+  "schema": "office-com-operations.v1",
+  "target": "PowerPoint.Application",
+  "units": "points",
+  "pageSetup": {
+    "slideWidth": 960,
+    "slideHeight": 540,
+    "orientation": "landscape",
+    "aspect": "16:9"
+  },
+  "notes": [
+    "Win32 PowerPoint COM operation plan for the current WorkIQ origin deck diagrams.",
+    "Slide 1 represents the latest page-2 MCPHub architecture diagram.",
+    "Slide 2 represents page-3 left workflow: Worker connects outbound, register binding, update_tools, publish catalog.",
+    "Slide 3 represents page-3 right workflow: Agent Runtime request/result loop, Gateway cloud route/sign/audit, Worker verify/execute, result returns through Gateway.",
+    "Expected executor mapping: shapeType=cloud => msoShapeCloud; roundRect => msoShapeRoundedRectangle; addPicture => Shapes.AddPicture; addConnector supports begin/end and optional elbow points."
+  ],
+  "theme": {
+    "font": "Aptos",
+    "colors": {
+      "bg": "0B1220",
+      "panel": "111827",
+      "panel2": "0F172A",
+      "text": "F8FAFC",
+      "soft": "CBD5E1",
+      "muted": "94A3B8",
+      "line": "64748B",
+      "blue": "38BDF8",
+      "purple": "A78BFA",
+      "green": "22C55E",
+      "amber": "F59E0B",
+      "pink": "FB7185",
+      "cloud": "F5E077"
+    }
+  },
+  "slides": [
+    {
+      "slideIndex": 1,
+      "layout": "blank",
+      "operations": [
+        {
+          "op": "setBackground",
+          "fill": {
+            "color": "0B1220"
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "topic",
+          "text": "LOCAL COMPUTER ACCESS",
+          "x": 40,
+          "y": 22,
+          "w": 260,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "eyebrow",
+          "text": "MCPHub Gateway Architecture",
+          "x": 40,
+          "y": 48,
+          "w": 520,
+          "h": 28,
+          "font": {
+            "name": "Aptos",
+            "size": 16,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "zone.agent.title",
+          "text": "Agent Producers",
+          "x": 92,
+          "y": 94,
+          "w": 150,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "zone.service.title",
+          "text": "MCPHub Service",
+          "x": 395,
+          "y": 94,
+          "w": 170,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "zone.exec.title",
+          "text": "User Execution Plane",
+          "x": 708,
+          "y": 94,
+          "w": 170,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "zone.sep.left",
+          "shapeType": "line",
+          "x": 300,
+          "y": 120,
+          "w": 0,
+          "h": 340,
+          "line": {
+            "color": "64748B",
+            "transparency": 45,
+            "weight": 1.3,
+            "dash": "dash"
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "zone.sep.right",
+          "shapeType": "line",
+          "x": 660,
+          "y": 120,
+          "w": 0,
+          "h": 340,
+          "line": {
+            "color": "64748B",
+            "transparency": 45,
+            "weight": 1.3,
+            "dash": "dash"
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.openclaw.box",
+          "shapeType": "roundRect",
+          "x": 72,
+          "y": 138,
+          "w": 170,
+          "h": 48,
+          "fill": {
+            "color": "FB7185",
+            "transparency": 86
+          },
+          "line": {
+            "color": "FB7185",
+            "transparency": 35,
+            "weight": 1.4
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.openclaw.icon.bg",
+          "shapeType": "oval",
+          "x": 86,
+          "y": 149,
+          "w": 26,
+          "h": 26,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 0
+          },
+          "line": {
+            "color": "FB7185",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addPicture",
+          "name": "agent.openclaw.logo",
+          "path": "assets/openclaw-logo-icon.png",
+          "x": 82,
+          "y": 144,
+          "w": 36,
+          "h": 36,
+          "lockAspectRatio": true
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.openclaw.label",
+          "text": "OpenClaw",
+          "x": 122,
+          "y": 154,
+          "w": 108,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 12,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "agent.societas.box",
+          "shapeType": "roundRect",
+          "x": 72,
+          "y": 198,
+          "w": 170,
+          "h": 48,
+          "fill": {
+            "color": "38BDF8",
+            "transparency": 86
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1.4
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.societas.icon.bg",
+          "shapeType": "oval",
+          "x": 86,
+          "y": 209,
+          "w": 26,
+          "h": 26,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 0
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addPicture",
+          "name": "agent.societas.logo",
+          "path": "assets/societas-logo-icon.png",
+          "x": 91,
+          "y": 207,
+          "w": 23,
+          "h": 24,
+          "lockAspectRatio": true
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.societas.label",
+          "text": "Societas",
+          "x": 122,
+          "y": 214,
+          "w": 108,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 12,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "agent.copilot.box",
+          "shapeType": "roundRect",
+          "x": 72,
+          "y": 258,
+          "w": 170,
+          "h": 54,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 86
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 35,
+            "weight": 1.4
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.copilot.icon.tile",
+          "shapeType": "roundRect",
+          "x": 88,
+          "y": 271,
+          "w": 28,
+          "h": 28,
+          "fill": {
+            "color": "F8FAFC",
+            "transparency": 0
+          },
+          "line": {
+            "color": "F8FAFC",
+            "transparency": 100,
+            "weight": 0
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.copilot.githubmark",
+          "text": "●",
+          "x": 90,
+          "y": 267,
+          "w": 24,
+          "h": 26,
+          "font": {
+            "name": "Aptos",
+            "size": 22,
+            "color": "111827",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.copilot.label1",
+          "text": "GitHub",
+          "x": 122,
+          "y": 270,
+          "w": 108,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 12,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.copilot.label2",
+          "text": "Copilot",
+          "x": 122,
+          "y": 288,
+          "w": 108,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "top",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "agent.others.box",
+          "shapeType": "roundRect",
+          "x": 72,
+          "y": 330,
+          "w": 170,
+          "h": 48,
+          "fill": {
+            "color": "22C55E",
+            "transparency": 86
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 35,
+            "weight": 1.4
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.others.dot1",
+          "shapeType": "oval",
+          "x": 90,
+          "y": 347,
+          "w": 12,
+          "h": 12,
+          "fill": {
+            "color": "38BDF8",
+            "transparency": 72
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.others.dot2",
+          "shapeType": "oval",
+          "x": 113,
+          "y": 347,
+          "w": 12,
+          "h": 12,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 72
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "agent.others.dot3",
+          "shapeType": "oval",
+          "x": 136,
+          "y": 347,
+          "w": 12,
+          "h": 12,
+          "fill": {
+            "color": "F59E0B",
+            "transparency": 72
+          },
+          "line": {
+            "color": "F59E0B",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.others.label",
+          "text": "Others",
+          "x": 158,
+          "y": 345,
+          "w": 76,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 12,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "agent.bus.openclaw",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 242,
+            "y": 162
+          },
+          "points": [
+            {
+              "x": 282,
+              "y": 162
+            },
+            {
+              "x": 282,
+              "y": 260
+            }
+          ],
+          "end": {
+            "x": 333,
+            "y": 260
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 12,
+            "weight": 1.8,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addConnector",
+          "name": "agent.bus.societas",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 242,
+            "y": 222
+          },
+          "points": [
+            {
+              "x": 282,
+              "y": 222
+            }
+          ],
+          "end": {
+            "x": 282,
+            "y": 260
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 12,
+            "weight": 1.8,
+            "arrowEnd": false
+          }
+        },
+        {
+          "op": "addConnector",
+          "name": "agent.bus.copilot",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 242,
+            "y": 285
+          },
+          "points": [
+            {
+              "x": 282,
+              "y": 285
+            }
+          ],
+          "end": {
+            "x": 282,
+            "y": 260
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 12,
+            "weight": 1.8,
+            "arrowEnd": false
+          }
+        },
+        {
+          "op": "addConnector",
+          "name": "agent.bus.others",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 242,
+            "y": 354
+          },
+          "points": [
+            {
+              "x": 282,
+              "y": 354
+            },
+            {
+              "x": 282,
+              "y": 260
+            }
+          ],
+          "end": {
+            "x": 333,
+            "y": 260
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 12,
+            "weight": 1.8,
+            "arrowEnd": false
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "agent.bus.label",
+          "text": "HTTP(S)\nMCP calls",
+          "x": 288,
+          "y": 236,
+          "w": 56,
+          "h": 38,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "mcphub.cloud",
+          "shapeType": "cloud",
+          "x": 345,
+          "y": 135,
+          "w": 260,
+          "h": 245,
+          "fill": {
+            "color": "F5E077",
+            "transparency": 86
+          },
+          "line": {
+            "color": "F5E077",
+            "transparency": 28,
+            "weight": 1.8
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.title",
+          "text": "MCPHub",
+          "x": 398,
+          "y": 160,
+          "w": 154,
+          "h": 20,
+          "font": {
+            "name": "Aptos",
+            "size": 13,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.subtitle",
+          "text": "Service Cloud",
+          "x": 398,
+          "y": 181,
+          "w": 154,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.module.api",
+          "text": "Agent / MCP API",
+          "x": 395,
+          "y": 222,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.module.auth",
+          "text": "Auth + Policy",
+          "x": 395,
+          "y": 252,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.module.router",
+          "text": "Router + Registry",
+          "x": 395,
+          "y": 282,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.module.credential",
+          "text": "Credential Broker",
+          "x": 395,
+          "y": 312,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "mcphub.module.history",
+          "text": "Activity History",
+          "x": 395,
+          "y": 342,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addConnector",
+          "name": "flow.route",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 605,
+            "y": 245
+          },
+          "points": [
+            {
+              "x": 640,
+              "y": 245
+            },
+            {
+              "x": 640,
+              "y": 188
+            }
+          ],
+          "end": {
+            "x": 706,
+            "y": 188
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.2,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "flow.route.label",
+          "text": "route",
+          "x": 620,
+          "y": 219,
+          "w": 52,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 0
+        },
+        {
+          "op": "addConnector",
+          "name": "flow.register",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 706,
+            "y": 326
+          },
+          "points": [
+            {
+              "x": 640,
+              "y": 326
+            },
+            {
+              "x": 640,
+              "y": 295
+            }
+          ],
+          "end": {
+            "x": 605,
+            "y": 295
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 0,
+            "weight": 2,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "flow.register.label",
+          "text": "register",
+          "x": 618,
+          "y": 342,
+          "w": 68,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 0
+        },
+        {
+          "op": "addConnector",
+          "name": "flow.toolcall",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 605,
+            "y": 320
+          },
+          "points": [
+            {
+              "x": 640,
+              "y": 320
+            },
+            {
+              "x": 640,
+              "y": 360
+            }
+          ],
+          "end": {
+            "x": 706,
+            "y": 360
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.2,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "flow.toolcall.label",
+          "text": "tool_call",
+          "x": 618,
+          "y": 302,
+          "w": 72,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "device.laptop",
+          "shapeType": "roundRect",
+          "x": 710,
+          "y": 137,
+          "w": 160,
+          "h": 34,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 84
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 28,
+            "weight": 1.5
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "device.laptop.label",
+          "text": "Laptop",
+          "x": 720,
+          "y": 145,
+          "w": 140,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 11,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "device.vm",
+          "shapeType": "roundRect",
+          "x": 710,
+          "y": 181,
+          "w": 160,
+          "h": 34,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 84
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 28,
+            "weight": 1.5
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "device.vm.label",
+          "text": "VM",
+          "x": 720,
+          "y": 189,
+          "w": 140,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 11,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "device.devbox",
+          "shapeType": "roundRect",
+          "x": 710,
+          "y": 225,
+          "w": 160,
+          "h": 34,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 84
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 28,
+            "weight": 1.5
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "device.devbox.label",
+          "text": "DevBox",
+          "x": 720,
+          "y": 233,
+          "w": 140,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 11,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "device.ws.label",
+          "text": "outbound WS(S)",
+          "x": 716,
+          "y": 272,
+          "w": 148,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "workshop.boundary",
+          "shapeType": "roundRect",
+          "x": 690,
+          "y": 325,
+          "w": 205,
+          "h": 145,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 86
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 32,
+            "weight": 1.6
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "workshop.title",
+          "text": "Workshop",
+          "x": 710,
+          "y": 338,
+          "w": 165,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 12,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "worker.runtime",
+          "shapeType": "roundRect",
+          "x": 718,
+          "y": 366,
+          "w": 150,
+          "h": 30,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1.1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "worker.runtime.label",
+          "text": "LandGod Worker",
+          "x": 724,
+          "y": 373,
+          "w": 138,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addConnector",
+          "name": "worker.to.registry",
+          "connectorType": "straight",
+          "begin": {
+            "x": 793,
+            "y": 396
+          },
+          "end": {
+            "x": 793,
+            "y": 410
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 0,
+            "weight": 1.5,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "worker.registry",
+          "shapeType": "roundRect",
+          "x": 718,
+          "y": 410,
+          "w": 150,
+          "h": 28,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 14
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 35,
+            "weight": 1.1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "worker.registry.label",
+          "text": "Tool Registry",
+          "x": 724,
+          "y": 416,
+          "w": 138,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "worker.adapters.label",
+          "text": "local adapters",
+          "x": 724,
+          "y": 443,
+          "w": 138,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "top",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "adapter.workiq",
+          "shapeType": "roundRect",
+          "x": 704,
+          "y": 456,
+          "w": 55,
+          "h": 24,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "F59E0B",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "adapter.workiq.label",
+          "text": "WorkIQ",
+          "x": 705,
+          "y": 461,
+          "w": 53,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "adapter.files",
+          "shapeType": "roundRect",
+          "x": 766,
+          "y": 456,
+          "w": 50,
+          "h": 24,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "adapter.files.label",
+          "text": "Files",
+          "x": 767,
+          "y": 461,
+          "w": 48,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addShape",
+          "name": "adapter.browser",
+          "shapeType": "roundRect",
+          "x": 823,
+          "y": 456,
+          "w": 58,
+          "h": 24,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "adapter.browser.label",
+          "text": "Browser",
+          "x": 824,
+          "y": 461,
+          "w": 56,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 0
+        },
+        {
+          "op": "addTextBox",
+          "name": "footer",
+          "text": "Cloud agents call one governed service; user devices register capabilities and execute locally.",
+          "x": 40,
+          "y": 505,
+          "w": 880,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "94A3B8",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "top",
+          "margin": 2
+        }
+      ],
+      "name": "02 architecture diagram - MCPHub Gateway"
+    },
+    {
+      "slideIndex": 2,
+      "name": "03A registration workflow",
+      "layout": "blank",
+      "operations": [
+        {
+          "op": "setBackground",
+          "fill": {
+            "color": "0B1220"
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "deck.topic",
+          "text": "LOCAL COMPUTER ACCESS",
+          "x": 40,
+          "y": 20,
+          "w": 260,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "slide.title",
+          "text": "Worker Connects + Publishes Tools",
+          "x": 40,
+          "y": 44,
+          "w": 620,
+          "h": 24,
+          "font": {
+            "name": "Aptos",
+            "size": 15,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "slide.subtitle",
+          "text": "Worker-initiated outbound connection; Gateway stores binding and capability catalog.",
+          "x": 40,
+          "y": 66,
+          "w": 760,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.zone.left",
+          "text": "Agent Catalog",
+          "x": 90,
+          "y": 80,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.zone.mid",
+          "text": "Gateway / MCPHub Service",
+          "x": 380,
+          "y": 80,
+          "w": 200,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.zone.right",
+          "text": "User Computer",
+          "x": 700,
+          "y": 80,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.sep.left",
+          "shapeType": "line",
+          "x": 300,
+          "y": 105,
+          "w": 0,
+          "h": 330,
+          "line": {
+            "color": "64748B",
+            "transparency": 45,
+            "weight": 1.2,
+            "dash": "dash"
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "reg.sep.right",
+          "shapeType": "line",
+          "x": 660,
+          "y": 105,
+          "w": 0,
+          "h": 330,
+          "line": {
+            "color": "64748B",
+            "transparency": 45,
+            "weight": 1.2,
+            "dash": "dash"
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "reg.agent.catalog.boundary",
+          "shapeType": "roundRect",
+          "x": 68,
+          "y": 140,
+          "w": 165,
+          "h": 86,
+          "fill": {
+            "color": "FB7185",
+            "transparency": 88
+          },
+          "line": {
+            "color": "FB7185",
+            "transparency": 38,
+            "weight": 1.4
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "reg.agent.icon.bg",
+          "shapeType": "oval",
+          "x": 86,
+          "y": 166,
+          "w": 30,
+          "h": 30,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 0
+          },
+          "line": {
+            "color": "FB7185",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addPicture",
+          "name": "reg.agent.openclaw.logo",
+          "path": "assets/openclaw-logo-icon.png",
+          "x": 81,
+          "y": 160,
+          "w": 42,
+          "h": 42,
+          "lockAspectRatio": true
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.agent.catalog.title",
+          "text": "Cloud Agent",
+          "x": 128,
+          "y": 157,
+          "w": 92,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.agent.catalog.sub",
+          "text": "available tools",
+          "x": 128,
+          "y": 177,
+          "w": 92,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.gateway.cloud",
+          "shapeType": "cloud",
+          "x": 325,
+          "y": 118,
+          "w": 230,
+          "h": 250,
+          "fill": {
+            "color": "F5E077",
+            "transparency": 86
+          },
+          "line": {
+            "color": "F5E077",
+            "transparency": 28,
+            "weight": 1.8
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.gateway.title",
+          "text": "Gateway",
+          "x": 375,
+          "y": 138,
+          "w": 130,
+          "h": 20,
+          "font": {
+            "name": "Aptos",
+            "size": 13,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.gateway.ws",
+          "text": "WS endpoint · session",
+          "x": 366,
+          "y": 164,
+          "w": 150,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.gateway.token",
+          "text": "token / binding",
+          "x": 366,
+          "y": 182,
+          "w": 150,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.gateway.registry.box",
+          "shapeType": "roundRect",
+          "x": 353,
+          "y": 284,
+          "w": 170,
+          "h": 58,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 42,
+            "weight": 1.2
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.gateway.registry.title",
+          "text": "Capability Registry",
+          "x": 363,
+          "y": 296,
+          "w": 150,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.gateway.registry.sub",
+          "text": "user-scoped catalog",
+          "x": 363,
+          "y": 316,
+          "w": 150,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.device.box",
+          "shapeType": "roundRect",
+          "x": 710,
+          "y": 126,
+          "w": 140,
+          "h": 42,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 84
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 28,
+            "weight": 1.4
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.device.label",
+          "text": "Laptop / VM",
+          "x": 718,
+          "y": 138,
+          "w": 124,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.workshop.boundary",
+          "shapeType": "roundRect",
+          "x": 690,
+          "y": 202,
+          "w": 200,
+          "h": 176,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 86
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 32,
+            "weight": 1.6
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.workshop.title",
+          "text": "Workshop",
+          "x": 720,
+          "y": 216,
+          "w": 140,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 11,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.worker.box",
+          "shapeType": "roundRect",
+          "x": 728,
+          "y": 252,
+          "w": 126,
+          "h": 32,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1.2
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.worker.label",
+          "text": "LandGod Worker",
+          "x": 734,
+          "y": 260,
+          "w": 114,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.local.registry.box",
+          "shapeType": "roundRect",
+          "x": 728,
+          "y": 306,
+          "w": 126,
+          "h": 30,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 14
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 35,
+            "weight": 1.2
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.local.registry.label",
+          "text": "Local Tool Registry",
+          "x": 734,
+          "y": 313,
+          "w": 114,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "reg.worker.to.localregistry",
+          "connectorType": "straight",
+          "begin": {
+            "x": 791,
+            "y": 284
+          },
+          "end": {
+            "x": 791,
+            "y": 306
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 0,
+            "weight": 1.5,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "reg.tool.workiq",
+          "shapeType": "roundRect",
+          "x": 704,
+          "y": 350,
+          "w": 52,
+          "h": 24,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "F59E0B",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.tool.workiq.label",
+          "text": "WorkIQ",
+          "x": 706,
+          "y": 355,
+          "w": 48,
+          "h": 11,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.tool.files",
+          "shapeType": "roundRect",
+          "x": 762,
+          "y": 350,
+          "w": 44,
+          "h": 24,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.tool.files.label",
+          "text": "Files",
+          "x": 764,
+          "y": 355,
+          "w": 40,
+          "h": 11,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "reg.tool.browser",
+          "shapeType": "roundRect",
+          "x": 812,
+          "y": 350,
+          "w": 58,
+          "h": 24,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.tool.browser.label",
+          "text": "Browser",
+          "x": 814,
+          "y": 355,
+          "w": 54,
+          "h": 11,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "reg.flow.ws",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 728,
+            "y": 268
+          },
+          "end": {
+            "x": 520,
+            "y": 176
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.8,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 650,
+              "y": 268
+            },
+            {
+              "x": 590,
+              "y": 218
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.flow.ws.label1",
+          "text": "1. WS connect",
+          "x": 535,
+          "y": 216,
+          "w": 116,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.flow.ws.label2",
+          "text": "token auth + session_opened",
+          "x": 526,
+          "y": 234,
+          "w": 150,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "38BDF8",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "reg.flow.update_tools",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 728,
+            "y": 321
+          },
+          "end": {
+            "x": 523,
+            "y": 314
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.8,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 642,
+              "y": 332
+            },
+            {
+              "x": 590,
+              "y": 330
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.flow.update_tools.label",
+          "text": "2. register binding + update_tools",
+          "x": 510,
+          "y": 350,
+          "w": 180,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "reg.flow.catalog",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 353,
+            "y": 314
+          },
+          "end": {
+            "x": 210,
+            "y": 204
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.5,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 295,
+              "y": 312
+            },
+            {
+              "x": 245,
+              "y": 244
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.flow.catalog.label",
+          "text": "3. publish catalog",
+          "x": 205,
+          "y": 270,
+          "w": 120,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "reg.footer",
+          "text": "Protect: no inbound port on personal devices. Worker registers binding, then publishes a user-scoped capability catalog.",
+          "x": 40,
+          "y": 505,
+          "w": 880,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "94A3B8",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        }
+      ]
+    },
+    {
+      "slideIndex": 3,
+      "name": "03B invocation closed-loop workflow",
+      "layout": "blank",
+      "operations": [
+        {
+          "op": "setBackground",
+          "fill": {
+            "color": "0B1220"
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "deck.topic",
+          "text": "LOCAL COMPUTER ACCESS",
+          "x": 40,
+          "y": 20,
+          "w": 260,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "slide.title",
+          "text": "Agent Calls + Worker Executes Locally",
+          "x": 40,
+          "y": 44,
+          "w": 620,
+          "h": 24,
+          "font": {
+            "name": "Aptos",
+            "size": 15,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "slide.subtitle",
+          "text": "Agent request and result stay inside Agent Runtime; Gateway cloud routes, signs, records Activity.",
+          "x": 40,
+          "y": 66,
+          "w": 760,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.zone.left",
+          "text": "Agent",
+          "x": 90,
+          "y": 80,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.zone.mid",
+          "text": "Gateway / MCPHub Service",
+          "x": 380,
+          "y": 80,
+          "w": 200,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.zone.right",
+          "text": "User Computer",
+          "x": 700,
+          "y": 80,
+          "w": 160,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "38BDF8",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.sep.left",
+          "shapeType": "line",
+          "x": 300,
+          "y": 105,
+          "w": 0,
+          "h": 330,
+          "line": {
+            "color": "64748B",
+            "transparency": 45,
+            "weight": 1.2,
+            "dash": "dash"
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "call.sep.right",
+          "shapeType": "line",
+          "x": 660,
+          "y": 105,
+          "w": 0,
+          "h": 330,
+          "line": {
+            "color": "64748B",
+            "transparency": 45,
+            "weight": 1.2,
+            "dash": "dash"
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "call.agent.runtime",
+          "shapeType": "roundRect",
+          "x": 58,
+          "y": 120,
+          "w": 190,
+          "h": 250,
+          "fill": {
+            "color": "FB7185",
+            "transparency": 90
+          },
+          "line": {
+            "color": "FB7185",
+            "transparency": 42,
+            "weight": 1.6
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.agent.runtime.title",
+          "text": "Agent Runtime",
+          "x": 86,
+          "y": 138,
+          "w": 132,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.agent.request",
+          "shapeType": "roundRect",
+          "x": 82,
+          "y": 172,
+          "w": 142,
+          "h": 54,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 42,
+            "weight": 1.2
+          }
+        },
+        {
+          "op": "addPicture",
+          "name": "call.agent.societas.logo",
+          "path": "assets/societas-logo-icon.png",
+          "x": 92,
+          "y": 184,
+          "w": 28,
+          "h": 30,
+          "lockAspectRatio": true
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.agent.request.text",
+          "text": "HTTP request\n/tool_call",
+          "x": 128,
+          "y": 184,
+          "w": 84,
+          "h": 28,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.agent.result",
+          "shapeType": "roundRect",
+          "x": 82,
+          "y": 306,
+          "w": 142,
+          "h": 52,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 42,
+            "weight": 1.2
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.agent.result.title",
+          "text": "Tool Result",
+          "x": 98,
+          "y": 316,
+          "w": 110,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.agent.result.sub",
+          "text": "JSON · file · stdout",
+          "x": 98,
+          "y": 334,
+          "w": 110,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.gateway.cloud",
+          "shapeType": "cloud",
+          "x": 322,
+          "y": 104,
+          "w": 244,
+          "h": 300,
+          "fill": {
+            "color": "F5E077",
+            "transparency": 86
+          },
+          "line": {
+            "color": "F5E077",
+            "transparency": 28,
+            "weight": 1.8
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.gateway.title",
+          "text": "Gateway",
+          "x": 370,
+          "y": 126,
+          "w": 145,
+          "h": 20,
+          "font": {
+            "name": "Aptos",
+            "size": 13,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.gateway.roles",
+          "text": "route · sign · audit",
+          "x": 370,
+          "y": 150,
+          "w": 145,
+          "h": 16,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.gateway.signed",
+          "shapeType": "roundRect",
+          "x": 350,
+          "y": 244,
+          "w": 172,
+          "h": 68,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "FB7185",
+            "transparency": 44,
+            "weight": 1.2
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.gateway.signed.title",
+          "text": "signed tool_call",
+          "x": 360,
+          "y": 256,
+          "w": 152,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 10,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.gateway.signed.meta",
+          "text": "Ed25519 · nonce\nbody hash · exp",
+          "x": 360,
+          "y": 274,
+          "w": 152,
+          "h": 28,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "CBD5E1",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.gateway.activity",
+          "shapeType": "roundRect",
+          "x": 360,
+          "y": 334,
+          "w": 152,
+          "h": 34,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 44,
+            "weight": 1.1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.gateway.activity.label",
+          "text": "Response + Activity",
+          "x": 370,
+          "y": 342,
+          "w": 132,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.worker.boundary",
+          "shapeType": "roundRect",
+          "x": 690,
+          "y": 112,
+          "w": 200,
+          "h": 244,
+          "fill": {
+            "color": "A78BFA",
+            "transparency": 86
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 32,
+            "weight": 1.6
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.worker.title",
+          "text": "Worker",
+          "x": 728,
+          "y": 130,
+          "w": 124,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 11,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.worker.verify",
+          "shapeType": "roundRect",
+          "x": 728,
+          "y": 168,
+          "w": 126,
+          "h": 32,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1.1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.worker.verify.label",
+          "text": "verify request",
+          "x": 736,
+          "y": 176,
+          "w": 110,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.worker.registry",
+          "shapeType": "roundRect",
+          "x": 728,
+          "y": 224,
+          "w": 126,
+          "h": 32,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 14
+          },
+          "line": {
+            "color": "A78BFA",
+            "transparency": 35,
+            "weight": 1.1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.worker.registry.label",
+          "text": "Tool Registry",
+          "x": 736,
+          "y": 232,
+          "w": 110,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "call.worker.verify.to.registry",
+          "connectorType": "straight",
+          "begin": {
+            "x": 791,
+            "y": 200
+          },
+          "end": {
+            "x": 791,
+            "y": 224
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 0,
+            "weight": 1.5,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.worker.local.label",
+          "text": "local device",
+          "x": 738,
+          "y": 270,
+          "w": 110,
+          "h": 12,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "38BDF8",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "call.worker.registry.to.tools",
+          "connectorType": "straight",
+          "begin": {
+            "x": 791,
+            "y": 256
+          },
+          "end": {
+            "x": 791,
+            "y": 286
+          },
+          "line": {
+            "color": "64748B",
+            "transparency": 0,
+            "weight": 1.5,
+            "arrowEnd": true
+          }
+        },
+        {
+          "op": "addShape",
+          "name": "call.tool.workiq",
+          "shapeType": "roundRect",
+          "x": 706,
+          "y": 300,
+          "w": 52,
+          "h": 26,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "F59E0B",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.tool.workiq.label",
+          "text": "WorkIQ",
+          "x": 708,
+          "y": 306,
+          "w": 48,
+          "h": 11,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.tool.files",
+          "shapeType": "roundRect",
+          "x": 764,
+          "y": 300,
+          "w": 44,
+          "h": 26,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "22C55E",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.tool.files.label",
+          "text": "Files",
+          "x": 766,
+          "y": 306,
+          "w": 40,
+          "h": 11,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "call.tool.cli",
+          "shapeType": "roundRect",
+          "x": 814,
+          "y": 300,
+          "w": 46,
+          "h": 26,
+          "fill": {
+            "color": "0F172A",
+            "transparency": 10
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 35,
+            "weight": 1
+          }
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.tool.cli.label",
+          "text": "CLI",
+          "x": 816,
+          "y": 306,
+          "w": 42,
+          "h": 11,
+          "font": {
+            "name": "Aptos",
+            "size": 7,
+            "color": "F8FAFC",
+            "bold": false
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "call.flow.request",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 224,
+            "y": 198
+          },
+          "end": {
+            "x": 350,
+            "y": 150
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.8,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 270,
+              "y": 188
+            },
+            {
+              "x": 314,
+              "y": 170
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.flow.request.label",
+          "text": "1. HTTP /tool_call",
+          "x": 238,
+          "y": 146,
+          "w": 128,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "call.flow.signed",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 522,
+            "y": 278
+          },
+          "end": {
+            "x": 728,
+            "y": 184
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.8,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 596,
+              "y": 260
+            },
+            {
+              "x": 650,
+              "y": 210
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.flow.signed.label",
+          "text": "2. signed WS call",
+          "x": 586,
+          "y": 230,
+          "w": 120,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "call.flow.result",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 706,
+            "y": 324
+          },
+          "end": {
+            "x": 512,
+            "y": 352
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.5,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 628,
+              "y": 372
+            },
+            {
+              "x": 560,
+              "y": 368
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.flow.result.label",
+          "text": "3a. result",
+          "x": 575,
+          "y": 382,
+          "w": 86,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addConnector",
+          "name": "call.flow.return",
+          "connectorType": "elbow",
+          "begin": {
+            "x": 360,
+            "y": 352
+          },
+          "end": {
+            "x": 224,
+            "y": 332
+          },
+          "line": {
+            "color": "38BDF8",
+            "transparency": 0,
+            "weight": 2.5,
+            "arrowEnd": true
+          },
+          "points": [
+            {
+              "x": 304,
+              "y": 358
+            },
+            {
+              "x": 260,
+              "y": 352
+            }
+          ]
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.flow.return.label",
+          "text": "3b. return to Agent",
+          "x": 244,
+          "y": 378,
+          "w": 140,
+          "h": 14,
+          "font": {
+            "name": "Aptos",
+            "size": 8,
+            "color": "F8FAFC",
+            "bold": true
+          },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addTextBox",
+          "name": "call.footer",
+          "text": "Route / Execute: Gateway selects Worker by connectionId, clientName, or labels; Worker verifies and invokes toolRegistry.callTool.",
+          "x": 40,
+          "y": 505,
+          "w": 880,
+          "h": 18,
+          "font": {
+            "name": "Aptos",
+            "size": 9,
+            "color": "94A3B8",
+            "bold": false
+          },
+          "align": "left",
+          "valign": "middle",
+          "margin": 2
+        }
+      ]
+    }
+  ]
+}
