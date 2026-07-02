@@ -255,7 +255,7 @@
       <div>
         <div class="eyebrow">Page 1 · 真实问题与最初方案</div>
         <h1>WorkIQ 没有 API，Societas 怎么调用用户电脑上的 CLI？</h1>
-        <div class="subtitle">这是云上 Agent 落地时最典型的“最后一公里”问题：Agent 能理解任务，但真正能完成任务的工具、登录态和网络环境，在用户自己的工作设备上。</div>
+        <div class="subtitle">这是云上 Agent 落地时最典型的“最后一公里”问题：Agent 能理解任务，但真正能完成任务的工具、登录态和网络环境，在用户自己的工作设备上。关键不是远控电脑，而是本地 Worker 主动出站连接。</div>
       </div>
       <div class="brand"><div class="name">LandGod</div><div class="tag">从 WorkIQ Bridge 开始</div></div>
     </header>
@@ -269,7 +269,7 @@
           <div class="bullet"><span class="dot blue"></span><span>WorkIQ 能力在用户工作电脑上的 <b>workiq CLI</b></span></div>
           <div class="bullet"><span class="dot blue"></span><span>用户期望“Agent 直接帮我完成”，不是再让我手动当中转站</span></div>
         </div>
-        <div class="quote">这不是简单集成一个 API，而是让云上 Agent 接触真实工作环境的问题。</div>
+        <div class="quote">这不是远控，也不是把电脑暴露给云端；这是让云上 Agent 在安全边界内接触真实工作环境。</div>
       </article>
 
       <article class="card">
@@ -379,8 +379,8 @@
   <section class="slide">
     <header>
       <div>
-        <div class="eyebrow">Page 3 · 真实工作流：注册能力与调用能力</div>
-        <h1>Agent 如何一步一步调用 Worker 的本地能力？</h1>
+        <div class="eyebrow">Page 3 · 可信落地：Agent 如何安全调用本地能力</div>
+        <h1>HTTP 进 Gateway，WebSocket 到 Worker，本地工具执行</h1>
         <div class="subtitle">LandGod 的真实链路分两段：Worker 先通过 WebSocket 注册身份、包装并发布工具能力；Agent 后续通过 Skill/配置知道 Gateway，再用 HTTP <code>/tool_call</code> 触发一次受签名、可路由、可审计的本地执行。</div>
       </div>
       <div class="brand"><div class="name">Real Workflow</div><div class="tag">Register · Publish · Call</div></div>
