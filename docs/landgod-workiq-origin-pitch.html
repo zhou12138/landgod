@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LandGod / MCPHub 起源故事：WorkIQ Bridge</title>
+  <style>
+    :root {
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --soft: #cbd5e1;
+      --line: rgba(148, 163, 184, 0.22);
+      --blue: #38bdf8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --pink: #fb7185;
+      --purple: #a78bfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #020617;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      display: grid;
+      gap: 28px;
+      place-items: center;
+      padding: 28px;
+    }
+    .slide {
+      width: 1600px;
+      height: 900px;
+      position: relative;
+      overflow: hidden;
+      padding: 58px 72px 48px;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.18), transparent 30%),
+        radial-gradient(circle at 88% 14%, rgba(167, 139, 250, 0.16), transparent 32%),
+        linear-gradient(135deg, #0f172a 0%, #101827 54%, #07111f 100%);
+      box-shadow: 0 28px 90px rgba(0,0,0,.42);
+    }
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 28px;
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 28px;
+      pointer-events: none;
+    }
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 34px;
+      margin-bottom: 34px;
+    }
+    .eyebrow {
+      color: var(--blue);
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      font-size: 21px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 62px;
+      line-height: 1.05;
+      letter-spacing: -0.052em;
+      font-weight: 880;
+    }
+    .subtitle {
+      margin-top: 17px;
+      color: var(--soft);
+      font-size: 27px;
+      line-height: 1.36;
+      max-width: 1050px;
+      font-weight: 520;
+    }
+    .brand {
+      width: 245px;
+      padding: 18px 20px;
+      border: 1px solid rgba(56,189,248,.32);
+      background: rgba(15,23,42,.62);
+      border-radius: 22px;
+      text-align: right;
+      flex: 0 0 auto;
+    }
+    .brand .name { font-size: 32px; font-weight: 860; letter-spacing: -0.03em; }
+    .brand .tag { margin-top: 7px; color: var(--muted); font-size: 17px; line-height: 1.34; }
+    .slide-number { position:absolute; right:72px; bottom:34px; color:var(--muted); font-size:16px; letter-spacing:.08em; }
+
+    .grid-2 { position: relative; z-index: 1; display:grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .panel {
+      background: rgba(15,23,42,.74);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.20);
+      min-width: 0;
+    }
+    .panel h2 { margin: 0 0 16px; font-size: 31px; letter-spacing: -0.03em; }
+    .panel p { margin: 0; color: var(--soft); font-size: 22px; line-height: 1.5; }
+    .bullets { display:grid; gap: 13px; margin-top: 18px; }
+    .bullet { display:flex; align-items:flex-start; gap: 12px; color: var(--soft); font-size: 22px; line-height: 1.34; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 10px; background: var(--pink); flex: 0 0 auto; }
+    .dot.green { background: var(--green); }
+    .dot.blue { background: var(--blue); }
+    .dot.amber { background: var(--amber); }
+    .quote {
+      margin-top: 24px;
+      padding: 22px 24px;
+      border-radius: 22px;
+      border: 1px solid rgba(56,189,248,.28);
+      background: linear-gradient(135deg, rgba(56,189,248,.13), rgba(167,139,250,.10));
+      font-size: 25px;
+      line-height: 1.36;
+      color: #e0f2fe;
+      font-weight: 760;
+    }
+    .code-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,.24);
+      background: rgba(2,6,23,.34);
+      color: #dbeafe;
+      font-size: 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      margin: 6px 6px 0 0;
+      font-weight: 700;
+    }
+
+    .diagram {
+      position: relative;
+      z-index: 1;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      background: rgba(2,6,23,.35);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      padding: 26px 28px 24px;
+    }
+    svg { width: 100%; height: 520px; display:block; }
+    .node-title { fill:#f8fafc; font-size: 23px; font-weight: 850; text-anchor: middle; }
+    .node-sub { fill:#cbd5e1; font-size: 15px; font-weight: 520; text-anchor: middle; }
+    .cap { fill:#e2e8f0; font-size: 15px; font-weight: 720; text-anchor: middle; }
+    .footer-line { position:absolute; left:72px; right:72px; bottom:42px; border-top:1px solid rgba(148,163,184,.16); padding-top:17px; color:var(--soft); font-size:25px; line-height:1.35; font-weight:640; }
+    .footer-line b { color:white; }
+
+    .evolution { position:relative; z-index:1; display:grid; grid-template-columns: 1fr 1fr; gap:28px; }
+    .stage {
+      min-height: 548px;
+      background: rgba(15,23,42,.74);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 26px;
+      display:grid;
+      align-content:start;
+    }
+    .stage h2 { margin:0 0 12px; font-size: 31px; letter-spacing:-.03em; }
+    .stage .tag { color:var(--muted); font-size: 18px; margin-bottom:18px; }
+    .stage p { color:var(--soft); font-size:21px; line-height:1.45; margin:0; }
+    .mini-diagram { margin-top:20px; border:1px solid var(--line); border-radius:22px; background:rgba(2,6,23,.28); padding:18px; }
+    .mini-diagram svg { height: 260px; }
+
+    @media print { body { padding:0; display:block; background:white; } .slide { page-break-after:always; box-shadow:none; } }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <header>
+      <div>
+        <div class="eyebrow">Origin Story</div>
+        <h1>Societas 要集成 WorkIQ，<br/>但 WorkIQ 只有本地 CLI</h1>
+        <div class="subtitle">我们的 Agent 在云上，WorkIQ 的能力却在用户工作电脑里的 <code>workiq</code> CLI。没有 API、没有云端入口，怎么办？</div>
+      </div>
+      <div class="brand"><div class="name">LandGod</div><div class="tag">从 WorkIQ Bridge 开始</div></div>
+    </header>
+
+    <div class="grid-2">
+      <article class="panel">
+        <h2>真实约束</h2>
+        <p>Societas 可以理解需求、规划任务、总结结果，但它无法直接调用用户电脑上的本地 CLI。</p>
+        <div class="bullets">
+          <div class="bullet"><span class="dot"></span><span>WorkIQ 当时没有标准 API，只有本地 <b>workiq CLI</b></span></div>
+          <div class="bullet"><span class="dot"></span><span>CLI 安装在用户工作电脑上，依赖本地登录态、配置和网络环境</span></div>
+          <div class="bullet"><span class="dot"></span><span>Societas Agent 在云上，拿不到用户电脑上的命令行能力</span></div>
+          <div class="bullet"><span class="dot"></span><span>不能把用户凭据、token、公司环境直接搬到云上</span></div>
+        </div>
+        <div class="quote">问题不是 Societas 不够聪明，而是它缺少一座通向用户本地工具环境的桥。</div>
+      </article>
+
+      <article class="panel">
+        <h2>最初要解决的问题</h2>
+        <p>我们需要一个机制，让云上的 Societas 可以在用户授权下，把任务送到工作电脑，由本地环境调用 WorkIQ CLI，再把结果回传。</p>
+        <div class="bullets">
+          <div class="bullet"><span class="dot green"></span><span>Agent 只表达意图，不直接持有本地凭据</span></div>
+          <div class="bullet"><span class="dot green"></span><span>用户电脑负责执行 <span class="code-pill">workiq ...</span></span></div>
+          <div class="bullet"><span class="dot green"></span><span>结果回到云上 Agent，用于继续推理和生成报告</span></div>
+          <div class="bullet"><span class="dot green"></span><span>执行边界由用户控制，可见、可撤销</span></div>
+        </div>
+        <div class="quote">这就是 LandGod 的起点：不是先做平台，而是先搭一座让 Agent 够到本地工具的桥。</div>
+      </article>
+    </div>
+
+    <div class="footer-line"><b>起点：</b>Societas 在云上；WorkIQ 在用户电脑上；LandGod 负责把两者安全连接起来。</div>
+    <div class="slide-number">01 / 02</div>
+  </section>
+
+  <section class="slide">
+    <header>
+      <div>
+        <div class="eyebrow">From Bridge to Gateway</div>
+        <h1>后来发现：这座桥可以泛化</h1>
+        <div class="subtitle">一开始只是“工作电脑直接连云上 Agent”。加入 Gateway 后，LandGod 从 WorkIQ 专用桥，演进成可泛化的 MCPHub Gateway。</div>
+      </div>
+      <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">通向本地工具生态</div></div>
+    </header>
+
+    <div class="evolution">
+      <article class="stage">
+        <h2>第一阶段：点对点桥</h2>
+        <div class="tag">Societas ↔ 用户工作电脑 ↔ WorkIQ CLI</div>
+        <p>最初实现没有 Gateway。目标很直接：让用户工作电脑连接云上，让 Societas 可以触发本地 WorkIQ CLI。</p>
+        <div class="mini-diagram">
+          <svg viewBox="0 0 560 260" role="img" aria-label="点对点桥">
+            <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+            <path d="M145 90 L245 90" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/><path d="M315 90 L415 90" stroke="#64748b" stroke-width="3" marker-end="url(#a1)"/>
+            <rect x="20" y="42" width="126" height="96" rx="20" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s)"/><text x="83" y="82" class="node-title">Societas</text><text x="83" y="110" class="node-sub">云上 Agent</text>
+            <rect x="220" y="42" width="126" height="96" rx="20" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#s)"/><text x="283" y="82" class="node-title">工作电脑</text><text x="283" y="110" class="node-sub">本地执行</text>
+            <rect x="414" y="42" width="126" height="96" rx="20" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2" filter="url(#s)"/><text x="477" y="82" class="node-title">workiq</text><text x="477" y="110" class="node-sub">本地 CLI</text>
+            <text x="280" y="200" class="node-sub">优点：能跑通 WorkIQ 集成；缺点：专用、点对点、不容易扩展</text>
+          </svg>
+        </div>
+        <div class="bullets">
+          <div class="bullet"><span class="dot amber"></span><span>解决了 WorkIQ 无 API 的问题</span></div>
+          <div class="bullet"><span class="dot amber"></span><span>但还是偏一次性连接，难以管理多 Agent、多设备、多工具</span></div>
+        </div>
+      </article>
+
+      <article class="stage">
+        <h2>第二阶段：MCPHub Gateway</h2>
+        <div class="tag">任意 Agent → Gateway → 任意设备 Worker → 任意本地工具</div>
+        <p>加入 Gateway 后，我们发现这不是 WorkIQ 专属问题，而是云上 Agent 访问本地工具生态的通用问题。</p>
+        <div class="mini-diagram">
+          <svg viewBox="0 0 560 260" role="img" aria-label="MCPHub Gateway">
+            <defs><marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker><filter id="s2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter></defs>
+            <path d="M280 62 L280 105" stroke="#64748b" stroke-width="3" marker-end="url(#a2)"/><path d="M280 174 C150 174 120 190 120 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/><path d="M280 174 C280 190 280 198 280 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/><path d="M280 174 C410 174 440 190 440 218" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#a2)"/>
+            <rect x="80" y="16" width="400" height="48" rx="16" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#s2)"/><text x="280" y="47" class="node-title">Societas / Claude / Codex / 任意 Agent</text>
+            <rect x="92" y="106" width="376" height="70" rx="20" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#s2)"/><text x="280" y="137" class="node-title">MCPHub Gateway</text><text x="280" y="160" class="node-sub">路由 · 授权 · 能力注册 · Activity</text>
+            <rect x="34" y="218" width="170" height="36" rx="13" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="119" y="242" class="cap">workiq / az</text>
+            <rect x="220" y="218" width="120" height="36" rx="13" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="280" y="242" class="cap">copilot / gh</text>
+            <rect x="356" y="218" width="170" height="36" rx="13" fill="rgba(245,158,11,.16)" stroke="rgba(245,158,11,.52)" stroke-width="2"/><text x="441" y="242" class="cap">Portal / 文件 / VPN</text>
+          </svg>
+        </div>
+        <div class="bullets">
+          <div class="bullet"><span class="dot green"></span><span>从 WorkIQ 专用桥，泛化成云上 Agent 的本地工具 Gateway</span></div>
+          <div class="bullet"><span class="dot green"></span><span>可以接任意 Agent、任意用户设备、任意本地 CLI / Portal / 文件环境</span></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="footer-line"><b>抽象后的 LandGod：</b>不是只集成 WorkIQ，而是让云上 Agent 通过 MCPHub Gateway 使用用户设备上的整个本地工具生态。</div>
+    <div class="slide-number">02 / 02</div>
+  </section>
+</body>
+</html>
