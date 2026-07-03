@@ -37,7 +37,33 @@ Local Computer Access for cloud Agents
 不是复制 Agent 到每台机器，也不是远程控制电脑，而是把用户设备变成受治理的本地执行运行时。
 ```
 
-## 3. Slide 2 — MCPHub Gateway 架构
+## 3. Slide 2 — WorkIQ Integration
+
+目标：
+
+```text
+Add WorkIQ as a callable local capability inside Societas.
+```
+
+路径：
+
+```text
+Societas → MCPHub Gateway → MCPHub Client → WorkIQ CLI
+```
+
+讲清三点：
+
+- Societas 看到的是可调用 capability。
+- WorkIQ 仍然在用户设备上通过本地 CLI 执行。
+- 用户身份、凭据、VPN、设备上下文都留在本地。
+
+一句话：
+
+```text
+WorkIQ becomes Agent-operable without breaking the user's local trust boundary.
+```
+
+## 4. Slide 3 — MCPHub Gateway 架构
 
 三层：
 
@@ -69,7 +95,7 @@ Agent 不直接连接用户设备。
 Client 主动 outbound 连接 Gateway。
 ```
 
-## 4. Slide 3 — Trusted Execution Workflow
+## 5. Slide 4 — Trusted Execution Workflow
 
 阶段 A：Client 注册能力。
 
@@ -106,7 +132,7 @@ Agent HTTP /tool_call
 每次调用先签名验证，再按本地策略决定是否以用户身份执行。
 ```
 
-## 5. 签名安全点
+## 6. 签名安全点
 
 Gateway 不是简单转发，而是签名、绑定、分发。
 
@@ -136,7 +162,7 @@ signature
 - `signature`：证明请求确实由 Gateway 签发。
 - `binding`：保证请求只属于当前用户、当前 Client、当前 connection、当前 session。
 
-## 6. Human / Policy Gate
+## 7. Human / Policy Gate
 
 Human approval 不是每次都要。
 
@@ -161,7 +187,7 @@ Policy Gate 判断这个动作是否允许用用户身份执行。
 危险动作：deny
 ```
 
-## 7. 差异化讲法
+## 8. 差异化讲法
 
 和普通 MCP Server 区别：
 
@@ -177,7 +203,7 @@ MCPHub 产品化的是这些工具如何在用户真实环境中安全执行。
 MCPHub 提供的是跨多台用户设备的统一受治理执行网络。
 ```
 
-## 8. 收尾三句话
+## 9. 收尾三句话
 
 ```text
 Gateway governs.

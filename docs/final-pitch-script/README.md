@@ -1,6 +1,6 @@
 # MCPHub / WorkIQ 终极演讲稿
 
-本目录归档终极版 WorkIQ → MCPHub 产品 Pitch 的演讲材料。
+本目录归档终极版 WorkIQ → MCPHub 产品 Pitch 的演讲材料。当前对应 4 页 PPT：问题泛化、WorkIQ 集成、产品架构、可信执行 workflow。
 
 ## 文件
 

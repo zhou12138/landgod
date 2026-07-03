@@ -330,14 +330,94 @@
     </div>
 
     <div class="footer-line"><b>Thesis:</b> The WorkIQ problem directly generalizes into Local Computer Access: cloud intelligence, local execution.</div>
-    <div class="slide-number">01 / 03</div>
+    <div class="slide-number">01 / 04</div>
+  </section>
+
+  <section class="slide">
+    <div class="deck-topic">WorkIQ Integration</div>
+    <header>
+      <div>
+        <div class="eyebrow">02 · WorkIQ Integration: Societas → MCPHub → WorkIQ CLI</div>
+      </div>
+      <div class="brand"><div class="name">WorkIQ</div><div class="tag">Callable Local Capability</div></div>
+    </header>
+
+    <div class="three-grid">
+      <article class="card">
+        <h2>Integration Goal</h2>
+        <p class="lead">Add WorkIQ as a callable local capability inside Societas.</p>
+        <div class="bullets">
+          <div class="bullet"><span class="dot blue"></span><span>Societas keeps reasoning and task planning in the cloud</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>WorkIQ execution stays behind the user’s local <b>WorkIQ CLI</b></span></div>
+          <div class="bullet"><span class="dot blue"></span><span>No screenshots, copy/paste, or manual CLI handoff</span></div>
+          <div class="bullet"><span class="dot blue"></span><span>Actions run with the user’s existing identity and device context</span></div>
+        </div>
+        <div class="quote">The goal is not remote control; it is a governed local capability exposed to Societas.</div>
+      </article>
+
+      <article class="card">
+        <h2>Integration Path</h2>
+        <p class="lead">MCPHub turns the local WorkIQ CLI into a safe tool endpoint for the cloud Agent.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 640 300" role="img" aria-label="Societas integrates WorkIQ through MCPHub Gateway and Client">
+            <defs>
+              <marker id="wiA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
+              <filter id="wiS" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.22"/></filter>
+            </defs>
+            <rect x="24" y="66" width="126" height="78" rx="18" fill="rgba(56,189,248,.14)" stroke="rgba(56,189,248,.58)" stroke-width="2" filter="url(#wiS)"/>
+            <circle cx="52" cy="105" r="17" fill="rgba(15,23,42,.72)" stroke="rgba(56,189,248,.50)" stroke-width="2"/>
+            <image href="assets/societas-logo-icon.png" x="39" y="89" width="29" height="31" preserveAspectRatio="xMidYMid meet"/>
+            <text x="96" y="98" class="cap">Societas</text>
+            <text x="96" y="119" class="node-sub">Agent Runtime</text>
+
+            <rect x="240" y="54" width="158" height="102" rx="22" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.62)" stroke-width="2" filter="url(#wiS)"/>
+            <text x="319" y="88" class="node-title">MCPHub</text>
+            <text x="319" y="112" class="node-sub">Gateway</text>
+            <text x="319" y="135" class="node-sub">auth · route · sign · audit</text>
+
+            <rect x="492" y="48" width="124" height="72" rx="18" fill="rgba(34,197,94,.14)" stroke="rgba(34,197,94,.58)" stroke-width="2" filter="url(#wiS)"/>
+            <text x="554" y="76" class="cap">MCPHub</text>
+            <text x="554" y="98" class="node-sub">Client</text>
+            <rect x="492" y="164" width="124" height="72" rx="18" fill="rgba(245,158,11,.14)" stroke="rgba(245,158,11,.58)" stroke-width="2" filter="url(#wiS)"/>
+            <text x="554" y="193" class="cap">WorkIQ CLI</text>
+            <text x="554" y="215" class="node-sub">local execution</text>
+
+            <path d="M150 105 L238 105" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#wiA)"/>
+            <text x="194" y="82" class="cap">/tool_call</text>
+            <path d="M398 104 C436 100 458 84 492 84" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#wiA)"/>
+            <text x="448" y="62" class="cap">signed call</text>
+            <path d="M554 120 L554 164" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#wiA)"/>
+            <text x="593" y="144" class="proto">verify + execute</text>
+            <path d="M492 218 C396 276 224 260 98 144" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#wiA)" opacity=".88"/>
+            <text x="310" y="268" class="cap">result + Activity trace</text>
+          </svg>
+        </div>
+        <div class="decision">Societas sees WorkIQ as a callable capability; WorkIQ still runs on the user’s device.</div>
+      </article>
+
+      <article class="card">
+        <h2>Why MCPHub</h2>
+        <p class="lead">The integration needs local identity, local network, and local execution — without moving credentials to the cloud.</p>
+        <div class="bullets">
+          <div class="bullet"><span class="dot"></span><span><b>No cloud API assumption</b>: WorkIQ can remain a local CLI</span></div>
+          <div class="bullet"><span class="dot"></span><span><b>User context stays local</b>: AAD, VPN, cookies, files, repo</span></div>
+          <div class="bullet"><span class="dot"></span><span><b>Client publishes capability</b>: WorkIQ becomes part of the user-scoped catalog</span></div>
+          <div class="bullet"><span class="dot"></span><span><b>Gateway governs</b>: route, sign, dispatch, and record Activity</span></div>
+          <div class="bullet"><span class="dot"></span><span><b>Client verifies</b>: signed meta, body hash, nonce, expiry, binding</span></div>
+        </div>
+        <div class="quote">WorkIQ becomes Agent-operable without breaking the user’s local trust boundary.</div>
+      </article>
+    </div>
+
+    <div class="footer-line"><b>Outcome:</b> Societas can invoke WorkIQ through MCPHub while identity, credentials, and execution context stay local.</div>
+    <div class="slide-number">02 / 04</div>
   </section>
 
   <section class="slide">
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">02 · Product Architecture + Demo Placeholder</div>
+        <div class="eyebrow">03 · Product Architecture + Demo Placeholder</div>
       </div>
       <div class="brand"><div class="name">MCPHub Gateway</div><div class="tag">Architecture + Demo</div></div>
     </header>
@@ -460,14 +540,14 @@
     </div>
 
     <div class="footer-line" style="font-size:18px; bottom:24px; border-top:0; padding-top:0"><b>Architecture + Demo:</b> one governed Gateway; local Workers execute.</div>
-    <div class="slide-number">02 / 03</div>
+    <div class="slide-number">03 / 04</div>
   </section>
 
   <section class="slide">
     <div class="deck-topic">Local Computer Access</div>
     <header>
       <div>
-        <div class="eyebrow">03 · Product Workflow: Register, Invoke, Execute</div>
+        <div class="eyebrow">04 · Product Workflow: Register, Invoke, Execute</div>
       </div>
       <div class="brand"><div class="name">Product Flow</div><div class="tag">Register · Invoke · Return</div></div>
     </header>
@@ -605,7 +685,7 @@
     </div>
 
     <div class="footer-line" style="font-size:22px"><b>Product Flow:</b> Clients publish capabilities first; Agents invoke later through Gateway; results return through Gateway with Activity trace.</div>
-    <div class="slide-number">03 / 03</div>
+    <div class="slide-number">04 / 04</div>
   </section>
 </body>
 </html>

@@ -51,9 +51,27 @@ Cloud Agent → MCPHub Gateway → MCPHub Client → Local Capabilities
 
 ---
 
-## Slide 2 — MCPHub Gateway Architecture & Demo
+## Slide 2 — WorkIQ Integration: Societas → MCPHub → WorkIQ CLI
 
-第二页是产品架构。
+第二页讲的是 WorkIQ 怎么真正集成进 Societas。
+
+目标很简单：把 WorkIQ 变成 Societas 里一个可调用的本地能力。用户不再需要截图、复制粘贴，也不需要手动把 CLI 结果转交给 Agent。
+
+调用路径是：
+
+```text
+Societas → MCPHub Gateway → MCPHub Client → WorkIQ CLI
+```
+
+Societas 发起 tool call；Gateway 负责认证、路由、签名和审计；MCPHub Client 在用户设备上验证请求，然后调用本地 WorkIQ CLI。最后结果和 Activity trace 通过 Gateway 返回给 Societas。
+
+这页的重点是：Societas 看到的是一个可调用 capability，但 WorkIQ 仍然运行在用户设备上。用户的身份、凭据和执行上下文都留在本地。
+
+---
+
+## Slide 3 — MCPHub Gateway Architecture & Demo
+
+第三页是产品架构。
 
 左边是 Cloud Agents，比如 OpenClaw、Societas、GitHub Copilot，以及其他 Agent。它们不直接连接用户设备，而是统一调用 MCPHub Gateway。
 
@@ -85,9 +103,9 @@ Agent → MCPHub Gateway → MCPHub Client → Local Tool → Result + Activity 
 
 ---
 
-## Slide 3 — Trusted Execution: How Agents Invoke Local Capabilities
+## Slide 4 — Trusted Execution: How Agents Invoke Local Capabilities
 
-第三页讲完整 workflow，分成两个阶段。
+第四页讲完整 workflow，分成两个阶段。
 
 第一阶段，是 **MCPHub Client 连接并发布工具能力**。
 
