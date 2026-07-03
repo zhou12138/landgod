@@ -6,6 +6,7 @@
 
 - `final-3min-product-pitch-cn.md` — 3 分钟中文产品 Pitch，可直接照读。
 - `talking-points.md` — 精简讲述要点，适合临场复习。
+- `qa.md` — 演讲后 Q&A 备答。
 
 ## 对应终极版 PPT
 
