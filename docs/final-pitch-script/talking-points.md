@@ -3,7 +3,7 @@
 ## 1. 开场一句话
 
 ```text
-MCPHub 解决的是：云端 Agent 很会思考，但真实工作环境仍然在用户本地设备上。
+MCPHub 解决的是云端 Agent 的最后一公里执行问题。
 ```
 
 核心口号：
@@ -11,6 +11,12 @@ MCPHub 解决的是：云端 Agent 很会思考，但真实工作环境仍然在
 ```text
 Cloud intelligence, local execution.
 云端智能，本地执行。
+```
+
+最关键的补充句：
+
+```text
+云端 Agent 可以在用户已有身份、权限和设备上下文下，安全调用本地能力。
 ```
 
 ## 2. Slide 1 — 从 WorkIQ 集成泛化成产品模式
@@ -25,12 +31,18 @@ Cloud intelligence, local execution.
 Local Computer Access for cloud Agents
 ```
 
+一句话讲清：
+
+```text
+不是复制 Agent 到每台机器，也不是远程控制电脑，而是把用户设备变成受治理的本地执行运行时。
+```
+
 ## 3. Slide 2 — MCPHub Gateway 架构
 
 三层：
 
 ```text
-Cloud Agents → MCPHub Gateway → MCPHub Client / Local Capabilities
+Cloud Agents → MCPHub Gateway → MCPHub Client → Local Capabilities
 ```
 
 Gateway 负责：
@@ -45,13 +57,16 @@ Client 负责：
 
 - outbound 连接 Gateway；
 - 发布本地能力；
-- 在用户设备上执行工具；
+- 验证 signed tool_call；
+- 执行 Local Policy Gate；
+- 在用户本地身份和设备上下文下执行工具；
 - 不做独立决策，不是完整 Agent。
 
 关键原则：
 
 ```text
 Agent 不直接连接用户设备。
+Client 主动 outbound 连接 Gateway。
 ```
 
 ## 4. Slide 3 — Trusted Execution Workflow
@@ -61,9 +76,15 @@ Agent 不直接连接用户设备。
 ```text
 WS connect
 → token auth + session_opened
-→ register binding: session + server key
+→ register binding: user + client + connection + session + server key
 → update_tools
 → publish capability catalog
+```
+
+一句话：
+
+```text
+先让 Gateway 知道这台设备在线、可信、有什么本地工具。
 ```
 
 阶段 B：Agent 调用，本地执行。
@@ -73,18 +94,74 @@ Agent HTTP /tool_call
 → Gateway route / sign / audit
 → signed tool_call
 → Client verify signed meta
+→ Local Policy Gate: auto / approve / deny
 → Tool Registry
 → Local Tool
 → result returns through Gateway
 ```
 
-安全点：
+一句话：
 
-- Gateway 不是简单转发，而是签名、绑定、分发。
-- signed meta 绑定 request、user、client、connection、session、body hash、nonce、exp。
-- Client 先验签、验 body hash、验 replay、验过期时间和 binding，再执行。
+```text
+每次调用先签名验证，再按本地策略决定是否以用户身份执行。
+```
 
-## 5. 差异化讲法
+## 5. 签名安全点
+
+Gateway 不是简单转发，而是签名、绑定、分发。
+
+signed meta 绑定：
+
+```text
+request
+user
+client
+connection
+session
+tool name
+arguments
+body hash
+nonce
+iat
+exp
+signature
+```
+
+字段解释：
+
+- `body hash`：证明 tool name 和 arguments 没被篡改。
+- `nonce`：一次性随机数，防止重放。
+- `iat`：issued at，签发时间。
+- `exp`：过期时间，限制有效窗口。
+- `signature`：证明请求确实由 Gateway 签发。
+- `binding`：保证请求只属于当前用户、当前 Client、当前 connection、当前 session。
+
+## 6. Human / Policy Gate
+
+Human approval 不是每次都要。
+
+更准确叫：
+
+```text
+Local Policy Gate
+```
+
+作用：
+
+```text
+签名证明请求是真的；
+Policy Gate 判断这个动作是否允许用用户身份执行。
+```
+
+策略：
+
+```text
+低风险：auto
+高风险：approve
+危险动作：deny
+```
+
+## 7. 差异化讲法
 
 和普通 MCP Server 区别：
 
@@ -100,7 +177,7 @@ MCPHub 产品化的是这些工具如何在用户真实环境中安全执行。
 MCPHub 提供的是跨多台用户设备的统一受治理执行网络。
 ```
 
-## 6. 收尾三句话
+## 8. 收尾三句话
 
 ```text
 Gateway governs.
