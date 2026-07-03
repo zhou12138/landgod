@@ -1,0 +1,148 @@
+{
+  "schema": "office-com-operations.v1",
+  "target": "PowerPoint.Application",
+  "units": "points",
+  "pageSetup": {
+    "slideWidth": 960,
+    "slideHeight": 540,
+    "orientation": "landscape",
+    "aspect": "16:9"
+  },
+  "notes": [
+    "Standalone Win32 PowerPoint COM operation plan for the WorkIQ integration identity/auth flow shown in the provided screenshot.",
+    "Diagram meaning: Societas requests delegated access through MISE OBO Token Exchange with preauth scope WorkIQAgent.Ask, then calls WorkIQ Service A2A endpoint; result/response returns to Societas.",
+    "Expected executor mapping: addShape(shapeType='rect') => msoShapeRectangle; addConnector(connectorType='elbow'|'straight') => Shapes.AddConnector; arrowEnd=true adds an arrow head. Coordinates are PowerPoint points. Colors are hex RGB."
+  ],
+  "theme": {
+    "font": "Aptos",
+    "colors": {
+      "bg": "101214",
+      "panel": "1F2022",
+      "text": "F8FAFC",
+      "soft": "CBD5E1",
+      "line": "D1D5DB",
+      "muted": "9CA3AF"
+    }
+  },
+  "slides": [
+    {
+      "slideIndex": 1,
+      "layout": "blank",
+      "operations": [
+        {
+          "op": "setBackground",
+          "fill": { "color": "101214" }
+        },
+        {
+          "op": "addShape",
+          "name": "societas.box",
+          "shapeType": "rect",
+          "x": 70,
+          "y": 250,
+          "w": 125,
+          "h": 58,
+          "fill": { "color": "1F2022", "transparency": 0 },
+          "line": { "color": "D1D5DB", "transparency": 0, "weight": 1.0 }
+        },
+        {
+          "op": "addTextBox",
+          "name": "societas.label",
+          "text": "Societas",
+          "x": 70,
+          "y": 266,
+          "w": 125,
+          "h": 28,
+          "font": { "name": "Aptos", "size": 14, "color": "F8FAFC", "bold": false },
+          "align": "center",
+          "valign": "middle",
+          "margin": 2
+        },
+        {
+          "op": "addShape",
+          "name": "mise.box",
+          "shapeType": "rect",
+          "x": 250,
+          "y": 160,
+          "w": 275,
+          "h": 132,
+          "fill": { "color": "1F2022", "transparency": 0 },
+          "line": { "color": "D1D5DB", "transparency": 0, "weight": 1.0 }
+        },
+        {
+          "op": "addTextBox",
+          "name": "mise.label",
+          "text": "MISE\nOBO Token Exchange\nPreauth Scope:\nWorkIQAgent.Ask",
+          "x": 250,
+          "y": 178,
+          "w": 275,
+          "h": 92,
+          "font": { "name": "Aptos", "size": 14, "color": "F8FAFC", "bold": false },
+          "align": "center",
+          "valign": "middle",
+          "margin": 4
+        },
+        {
+          "op": "addShape",
+          "name": "workiq.box",
+          "shapeType": "rect",
+          "x": 585,
+          "y": 236,
+          "w": 305,
+          "h": 82,
+          "fill": { "color": "1F2022", "transparency": 0 },
+          "line": { "color": "D1D5DB", "transparency": 0, "weight": 1.0 }
+        },
+        {
+          "op": "addTextBox",
+          "name": "workiq.label",
+          "text": "WorkIQ Service\nhttps://workiq.svc.cloud.microsoft/a2a/",
+          "x": 585,
+          "y": 255,
+          "w": 305,
+          "h": 44,
+          "font": { "name": "Aptos", "size": 14, "color": "CBD5E1", "bold": false },
+          "align": "center",
+          "valign": "middle",
+          "margin": 4
+        },
+        {
+          "op": "addConnector",
+          "name": "flow.societas.to.mise",
+          "connectorType": "elbow",
+          "begin": { "x": 195, "y": 250 },
+          "points": [
+            { "x": 220, "y": 230 },
+            { "x": 250, "y": 225 }
+          ],
+          "end": { "x": 250, "y": 225 },
+          "line": { "color": "D1D5DB", "transparency": 0, "weight": 1.1, "arrowEnd": true }
+        },
+        {
+          "op": "addConnector",
+          "name": "flow.mise.to.workiq",
+          "connectorType": "elbow",
+          "begin": { "x": 525, "y": 225 },
+          "points": [
+            { "x": 555, "y": 225 },
+            { "x": 585, "y": 246 }
+          ],
+          "end": { "x": 585, "y": 246 },
+          "line": { "color": "D1D5DB", "transparency": 0, "weight": 1.1, "arrowEnd": true }
+        },
+        {
+          "op": "addConnector",
+          "name": "flow.workiq.return.to.societas",
+          "connectorType": "elbow",
+          "begin": { "x": 600, "y": 318 },
+          "points": [
+            { "x": 520, "y": 348 },
+            { "x": 325, "y": 350 },
+            { "x": 195, "y": 308 }
+          ],
+          "end": { "x": 195, "y": 308 },
+          "line": { "color": "D1D5DB", "transparency": 0, "weight": 1.1, "arrowEnd": true }
+        }
+      ]
+    }
+  ]
+}
